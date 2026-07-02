@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         FUEL COST REPORT — Pivot + Graph (reuse existing views)
+    ================================================================ -->
+    <record id="action_fleet_fuel_report" model="ir.actions.act_window">
+        <field name="name">Fuel Cost Report</field>
+        <field name="res_model">fleet.fuel.log</field>
+        <field name="view_mode">pivot,graph,list</field>
+        <field name="domain">[('state','in',['approved','posted'])]</field>
+        <field name="context">{
+            'search_default_grp_vehicle': 1,
+            'search_default_grp_month': 1
+        }</field>
+    </record>
+
+    <menuitem id="menu_fleet_fuel_report"
+        name="Fuel Report"
+        parent="fleet_fuel_log.menu_fleet_fuel_root"
+        action="action_fleet_fuel_report"
+        sequence="80"
+        groups="fleet_fuel_log.group_fleet_manager"
+    />
+
+</odoo>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_fx_report_wizard_form" model="ir.ui.view">
+    <field name="name">fx.report.wizard.form</field>
+    <field name="model">fx.report.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Buat Laporan Dual-Currency">
+        <group>
+          <group string="Identitas">
+            <field name="company_id"
+                   groups="base.group_multi_company"/>
+            <field name="report_currency_id"/>
+            <field name="report_name"/>
+          </group>
+          <group string="Periode">
+            <field name="pl_date_from"/>
+            <field name="pl_date_to"/>
+          </group>
+        </group>
+
+        <group string="Kurs">
+          <group>
+            <field name="pl_avg_rate"
+                   help="Auto-hitung dari tabel kurs. Dapat diubah manual."/>
+            <field name="bs_closing_rate"
+                   help="Auto-ambil kurs per tanggal Sampai. Dapat diubah manual."/>
+            <field name="rate_source"/>
+          </group>
+          <group>
+            <field name="rate_info" readonly="1"
+                   widget="char" nolabel="0"/>
+          </group>
+        </group>
+
+        <!-- Laporan existing jika ada -->
+        <group string="Laporan Existing" invisible="not existing_config_id">
+          <field name="existing_config_id" readonly="1"/>
+          <div class="text-muted" style="font-size:12px; padding:4px 8px;">
+            Terdapat laporan dengan periode yang sama. Anda dapat membukanya
+            langsung atau membuat kalkulasi baru.
+          </div>
+        </group>
+
+        <group string="Catatan">
+          <field name="notes" nolabel="1"
+                 placeholder="Catatan opsional untuk laporan ini..."/>
+        </group>
+
+        <footer>
+          <button name="action_calculate_new" type="object"
+                  string="⚙ Hitung Laporan Baru"
+                  class="btn-primary"/>
+          <button name="action_open_existing" type="object"
+                  string="Buka Laporan Existing"
+                  class="btn-secondary"
+                  invisible="not existing_config_id"/>
+          <button special="cancel" string="Batal"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+</odoo>

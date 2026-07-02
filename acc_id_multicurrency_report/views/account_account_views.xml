@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_account_form_fx_inherit" model="ir.ui.view">
+    <field name="name">account.account.form.fx</field>
+    <field name="model">account.account</field>
+    <field name="inherit_id" ref="account.view_account_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//notebook" position="inside">
+        <page string="FX Configuration" name="fx_config">
+          <group>
+            <group string="Pengaturan Laporan Dual-Currency">
+              <field name="id_fx_rate_type"
+                     help="Kosongkan untuk default otomatis berdasarkan tipe akun."/>
+              <field name="id_exclude_from_fx"/>
+            </group>
+            <group string="Keterangan Tipe Kurs Default">
+              <div class="o_field_info text-muted" style="font-size:12px; padding:8px;">
+                <ul>
+                  <li>Pendapatan / Beban → <strong>Average Rate</strong></li>
+                  <li>Aset / Liabilitas / Ekuitas → <strong>Closing Rate</strong></li>
+                  <li>Selisih Kurs → <strong>Actual Rate</strong></li>
+                </ul>
+                Override per-laporan tersedia di tab
+                <em>Override Kurs per Akun</em> di form konfigurasi laporan.
+              </div>
+            </group>
+          </group>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+</odoo>

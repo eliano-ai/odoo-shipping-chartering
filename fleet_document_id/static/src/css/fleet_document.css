@@ -1,0 +1,41 @@
+/* fleet_document_id — backend styles */
+
+/* Status badge colors in list/kanban */
+.o_fleet_doc_expired  { color: #721c24 !important; font-weight: 600; }
+.o_fleet_doc_warning  { color: #856404 !important; font-weight: 600; }
+.o_fleet_doc_valid    { color: #155724 !important; }
+
+/* Smart button pulse for critical status */
+.o_form_view .oe_button_box .oe_stat_button.o_doc_critical {
+    border-color: #dc3545;
+    animation: doc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes doc-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.3); }
+    50%       { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+}
+
+/* Days remaining coloring in list view */
+.o_list_view .o_field_days_remaining.text-danger span,
+.o_list_view .o_field_days_remaining[style*="color: rgb(220"] {
+    font-weight: 600;
+}
+
+/* Kanban column headers */
+.o_kanban_group[data-id="expired"] .o_kanban_header_title {
+    color: #721c24;
+}
+.o_kanban_group[data-id="expiring_soon"] .o_kanban_header_title {
+    color: #856404;
+}
+.o_kanban_group[data-id="valid"] .o_kanban_header_title {
+    color: #155724;
+}
+
+/* Alert banners in form view */
+.o_form_view .alert.o_fleet_doc_banner {
+    border-radius: 6px;
+    margin-bottom: 12px;
+    font-size: 13px;
+}

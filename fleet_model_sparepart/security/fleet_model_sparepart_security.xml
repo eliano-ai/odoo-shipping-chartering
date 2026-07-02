@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Fleet Manager: full CRUD -->
+    <record id="group_fleet_sparepart_manager" model="res.groups">
+        <field name="name">Fleet Sparepart Manager</field>
+        <field name="comment">Full access to all sparepart records.</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_manager'))]"/>
+    </record>
+
+    <!-- Fleet User: read only -->
+    <record id="group_fleet_sparepart_user" model="res.groups">
+        <field name="name">Fleet Sparepart User</field>
+        <field name="comment">Read-only access to sparepart records.</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_user'))]"/>
+    </record>
+
+    <!-- Record Rules -->
+    <record id="rule_sparepart_manager_all" model="ir.rule">
+        <field name="name">Sparepart Manager: all records</field>
+        <field name="model_id" ref="model_fleet_model_sparepart"/>
+        <field name="groups" eval="[(4, ref('group_fleet_sparepart_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_sparepart_user_read" model="ir.rule">
+        <field name="name">Sparepart User: read only</field>
+        <field name="model_id" ref="model_fleet_model_sparepart"/>
+        <field name="groups" eval="[(4, ref('group_fleet_sparepart_user'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fleet_vehicle_form_inherit_document" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.document</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart button -->
+            <div name="button_box" position="inside">
+                <button name="action_view_documents" type="object"
+                        class="oe_stat_button" icon="fa-file-text-o">
+                    <div class="o_stat_info">
+                        <field name="document_count" class="o_stat_value"/>
+                        <span class="o_stat_text">Dokumen</span>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Status banner di bawah header -->
+            <div class="oe_title" position="after">
+                <div class="alert alert-danger mb-2" role="alert"
+                     invisible="doc_status != 'critical'">
+                    <strong>Perhatian:</strong> Kendaraan ini memiliki
+                    <strong><field name="expired_doc_count" readonly="1"/> dokumen expired.</strong>
+                    Tidak boleh beroperasi sampai dokumen diperpanjang.
+                </div>
+                <div class="alert alert-warning mb-2" role="alert"
+                     invisible="doc_status != 'warning'">
+                    <strong>Perhatian:</strong>
+                    <field name="expiring_doc_count" readonly="1"/> dokumen akan expired dalam waktu dekat.
+                    Dokumen terdekat: <strong><field name="next_expiry_doc" readonly="1"/></strong>
+                    (<field name="next_expiry_date" readonly="1"/>).
+                </div>
+            </div>
+
+            <!-- Tab Kapal Laut (hanya tampil jika is_vessel = True) -->
+            <notebook position="inside">
+                <page string="Data Kapal" name="vessel_data"
+                      invisible="not is_vessel">
+                    <group>
+                        <group string="Identifikasi Kapal">
+                            <field name="vessel_type_id"/>
+                            <field name="call_sign"/>
+                            <field name="imo_number"/>
+                            <field name="flag_state"/>
+                            <field name="port_of_registry"/>
+                            <field name="operation_area"/>
+                        </group>
+                        <group string="Dimensi &amp; Tonase">
+                            <field name="gross_tonnage"/>
+                            <field name="net_tonnage"/>
+                            <field name="deadweight_tonnage"/>
+                        </group>
+                    </group>
+                    <group string="Klasifikasi">
+                        <group>
+                            <field name="classification_society"/>
+                            <field name="class_notation"/>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+
+            <!-- Tab Dokumen Legal -->
+            <notebook position="inside">
+                <page string="Dokumen Legal" name="legal_documents">
+                    <group>
+                        <group>
+                            <field name="required_license_type"
+                                   string="SIM yang Diperlukan"
+                                   help="Kategori SIM minimum untuk mengoperasikan kendaraan ini"/>
+                            <field name="doc_status" readonly="1"
+                                   widget="badge"
+                                   decoration-success="doc_status == 'ok'"
+                                   decoration-warning="doc_status == 'warning'"
+                                   decoration-danger="doc_status == 'critical'"
+                                   decoration-muted="doc_status == 'incomplete'"/>
+                        </group>
+                        <group>
+                            <field name="next_expiry_date" readonly="1"/>
+                            <field name="next_expiry_doc" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- ✅ FIX: decoration dipindah dari <field> ke <list> -->
+                    <field name="is_vessel" invisible="1"/>
+                    <field name="vessel_type_id" invisible="1"/>
+                    <field name="document_ids"
+                           context="{'default_vehicle_id': id}">
+                        <list string="Dokumen Legal"
+                              editable="bottom"
+                              decoration-danger="state == 'expired'"
+                              decoration-warning="state == 'expiring_soon'">
+                            <field name="doc_type" required="1"/>
+                            <field name="sim_type"
+                                   optional="hide"
+                                   invisible="doc_type != 'sim'"/>
+                            <field name="driver_id"
+                                   optional="show"
+                                   invisible="doc_type != 'sim'"/>
+                            <field name="doc_number"/>
+                            <field name="expiry_date" required="1"/>
+                            <field name="days_remaining"
+                                   decoration-danger="days_remaining &lt; 0"
+                                   decoration-warning="days_remaining &gt;= 0 and days_remaining &lt;= 30"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'valid'"
+                                   decoration-warning="state == 'expiring_soon'"
+                                   decoration-danger="state == 'expired'"/>
+                            <field name="renewal_pic_id" optional="show"/>
+                            <button name="action_open_renewal_wizard" type="object"
+                                    string="Perpanjang" class="btn-primary btn-sm"
+                                    invisible="state == 'valid'"/>
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+
+        </field>
+    </record>
+</odoo>

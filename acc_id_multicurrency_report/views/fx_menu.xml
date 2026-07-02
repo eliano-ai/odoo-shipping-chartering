@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <menuitem id="menu_fx_report_root"
+            name="Laporan Dual-Currency"
+            parent="account.menu_finance_reports"
+            sequence="100"/>
+
+  <menuitem id="menu_fx_report_wizard"
+            name="Buat Laporan Baru"
+            parent="menu_fx_report_root"
+            action="action_fx_report_wizard"
+            sequence="10"
+            groups="acc_id_multicurrency_report.group_fx_manager"/>
+
+  <menuitem id="menu_fx_report_list"
+            name="Riwayat Laporan"
+            parent="menu_fx_report_root"
+            action="action_fx_report_config_list"
+            sequence="20"
+            groups="acc_id_multicurrency_report.group_fx_user"/>
+
+  <menuitem id="menu_fx_calc_log"
+            name="Log Kalkulasi"
+            parent="menu_fx_report_root"
+            action="action_fx_calc_log_list"
+            sequence="30"
+            groups="acc_id_multicurrency_report.group_fx_manager"/>
+
+</odoo>

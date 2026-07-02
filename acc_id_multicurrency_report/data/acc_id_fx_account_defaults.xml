@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+  <!--
+    noupdate="1": data ini hanya diload saat pertama install,
+    tidak di-override saat upgrade modul.
+
+    Default rate type per akun ditentukan secara dinamis oleh
+    account._get_effective_fx_rate_type() berdasarkan account_type.
+    File ini disediakan sebagai placeholder dan untuk dokumentasi.
+
+    Logika default:
+      income, income_other                              → average
+      expense, expense_depreciation, expense_direct_cost → average
+      asset_*, liability_*, equity_*                    → closing
+
+    Untuk override per akun: gunakan tab "FX Configuration"
+    di form account.account, atau gunakan acc.id.fx.rate.override
+    di level per-laporan.
+  -->
+</odoo>

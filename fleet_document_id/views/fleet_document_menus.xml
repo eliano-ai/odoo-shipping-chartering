@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_fleet_document_root"
+              name="Dokumen Legal"
+              parent="fleet.menu_root"
+              sequence="15"/>
+
+    <menuitem id="menu_fleet_document_all"
+              name="Semua Dokumen"
+              parent="menu_fleet_document_root"
+              action="action_fleet_vehicle_document"
+              sequence="10"/>
+
+    <menuitem id="menu_fleet_document_dashboard"
+              name="Dashboard Compliance"
+              parent="menu_fleet_document_root"
+              action="fleet_document_dashboard_action"
+              sequence="20"/>
+
+    <menuitem id="menu_fleet_document_renewal_log"
+              name="Riwayat Perpanjangan"
+              parent="menu_fleet_document_root"
+              action="action_fleet_document_renewal_log"
+              sequence="30"
+              groups="fleet.fleet_group_manager"/>
+
+    <!-- Konfigurasi — hanya Fleet Manager -->
+    <menuitem id="menu_fleet_document_config"
+              name="Konfigurasi"
+              parent="menu_fleet_document_root"
+              sequence="90"
+              groups="fleet.fleet_group_manager"/>
+
+    <menuitem id="menu_fleet_document_type"
+              name="Master Tipe Dokumen"
+              parent="menu_fleet_document_config"
+              action="action_fleet_document_type"
+              sequence="10"
+              groups="fleet.fleet_group_manager"/>
+
+    <menuitem id="menu_fleet_vessel_type"
+              name="Master Tipe Kapal"
+              parent="menu_fleet_document_config"
+              action="action_fleet_document_vessel_type"
+              sequence="20"
+              groups="fleet.fleet_group_manager"/>
+</odoo>

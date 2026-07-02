@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="fx_pl_report_template" name="Laporan Laba Rugi Dual-Currency">
+<t t-call="web.html_container">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <link rel="stylesheet"
+        href="/web/static/lib/bootstrap/css/bootstrap.min.css"/>
+  <link rel="stylesheet"
+        href="/acc_id_multicurrency_report/static/src/css/fx_report.css"/>
+</head>
+<body class="fx-report-body">
+
+<div class="container-fluid px-4 py-3">
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <div class="text-center mb-3">
+    <h4 class="fw-bold mb-1">
+      <t t-esc="company.name"/>
+    </h4>
+    <h5 class="mb-1">LAPORAN LABA RUGI — MANAJEMEN</h5>
+    <p class="text-muted mb-0">
+      Periode:
+      <t t-esc="config.pl_date_from.strftime('%d %B %Y')"/>
+      –
+      <t t-esc="config.pl_date_to.strftime('%d %B %Y')"/>
+    </p>
+  </div>
+
+  <!-- ── Tab bar ─────────────────────────────────────────────── -->
+  <div class="d-flex gap-2 mb-3 align-items-center">
+    <div class="btn-group" role="group">
+      <button class="btn btn-sm btn-outline-primary fx-tab active"
+              data-view="cfo" onclick="switchView('cfo', this)">
+        CFO View
+      </button>
+      <button class="btn btn-sm btn-outline-primary fx-tab"
+              data-view="acc" onclick="switchView('acc', this)">
+        Accounting View
+      </button>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+      <a t-attf-href="/acc_id_fx/bs_report/#{config.id}"
+         class="btn btn-sm btn-outline-secondary">Neraca →</a>
+      <a t-attf-href="/web/report/download?data=%7B%22model%22%3A%22acc.id.fx.report.config%22%2C%22id%22%3A#{config.id}%2C%22report_name%22%3A%22acc_id_multicurrency_report.fx_report_xlsx%22%7D"
+         class="btn btn-sm btn-outline-success">⬇ XLSX</a>
+      <a t-attf-href="/web#id=#{config.id}&amp;model=acc.id.fx.report.config&amp;view_type=form"
+         class="btn btn-sm btn-outline-dark">⚙ Config</a>
+    </div>
+  </div>
+
+  <!-- ── Stale warning ───────────────────────────────────────── -->
+  <t t-if="is_stale">
+    <div class="alert alert-warning d-flex align-items-center mb-3">
+      <i class="fa fa-exclamation-triangle me-2"/>
+      <div>
+        <strong>Data Berubah Sejak Kalkulasi Terakhir.</strong>
+        <span class="ms-1">
+          <t t-esc="config.stale_reason or ''"/>
+        </span>
+        <a t-attf-href="/web#id=#{config.id}&amp;model=acc.id.fx.report.config&amp;view_type=form"
+           class="btn btn-sm btn-warning ms-2">
+          Hitung Ulang
+        </a>
+      </div>
+    </div>
+  </t>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- CFO VIEW                                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="view-cfo" class="fx-view">
+
+    <!-- KPI Cards -->
+    <div class="row g-3 mb-3">
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small mb-1">Pendapatan Bersih</div>
+            <div class="fs-5 fw-bold">
+              Rp <t t-esc="'{:,.0f}'.format(abs(grouped['total_income_idr']))"/>
+            </div>
+            <div class="text-success small">
+              ≈ USD <t t-esc="'{:,.0f}'.format(abs(grouped['total_income_usd']))"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small mb-1">Total Beban</div>
+            <div class="fs-5 fw-bold">
+              Rp <t t-esc="'{:,.0f}'.format(abs(grouped['total_expense_idr']))"/>
+            </div>
+            <div class="text-danger small">
+              ≈ USD <t t-esc="'{:,.0f}'.format(abs(grouped['total_expense_usd']))"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small mb-1">Laba Bersih</div>
+            <div class="fs-5 fw-bold">
+              Rp <t t-esc="'{:,.0f}'.format(grouped['net_idr'])"/>
+            </div>
+            <div class="small"
+                 t-attf-class="#{grouped['net_usd'] >= 0 and 'text-success' or 'text-danger'}">
+              ≈ USD <t t-esc="'{:,.0f}'.format(grouped['net_usd'])"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 border-0 shadow-sm">
+          <div class="card-body">
+            <div class="text-muted small mb-1">Margin Bersih</div>
+            <div class="fs-5 fw-bold">
+              <t t-if="grouped['total_income_idr'] != 0">
+                <t t-esc="'{:.1f}%'.format(grouped['net_idr'] / grouped['total_income_idr'] * 100)"/>
+              </t>
+              <t t-else="">—</t>
+            </div>
+            <div class="text-muted small">
+              Kurs avg Rp
+              <t t-esc="'{:,.0f}'.format(config.pl_avg_rate)"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ringkasan tabel CFO -->
+    <table class="table table-sm table-bordered fx-table">
+      <thead class="fx-thead">
+        <tr>
+          <th style="width:45%">Uraian</th>
+          <th class="text-end" style="width:22%">IDR (Rp)</th>
+          <th class="text-center" style="width:10%">Kurs</th>
+          <th class="text-end" style="width:18%">USD ($)</th>
+          <th class="text-center" style="width:5%">Tipe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Pendapatan -->
+        <tr class="fx-section-header">
+          <td colspan="5">PENDAPATAN USAHA</td>
+        </tr>
+        <t t-foreach="grouped['income_lines']" t-as="line">
+          <tr>
+            <td class="ps-4">
+              <span class="text-muted small me-1">
+                <t t-esc="line.account_code"/>
+              </span>
+              <t t-esc="line.account_name"/>
+            </td>
+            <td class="text-end">
+              <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+            </td>
+            <td class="text-center text-muted small">
+              <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+            </td>
+            <td class="text-end">
+              <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-primary small">
+                <t t-esc="line.rate_type_applied[:3].upper()"/>
+              </span>
+            </td>
+          </tr>
+        </t>
+        <tr class="fx-subtotal">
+          <td class="ps-3">Jumlah Pendapatan</td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(grouped['total_income_idr'])"/>
+          </td>
+          <td class="text-center text-muted small">avg</td>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(grouped['total_income_usd'])"/>
+          </td>
+          <td/>
+        </tr>
+
+        <!-- Beban -->
+        <tr class="fx-section-header">
+          <td colspan="5">BEBAN USAHA</td>
+        </tr>
+        <t t-foreach="grouped['expense_lines']" t-as="line">
+          <tr>
+            <td class="ps-4">
+              <span class="text-muted small me-1">
+                <t t-esc="line.account_code"/>
+              </span>
+              <t t-esc="line.account_name"/>
+            </td>
+            <td class="text-end">
+              (<t t-esc="'{:,.0f}'.format(abs(line.balance_functional))"/>)
+            </td>
+            <td class="text-center text-muted small">
+              <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+            </td>
+            <td class="text-end">
+              (<t t-esc="'{:,.2f}'.format(abs(line.balance_presentation))"/>)
+            </td>
+            <td class="text-center">
+              <span class="badge bg-primary small">AVG</span>
+            </td>
+          </tr>
+        </t>
+        <tr class="fx-subtotal">
+          <td class="ps-3">Jumlah Beban Usaha</td>
+          <td class="text-end">
+            (<t t-esc="'{:,.0f}'.format(abs(grouped['total_expense_idr']))"/>)
+          </td>
+          <td class="text-center text-muted small">avg</td>
+          <td class="text-end">
+            (<t t-esc="'{:,.2f}'.format(abs(grouped['total_expense_usd']))"/>)
+          </td>
+          <td/>
+        </tr>
+
+        <!-- Lain-lain -->
+        <t t-if="grouped['other_lines']">
+          <tr class="fx-section-header">
+            <td colspan="5">LAIN-LAIN</td>
+          </tr>
+          <t t-foreach="grouped['other_lines']" t-as="line">
+            <tr>
+              <td class="ps-4">
+                <span class="text-muted small me-1">
+                  <t t-esc="line.account_code"/>
+                </span>
+                <t t-esc="line.account_name"/>
+              </td>
+              <td class="text-end">
+                <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+              </td>
+              <td class="text-center text-muted small">
+                <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+              </td>
+              <td class="text-end">
+                <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-secondary small">
+                  <t t-esc="(line.rate_type_applied or '')[:3].upper()"/>
+                </span>
+              </td>
+            </tr>
+          </t>
+        </t>
+
+        <!-- Laba Bersih -->
+        <tr class="fx-total">
+          <td>LABA BERSIH PERIODE</td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(grouped['net_idr'])"/>
+          </td>
+          <td/>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(grouped['net_usd'])"/>
+          </td>
+          <td/>
+        </tr>
+      </tbody>
+    </table>
+  </div><!-- /view-cfo -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- ACCOUNTING VIEW (hidden by default)                        -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="view-acc" class="fx-view d-none">
+    <p class="text-muted small mb-2">
+      Klik baris akun untuk melihat transaksi (lazy load).
+      Pagination default 50 baris per halaman.
+    </p>
+    <table class="table table-sm table-bordered fx-table">
+      <thead class="fx-thead">
+        <tr>
+          <th style="width:8%">Kode</th>
+          <th style="width:34%">Nama Akun</th>
+          <th class="text-end" style="width:18%">IDR (Rp)</th>
+          <th class="text-center" style="width:10%">Kurs</th>
+          <th class="text-end" style="width:16%">USD ($)</th>
+          <th class="text-center" style="width:8%">Tipe</th>
+          <th class="text-center" style="width:6%">OVR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <t t-foreach="grouped['income_lines'] + grouped['expense_lines'] + grouped['other_lines']"
+           t-as="line">
+          <!-- Baris akun — clickable -->
+          <tr class="fx-drillable"
+              t-att-data-account-id="line.account_id.id"
+              t-att-data-config-id="config.id"
+              onclick="toggleDrilldown(this)">
+            <td>
+              <span class="text-muted">
+                <t t-esc="line.account_code"/>
+              </span>
+            </td>
+            <td>
+              <t t-esc="line.account_name"/>
+              <i class="fa fa-caret-right drill-caret ms-1 text-muted"/>
+            </td>
+            <td class="text-end">
+              <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+            </td>
+            <td class="text-center text-muted small">
+              <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+            </td>
+            <td class="text-end">
+              <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+            </td>
+            <td class="text-center">
+              <span t-attf-class="badge #{line.rate_type_applied == 'average' and 'bg-primary' or 'bg-secondary'} small">
+                <t t-esc="(line.rate_type_applied or '')[:3].upper()"/>
+              </span>
+            </td>
+            <td class="text-center">
+              <t t-if="line.is_override">
+                <span class="badge bg-warning text-dark small"
+                      t-att-title="line.override_reason">OVR</span>
+              </t>
+            </td>
+          </tr>
+          <!-- Drilldown row — hidden, lazy loaded -->
+          <tr t-attf-id="drill-#{line.account_id.id}"
+              class="fx-drilldown-row d-none">
+            <td colspan="7" class="p-0">
+              <div class="fx-drilldown-content p-3">
+                <div class="fx-loading text-center text-muted py-2">
+                  <i class="fa fa-spinner fa-spin me-1"/> Memuat data transaksi...
+                </div>
+              </div>
+            </td>
+          </tr>
+        </t>
+        <!-- Total -->
+        <tr class="fx-total">
+          <td colspan="2">LABA BERSIH PERIODE</td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(grouped['net_idr'])"/>
+          </td>
+          <td/>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(grouped['net_usd'])"/>
+          </td>
+          <td colspan="2"/>
+        </tr>
+      </tbody>
+    </table>
+  </div><!-- /view-acc -->
+
+  <!-- ── Footer ──────────────────────────────────────────────── -->
+  <div class="row mt-2">
+    <div class="col">
+      <small class="text-muted">
+        Dihitung:
+        <t t-esc="config.last_calculated_at.strftime('%d %b %Y %H:%M') if config.last_calculated_at else '-'"/>
+        oleh
+        <t t-esc="config.last_calculated_by.name if config.last_calculated_by else '-'"/>
+        | Kurs avg: Rp <t t-esc="'{:,.2f}'.format(config.pl_avg_rate)"/>
+        | Sumber: <t t-esc="config.rate_source or '-'"/>
+      </small>
+    </div>
+  </div>
+
+  <!-- ── Disclaimer ──────────────────────────────────────────── -->
+  <div class="alert alert-light border mt-3 py-2">
+    <small class="text-muted fst-italic">
+      <strong>Catatan Penting:</strong>
+      Laporan ini disajikan dalam Rupiah (IDR) sebagai mata uang fungsional
+      <t t-esc="company.name"/>.
+      Kolom ekuivalen USD disajikan untuk tujuan informasi manajemen internal,
+      menggunakan kurs rata-rata Rp <t t-esc="'{:,.2f}'.format(config.pl_avg_rate)"/>
+      per USD 1.
+      <strong>Penyajian ini bukan merupakan translasi laporan keuangan
+      sebagaimana dimaksud dalam PSAK 10.</strong>
+    </small>
+  </div>
+
+</div><!-- /container -->
+
+<script src="/web/static/lib/jquery/jquery.js"/>
+<script src="/acc_id_multicurrency_report/static/src/js/fx_report.js"/>
+</body>
+</t>
+</template>
+</odoo>

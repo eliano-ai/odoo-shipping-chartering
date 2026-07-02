@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="cron_crew_reminder_h3" model="ir.cron">
+        <field name="name">Vessel Crew: Kirim Reminder Sign On H-3</field>
+        <field name="model_id" ref="vessel_crew_management.model_vessel_crew_assignment"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_send_reminder_h3()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+
+    <record id="cron_crew_overdue_check" model="ir.cron">
+        <field name="name">Vessel Crew: Cek Assignment Sign On Overdue</field>
+        <field name="model_id" ref="vessel_crew_management.model_vessel_crew_assignment"/>
+        <field name="state">code</field>
+        <field name="code">model.cron_check_overdue_sign_on()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active">True</field>
+    </record>
+</odoo>

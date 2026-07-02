@@ -1,0 +1,15 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fleet_document_fleet_user,fleet.vehicle.document fleet user,model_fleet_vehicle_document,fleet.fleet_group_user,1,1,1,0
+access_fleet_document_fleet_manager,fleet.vehicle.document fleet manager,model_fleet_vehicle_document,fleet.fleet_group_manager,1,1,1,1
+access_fleet_document_admin,fleet.vehicle.document admin,model_fleet_vehicle_document,base.group_system,1,1,1,1
+access_fleet_renewal_log_fleet_user,fleet.document.renewal.log fleet user,model_fleet_document_renewal_log,fleet.fleet_group_user,1,0,0,0
+access_fleet_renewal_log_fleet_manager,fleet.document.renewal.log fleet manager,model_fleet_document_renewal_log,fleet.fleet_group_manager,1,1,1,1
+access_fleet_renewal_log_admin,fleet.document.renewal.log admin,model_fleet_document_renewal_log,base.group_system,1,1,1,1
+access_fleet_renewal_wizard_user,fleet.document.renewal.wizard user,model_fleet_document_renewal_wizard,fleet.fleet_group_user,1,1,1,1
+access_fleet_renewal_wizard_manager,fleet.document.renewal.wizard manager,model_fleet_document_renewal_wizard,fleet.fleet_group_manager,1,1,1,1
+access_fleet_doc_type_fleet_user,fleet.document.type fleet user,model_fleet_document_type,fleet.fleet_group_user,1,0,0,0
+access_fleet_doc_type_fleet_manager,fleet.document.type fleet manager,model_fleet_document_type,fleet.fleet_group_manager,1,1,1,1
+access_fleet_doc_type_admin,fleet.document.type admin,model_fleet_document_type,base.group_system,1,1,1,1
+access_fleet_vessel_type_fleet_user,fleet.document.vessel.type fleet user,model_fleet_document_vessel_type,fleet.fleet_group_user,1,0,0,0
+access_fleet_vessel_type_fleet_manager,fleet.document.vessel.type fleet manager,model_fleet_document_vessel_type,fleet.fleet_group_manager,1,1,1,1
+access_fleet_vessel_type_admin,fleet.document.vessel.type admin,model_fleet_document_vessel_type,base.group_system,1,1,1,1

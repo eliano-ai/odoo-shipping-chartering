@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- H-30: Informasi awal -->
+    <record id="email_template_doc_alert_30" model="mail.template">
+        <field name="name">Fleet Dokumen: Alert H-30</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="subject">⏰ Dokumen akan expired dalam 30 hari: {{ object.display_name }}</field>
+        <field name="email_to">{{ object.renewal_pic_id.email if object.renewal_pic_id else '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #1F4E79; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Pengingat Perpanjangan Dokumen Kendaraan</h2>
+        <p style="margin: 4px 0 0; opacity: 0.8;">30 hari sebelum expired</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px; color: #666; width: 40%;">Dokumen</td>
+                <td style="padding: 8px; font-weight: bold;">{{ object.display_name }}</td></tr>
+            <tr style="background: white;"><td style="padding: 8px; color: #666;">Kendaraan</td>
+                <td style="padding: 8px;">{{ object.vehicle_id.license_plate or object.vehicle_id.name }}</td></tr>
+            <tr><td style="padding: 8px; color: #666;">Berlaku Hingga</td>
+                <td style="padding: 8px; color: #e67e22; font-weight: bold;">{{ object.expiry_date }}</td></tr>
+            <tr style="background: white;"><td style="padding: 8px; color: #666;">Sisa Hari</td>
+                <td style="padding: 8px; color: #e67e22; font-weight: bold;">{{ object.days_remaining }} hari</td></tr>
+            <tr><td style="padding: 8px; color: #666;">Nomor Dokumen</td>
+                <td style="padding: 8px;">{{ object.doc_number or '-' }}</td></tr>
+        </table>
+        <div style="margin-top: 20px; padding: 12px; background: #fff3cd; border-radius: 6px; border-left: 4px solid #ffc107;">
+            <strong>Tindakan diperlukan:</strong> Segera proses perpanjangan dokumen ini sebelum expired.
+        </div>
+        <div style="margin-top: 16px; text-align: center;">
+            <a href="/web#model=fleet.vehicle.document&amp;id={{ object.id }}"
+               style="background: #1F4E79; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; display: inline-block;">
+                Buka Detail Dokumen
+            </a>
+        </div>
+    </div>
+</div>
+        ]]></field>
+        <field name="auto_delete">True</field>
+    </record>
+
+    <!-- H-7: Peringatan mendesak -->
+    <record id="email_template_doc_alert_7" model="mail.template">
+        <field name="name">Fleet Dokumen: Alert H-7 Mendesak</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="subject">🚨 MENDESAK — Dokumen expired dalam 7 hari: {{ object.display_name }}</field>
+        <field name="email_to">{{ object.renewal_pic_id.email if object.renewal_pic_id else '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #c0392b; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">⚠️ MENDESAK: Dokumen Hampir Expired</h2>
+        <p style="margin: 4px 0 0; opacity: 0.9;">Tersisa 7 hari atau kurang</p>
+    </div>
+    <div style="background: #fdf2f8; padding: 20px; border: 2px solid #c0392b; border-top: none; border-radius: 0 0 8px 8px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px; color: #666; width: 40%;">Dokumen</td>
+                <td style="padding: 8px; font-weight: bold;">{{ object.display_name }}</td></tr>
+            <tr style="background: white;"><td style="padding: 8px; color: #666;">Kendaraan</td>
+                <td style="padding: 8px;">{{ object.vehicle_id.license_plate or object.vehicle_id.name }}</td></tr>
+            <tr><td style="padding: 8px; color: #666;">Expired Pada</td>
+                <td style="padding: 8px; color: #c0392b; font-weight: bold; font-size: 16px;">{{ object.expiry_date }}</td></tr>
+            <tr style="background: white;"><td style="padding: 8px; color: #666;">Sisa Hari</td>
+                <td style="padding: 8px; color: #c0392b; font-weight: bold; font-size: 16px;">{{ object.days_remaining }} HARI</td></tr>
+        </table>
+        <div style="margin-top: 16px; padding: 12px; background: #fadbd8; border-radius: 6px; border-left: 4px solid #c0392b;">
+            <strong>Kendaraan berisiko tidak dapat beroperasi secara legal jika dokumen ini tidak segera diperpanjang!</strong>
+        </div>
+        <div style="margin-top: 16px; text-align: center;">
+            <a href="/web#model=fleet.vehicle.document&amp;id={{ object.id }}"
+               style="background: #c0392b; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                Proses Perpanjangan Sekarang
+            </a>
+        </div>
+    </div>
+</div>
+        ]]></field>
+        <field name="auto_delete">True</field>
+    </record>
+
+    <!-- H-0: Expired hari ini -->
+    <record id="email_template_doc_expired" model="mail.template">
+        <field name="name">Fleet Dokumen: Expired Hari Ini</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="subject">🔴 Dokumen EXPIRED Hari Ini: {{ object.display_name }}</field>
+        <field name="email_to">{{ object.renewal_pic_id.email if object.renewal_pic_id else '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #922b21; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">🔴 Dokumen EXPIRED Hari Ini</h2>
+    </div>
+    <div style="background: #fdedec; padding: 20px; border: 2px solid #922b21; border-top: none; border-radius: 0 0 8px 8px;">
+        <p><strong>{{ object.display_name }}</strong> telah EXPIRED pada hari ini <strong>{{ object.expiry_date }}</strong>.</p>
+        <p>Kendaraan <strong>{{ object.vehicle_id.license_plate or object.vehicle_id.name }}</strong> tidak boleh beroperasi di jalan umum sampai dokumen ini diperpanjang.</p>
+        <div style="margin-top: 16px; text-align: center;">
+            <a href="/web#model=fleet.vehicle.document&amp;id={{ object.id }}"
+               style="background: #922b21; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                Proses Perpanjangan
+            </a>
+        </div>
+    </div>
+</div>
+        ]]></field>
+        <field name="auto_delete">True</field>
+    </record>
+
+    <!-- H+7: Belum juga diperpanjang -->
+    <record id="email_template_doc_overdue" model="mail.template">
+        <field name="name">Fleet Dokumen: Overdue H+7</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="subject">🚫 Eskalasi: Dokumen BELUM diperpanjang ({{ object.days_remaining|abs }} hari terlewat): {{ object.display_name }}</field>
+        <field name="email_to">{{ object.renewal_pic_id.email if object.renewal_pic_id else '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #1a1a1a; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">🚫 Eskalasi: Dokumen Belum Diperpanjang</h2>
+        <p style="margin: 4px 0 0; opacity: 0.7;">{{ object.days_remaining|abs }} hari setelah expired</p>
+    </div>
+    <div style="background: #f8f9fa; padding: 20px; border: 2px solid #1a1a1a; border-top: none; border-radius: 0 0 8px 8px;">
+        <p>Dokumen <strong>{{ object.display_name }}</strong> telah expired sejak <strong>{{ object.expiry_date }}</strong> dan belum diperpanjang.</p>
+        <p>Segera koordinasikan dengan GA Manager untuk penyelesaian segera.</p>
+        <div style="margin-top: 16px; text-align: center;">
+            <a href="/web#model=fleet.vehicle.document&amp;id={{ object.id }}"
+               style="background: #1a1a1a; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: bold;">
+                Buka Dokumen
+            </a>
+        </div>
+    </div>
+</div>
+        ]]></field>
+        <field name="auto_delete">True</field>
+    </record>
+
+</odoo>

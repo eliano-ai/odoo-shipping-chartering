@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="group_fleet_manager" model="res.groups">
+        <field name="name">Fleet Manager</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_manager'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="group_driver" model="res.groups">
+        <field name="name">Driver / Operator</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_user'))]"/>
+    </record>
+
+    <record id="rule_fuel_manager_all" model="ir.rule">
+        <field name="name">Fuel Manager: all logs</field>
+        <field name="model_id" ref="model_fleet_fuel_log"/>
+        <field name="groups" eval="[(4, ref('group_fleet_manager'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_fuel_driver_own" model="ir.rule">
+        <field name="name">Driver: own logs only</field>
+        <field name="model_id" ref="model_fleet_fuel_log"/>
+        <field name="groups" eval="[(4, ref('group_driver'))]"/>
+        <field name="domain_force">[('logged_by','=',user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_trip_manager_all" model="ir.rule">
+        <field name="name">Fuel Manager: all trips</field>
+        <field name="model_id" ref="model_fleet_vehicle_trip"/>
+        <field name="groups" eval="[(4, ref('group_fleet_manager'))]"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="rule_trip_driver_own" model="ir.rule">
+        <field name="name">Driver: own vehicle trips</field>
+        <field name="model_id" ref="model_fleet_vehicle_trip"/>
+        <field name="groups" eval="[(4, ref('group_driver'))]"/>
+        <field name="domain_force">[('vehicle_id.driver_id.user_ids','in',[user.id])]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

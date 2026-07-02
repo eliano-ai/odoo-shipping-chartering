@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         EXTEND fleet.vehicle.model FORM
+    ================================================================ -->
+    <record id="fleet_vehicle_model_form_inherit_sparepart" model="ir.ui.view">
+        <field name="name">fleet.vehicle.model.form.inherit.sparepart</field>
+        <field name="model">fleet.vehicle.model</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_model_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart Buttons -->
+            <xpath expr="//sheet" position="before">
+                <div class="oe_button_box" name="button_box">
+                    <button type="object"
+                        name="action_view_vehicles"
+                        class="oe_stat_button"
+                        icon="fa-ship"
+                    >
+                        <field name="vehicle_count" widget="statinfo" string="Vessels"/>
+                    </button>
+                    <button type="object"
+                        name="action_view_spareparts"
+                        class="oe_stat_button"
+                        icon="fa-cogs"
+                        invisible="sparepart_count == 0"
+                    >
+                        <field name="sparepart_count" widget="statinfo" string="Spareparts"/>
+                    </button>
+                </div>
+            </xpath>
+
+            <!-- Tab Sparepart -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Sparepart" name="sparepart_tab">
+
+                    <!-- Ganti <label> tanpa for= dengan <div class="o_form_label"> -->
+                    <div class="o_form_label" style="font-weight:500; margin-bottom:8px; display:block;">
+                        List of Sparepart
+                    </div>
+
+                    <field name="vehicle_ids" readonly="1" widget="one2many">
+                        <list
+                            string="Vehicles / Vessels"
+                            open_form_view="1"
+                            decoration-muted="active == False"
+                        >
+                            <field name="license_plate"
+                                string="License Pl."
+                                optional="show"
+                            />
+                            <field name="model_id"
+                                string="Model"
+                                optional="show"
+                            />
+                            <field name="tag_ids"
+                                string="Category"
+                                widget="many2many_tags"
+                                optional="show"
+                            />
+                            <field name="driver_id"
+                                string="Driver"
+                                optional="show"
+                            />
+                            <field name="sparepart_count"
+                                string="Spareparts"
+                                optional="show"
+                            />
+                            <field name="sparepart_total_value"
+                                string="Parts Value"
+                                optional="hide"
+                            />
+                            <field name="active" column_invisible="1"/>
+                            <button name="action_view_spareparts"
+                                type="object"
+                                string="View Parts"
+                                icon="fa-cogs"
+                                class="btn-sm"
+                            />
+                        </list>
+                    </field>
+
+                    <div class="text-muted mt-2" style="font-size:12px;">
+                        <i class="fa fa-info-circle me-1"/>
+                        Klik baris kendaraan untuk membuka detail, atau gunakan tombol
+                        <strong>View Parts</strong> untuk melihat daftar sparepart unit tersebut.
+                        Tambah sparepart melalui form kendaraan individual.
+                    </div>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- ================================================================
+         EXTEND fleet.vehicle FORM
+    ================================================================ -->
+    <record id="fleet_vehicle_form_inherit_sparepart" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.sparepart</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button type="object"
+                    name="action_view_spareparts"
+                    class="oe_stat_button"
+                    icon="fa-cogs"
+                >
+                    <field name="sparepart_count" widget="statinfo" string="Spareparts"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Sparepart" name="vehicle_sparepart_tab">
+
+                    <div class="mb-2" style="padding:8px 0; display:flex; gap:32px;">
+                        <div>
+                            <span style="font-size:11px;color:var(--color-text-secondary);">Total Allocated Value</span><br/>
+                            <strong>
+                                <field name="sparepart_total_value" readonly="1" nolabel="1"/>
+                            </strong>
+                            <field name="currency_id" invisible="1"/>
+                        </div>
+                        <div>
+                            <span style="font-size:11px;color:var(--color-text-secondary);">Total Parts</span><br/>
+                            <strong>
+                                <field name="sparepart_count" readonly="1" nolabel="1"/>
+                            </strong>
+                        </div>
+                    </div>
+
+                    <field name="sparepart_ids"
+                        context="{'default_vehicle_id': id}"
+                        widget="one2many"
+                    >
+                        <list
+                            string="Spareparts"
+                            open_form_view="1"
+                            decoration-danger="qty_difference &lt; 0"
+                            decoration-warning="qty_difference == 0 and qty_allocated &gt; 0"
+                        >
+                            <field name="sequence" widget="handle"/>
+                            <field name="product_id" string="Sparepart" required="1"
+                                options="{'no_create': True}"
+                                domain="[('categ_id.complete_name', 'ilike', 'Vessel Inventory')]"
+                            />
+                            <field name="part_number" optional="show"/>
+                            <field name="product_category_id" optional="show" string="Category"/>
+                            <field name="vendor_id" optional="show"/>
+                            <field name="qty_onhand" optional="show" string="On-Hand"
+                                decoration-danger="qty_onhand == 0"
+                            />
+                            <field name="qty_allocated" optional="show" string="Allocated"
+                                sum="Total Allocated"
+                            />
+                            <field name="qty_difference" optional="show" string="Diff"
+                                decoration-danger="qty_difference &lt; 0"
+                            />
+                            <field name="uom_id" optional="show"/>
+                            <field name="price_unit" optional="show"/>
+                            <field name="subtotal" optional="show" sum="Total Value"/>
+                        </list>
+                    </field>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

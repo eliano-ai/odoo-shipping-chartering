@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="fleet_document_renewal_wizard_view_form" model="ir.ui.view">
+        <field name="name">fleet.document.renewal.wizard.form</field>
+        <field name="model">fleet.document.renewal.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Perpanjang Dokumen">
+                <group string="Dokumen yang Diperpanjang">
+                    <field name="document_id" readonly="1"/>
+                    <field name="vehicle_id" readonly="1"/>
+                    <field name="current_expiry" readonly="1" string="Expired Saat Ini"/>
+                </group>
+                <group string="Detail Perpanjangan Baru">
+                    <field name="renewal_date" required="1"/>
+                    <field name="new_expiry_date" required="1"/>
+                    <field name="new_doc_number"
+                           placeholder="Kosongkan jika nomor dokumen tidak berubah"/>
+                </group>
+                <group string="Biaya">
+                    <field name="cost"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="create_expense"/>
+                    <field name="expense_employee_id"
+                           invisible="not create_expense"
+                           required="create_expense"/>
+                </group>
+                <group string="Lampiran">
+                    <field name="attachment_ids" widget="many2many_binary"
+                           string="Upload Scan Dokumen Baru"/>
+                </group>
+                <group string="Catatan">
+                    <field name="note" placeholder="No. antrian, nama petugas, nama agen asuransi, dll..."
+                           nolabel="1"/>
+                </group>
+                <footer>
+                    <button name="action_confirm_renewal" type="object"
+                            string="Konfirmasi Perpanjangan" class="btn-primary"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

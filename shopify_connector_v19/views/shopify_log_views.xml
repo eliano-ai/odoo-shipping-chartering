@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Log List View -->
+    <record id="view_shopify_log_tree" model="ir.ui.view">
+        <field name="name">shopify.sync.log.list</field>
+        <field name="model">shopify.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Sync Logs">
+                <field name="created_at"/>
+                <field name="config_id"/>
+                <field name="sync_type"/>
+                <field name="direction"/>
+                <field name="status" widget="badge"
+                       decoration-success="status == 'success'"
+                       decoration-danger="status == 'failed'"
+                       decoration-warning="status == 'needs_review'"/>
+                <field name="record_name"/>
+                <field name="odoo_record_ref"/>
+                <field name="shopify_record_ref"/>
+                <field name="duration_ms"/>
+                <field name="error_message" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Log Form View -->
+    <record id="view_shopify_log_form" model="ir.ui.view">
+        <field name="name">shopify.sync.log.form</field>
+        <field name="model">shopify.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Sync Log">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="config_id"/>
+                            <field name="sync_type"/>
+                            <field name="direction"/>
+                            <field name="status" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="record_name"/>
+                            <field name="odoo_record_ref"/>
+                            <field name="shopify_record_ref"/>
+                            <field name="duration_ms"/>
+                            <field name="created_at"/>
+                            <field name="retry_count"/>
+                        </group>
+                    </group>
+                    <group string="Error" invisible="not error_message">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+                    <notebook>
+                        <page string="Request Payload">
+                            <field name="request_payload" widget="code" nolabel="1"/>
+                        </page>
+                        <page string="Response Payload">
+                            <field name="response_payload" widget="code" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Log Search View -->
+    <record id="view_shopify_log_search" model="ir.ui.view">
+        <field name="name">shopify.sync.log.search</field>
+        <field name="model">shopify.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Logs">
+                <field name="record_name"/>
+                <field name="config_id"/>
+                <field name="error_message"/>
+                <filter name="failed" string="Failed" domain="[('status', '=', 'failed')]"/>
+                <filter name="needs_review" string="Needs Review" domain="[('status', '=', 'needs_review')]"/>
+                <filter name="success" string="Success" domain="[('status', '=', 'success')]"/>
+                <filter name="today" string="Today"
+                        domain="[('created_at', '>=', (context_today()).strftime('%Y-%m-%d'))]"/>
+                <separator/>
+                <filter name="orders" string="Orders" domain="[('sync_type', '=', 'order')]"/>
+                <filter name="inventory" string="Inventory" domain="[('sync_type', '=', 'inventory')]"/>
+                <filter name="products" string="Products" domain="[('sync_type', '=', 'product')]"/>
+                
+            </search>
+        </field>
+    </record>
+
+    <!-- Log Action -->
+    <record id="action_shopify_sync_log" model="ir.actions.act_window">
+        <field name="name">Sync Logs</field>
+        <field name="res_model">shopify.sync.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_shopify_log_search"/>
+        <field name="context">{'search_default_failed': 1}</field>
+    </record>
+
+    <record id="action_shopify_sync_log_all" model="ir.actions.act_window">
+        <field name="name">All Sync Logs</field>
+        <field name="res_model">shopify.sync.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_shopify_log_search"/>
+    </record>
+
+</odoo>

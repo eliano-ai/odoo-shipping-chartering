@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="vessel_sign_off_wizard_view" model="ir.ui.view">
+    <field name="name">vessel.sign.off.wizard.form</field>
+    <field name="model">vessel.sign.off.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Konfirmasi Sign Off ABK">
+        <sheet>
+          <group string="Informasi Penugasan">
+            <field name="seafarer_name" readonly="1"/>
+            <field name="vessel_name" readonly="1"/>
+            <field name="sign_on_actual_date" readonly="1"/>
+          </group>
+          <group string="Detail Sign Off">
+            <field name="sign_off_date"/>
+            <field name="sign_off_port"/>
+            <field name="sign_off_reason"/>
+            <field name="sea_service_days_preview" readonly="1"
+                   string="Total Hari di Laut (preview)"/>
+          </group>
+          <field name="notes" placeholder="Catatan tambahan (opsional)..."/>
+        </sheet>
+        <footer>
+          <button name="action_confirm_sign_off" type="object"
+                  string="Konfirmasi Sign Off" class="btn-primary"/>
+          <button special="cancel" string="Batal"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+</odoo>

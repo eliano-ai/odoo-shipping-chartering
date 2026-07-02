@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── List View ──────────────────────────────────────────────────── -->
+    <record id="fleet_vehicle_document_view_list" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.list</field>
+        <field name="model">fleet.vehicle.document</field>
+        <field name="arch" type="xml">
+            <list string="Dokumen Kendaraan"
+                  decoration-danger="state == 'expired'"
+                  decoration-warning="state == 'expiring_soon'"
+                  decoration-muted="state == 'missing'"
+                  default_order="expiry_date asc">
+                <field name="vehicle_id" optional="show"/>
+                <field name="doc_type" string="Jenis"/>
+                <field name="sim_type" optional="hide"/>
+                <field name="driver_id" optional="show"/>
+                <field name="doc_number" optional="show"/>
+                <field name="expiry_date" string="Berlaku Hingga"/>
+                <field name="days_remaining" string="Sisa Hari"
+                       decoration-danger="days_remaining &lt; 0"
+                       decoration-warning="days_remaining &gt;= 0 and days_remaining &lt;= 30"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'valid'"
+                       decoration-warning="state == 'expiring_soon'"
+                       decoration-danger="state == 'expired'"
+                       decoration-muted="state == 'missing'"/>
+                <field name="renewal_pic_id" optional="show"/>
+                <field name="attachment_count" string="Lampiran" optional="show"/>
+                <button name="action_open_renewal_wizard" type="object"
+                        string="Perpanjang" class="btn-primary btn-sm"
+                        invisible="state == 'valid'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Form View ──────────────────────────────────────────────────── -->
+    <record id="fleet_vehicle_document_view_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.form</field>
+        <field name="model">fleet.vehicle.document</field>
+        <field name="arch" type="xml">
+            <form string="Dokumen Kendaraan">
+                <header>
+                    <button name="action_open_renewal_wizard" type="object"
+                            string="Perpanjang Dokumen" class="btn-primary"
+                            invisible="state == 'valid'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="valid,expiring_soon,expired"/>
+                </header>
+                <sheet>
+                    <!-- Smart buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_attachments" type="object"
+                                class="oe_stat_button" icon="fa-paperclip"
+                                invisible="attachment_count == 0">
+                            <field name="attachment_count" widget="statinfo"
+                                   string="Lampiran"/>
+                        </button>
+                        <!-- ✅ FIX: Ganti ke type="object" + name method Python -->
+                        <button name="action_view_renewal_logs"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-history"
+                                invisible="renewal_count == 0">
+                            <field name="renewal_count" widget="statinfo"
+                                   string="Perpanjangan"/>
+                        </button>
+                    </div>
+
+                    <!-- Status banner -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'expired'">
+                        <strong>Dokumen ini sudah EXPIRED sejak {{ expiry_date }}.</strong>
+                        Kendaraan tidak boleh beroperasi sampai dokumen diperpanjang.
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state != 'expiring_soon'">
+                        <strong>Dokumen akan expired dalam {{ days_remaining }} hari ({{ expiry_date }}).</strong>
+                        Segera proses perpanjangan.
+                    </div>
+
+                    <div class="alert alert-info" role="alert"
+                         invisible="not doc_type or doc_type_id">
+                        Dokumen ini masih menggunakan tipe lama. Saat perpanjangan, pilih
+                        <strong>Tipe Dokumen</strong> dari master untuk mengaktifkan fitur kapal.
+                    </div>
+
+                    <group>
+                        <group string="Informasi Dokumen">
+                            <!-- Tipe baru (Many2one ke master) -->
+                            <field name="doc_type_id"
+                                   options="{'no_create': False, 'no_open': False}"
+                                   placeholder="Pilih tipe dokumen..."/>
+                            <!-- Tipe lama (deprecated) — tetap tampil jika ada nilainya -->
+                            <field name="doc_type"
+                                   invisible="doc_type_id"
+                                   string="Jenis Dokumen (Lama)"/>
+                            <!-- SIM — kendaraan darat -->
+                            <field name="sim_type"
+                                   invisible="doc_type != 'sim'"
+                                   required="doc_type == 'sim'"/>
+                            <field name="driver_id"
+                                   invisible="doc_type != 'sim'"
+                                   required="doc_type == 'sim'"/>
+                            <!-- Kendaraan (wajib untuk non-SIM darat & dokumen kapal non-crew) -->
+                            <field name="vehicle_id"
+                                   invisible="doc_type == 'sim'"/>
+                            <!-- Crew — dokumen kapal yang melekat ke individu -->
+                            <field name="crew_id"
+                                   invisible="not is_vessel_doc or not doc_type_id or not doc_type_id.requires_crew"
+                                   required="is_vessel_doc and doc_type_id and doc_type_id.requires_crew"/>
+                            <field name="crew_rank"
+                                   invisible="not crew_id"/>
+                            <field name="doc_number"/>
+                            <field name="issuing_authority"/>
+                        </group>
+                        <group string="Masa Berlaku">
+                            <field name="issue_date"/>
+                            <field name="expiry_date" required="1"/>
+                            <field name="days_remaining"
+                                   decoration-danger="days_remaining &lt; 0"
+                                   decoration-warning="days_remaining &gt;= 0 and days_remaining &lt;= 30"/>
+                            <field name="alert_threshold_days"/>
+                            <field name="next_survey_date"
+                                   invisible="not is_vessel_doc"
+                                   string="Survey Antara Berikutnya"/>
+                        </group>
+                        <group string="Perpanjangan">
+                            <field name="renewal_pic_id"/>
+                            <field name="renewal_cost"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Lainnya">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Lampiran Dokumen" name="attachments">
+                            <field name="attachment_ids" widget="many2many_binary"
+                                   string="Upload Scan / Foto Dokumen"/>
+                        </page>
+                        <page string="Riwayat Perpanjangan" name="renewal_history">
+                            <field name="renewal_log_ids">
+                                <list string="Riwayat Perpanjangan" create="0">
+                                    <field name="renewal_date"/>
+                                    <field name="previous_expiry_date"/>
+                                    <field name="new_expiry_date"/>
+                                    <field name="cost"/>
+                                    <field name="renewed_by"/>
+                                    <field name="note"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Catatan" name="notes">
+                            <field name="note" placeholder="Catatan tambahan..."/>
+                        </page>
+                    </notebook>
+                    <field name="is_vessel_doc" invisible="1"/>
+                    <field name="doc_category" invisible="1"/>
+                </sheet>
+                <chatter/>
+                <!-- Hidden computed fields needed for invisible conditions -->
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── Kanban View ────────────────────────────────────────────────── -->
+    <record id="fleet_vehicle_document_view_kanban" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.kanban</field>
+        <field name="model">fleet.vehicle.document</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    class="o_kanban_small_column"
+                    group_create="0">
+                <field name="state"/>
+                <field name="days_remaining"/>
+                <field name="doc_type"/>
+                <field name="vehicle_id"/>
+                <field name="expiry_date"/>
+                <field name="renewal_pic_id"/>
+                <progressbar field="state"
+                             colors='{"valid": "success", "expiring_soon": "warning", "expired": "danger"}'/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="oe_kanban_details">
+                                <strong class="o_kanban_record_title">
+                                    <field name="display_name"/>
+                                </strong>
+                                <div class="o_kanban_record_subtitle text-muted">
+                                    <field name="vehicle_id"/>
+                                </div>
+                                <div class="mt-2">
+                                    <span t-if="record.days_remaining.raw_value &lt; 0"
+                                          class="badge text-bg-danger">
+                                        Expired <t t-esc="Math.abs(record.days_remaining.raw_value)"/> hari lalu
+                                    </span>
+                                    <span t-elif="record.days_remaining.raw_value &lt;= 30"
+                                          class="badge text-bg-warning">
+                                        <t t-esc="record.days_remaining.value"/> hari lagi
+                                    </span>
+                                    <span t-else="" class="badge text-bg-success">
+                                        <t t-esc="record.days_remaining.value"/> hari
+                                    </span>
+                                </div>
+                                <div class="text-muted mt-1" style="font-size:12px;">
+                                    <field name="expiry_date"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ─── Search View ────────────────────────────────────────────────── -->
+    <record id="fleet_vehicle_document_view_search" model="ir.ui.view">
+        <field name="name">fleet.vehicle.document.search</field>
+        <field name="model">fleet.vehicle.document</field>
+        <field name="arch" type="xml">
+            <search string="Cari Dokumen">
+                <field name="vehicle_id" string="Kendaraan"/>
+                <field name="driver_id" string="Pengemudi"/>
+                <field name="doc_number" string="Nomor Dokumen"/>
+                <field name="renewal_pic_id" string="PIC Perpanjangan"/>
+                
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Action ────────────────────────────────────────────────────── -->
+    <record id="action_fleet_vehicle_document" model="ir.actions.act_window">
+        <field name="name">Dokumen Legal Kendaraan</field>
+        <field name="res_model">fleet.vehicle.document</field>
+        <field name="view_mode">list,kanban,form</field>
+        <field name="context">{'search_default_filter_expired': 0}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Belum ada dokumen kendaraan
+            </p>
+            <p>
+                Mulai tambahkan dokumen legal kendaraan seperti STNK, KIR, SIM, dan Asuransi
+                untuk mendapatkan notifikasi otomatis sebelum expired.
+            </p>
+        </field>
+    </record>
+
+    <!-- Renewal log action -->
+    <record id="action_fleet_document_renewal_log" model="ir.actions.act_window">
+        <field name="name">Riwayat Perpanjangan</field>
+        <field name="res_model">fleet.document.renewal.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

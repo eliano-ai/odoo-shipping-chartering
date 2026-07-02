@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ═══ res.currency.rate — tambah kolom rate_source ═══════════════════ -->
+  <record id="view_currency_rate_list_inherit" model="ir.ui.view">
+    <field name="name">res.currency.rate.list.fx</field>
+    <field name="model">res.currency.rate</field>
+    <field name="inherit_id" ref="base.view_currency_rate_tree"/>
+    <field name="arch" type="xml">
+      <xpath expr="//list" position="inside">
+        <field name="rate_source" optional="show"/>
+        <field name="rate_type" optional="show"/>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="view_currency_rate_form_inherit" model="ir.ui.view">
+    <field name="name">res.currency.rate.form.fx</field>
+    <field name="model">res.currency.rate</field>
+    <field name="inherit_id" ref="base.view_currency_rate_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//field[@name='rate']" position="after">
+        <field name="rate_source"/>
+        <field name="rate_type"/>
+      </xpath>
+    </field>
+  </record>
+
+</odoo>

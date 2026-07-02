@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="menu_fleet_maintenance_root"
+        name="Maintenance"
+        parent="fleet.menu_root"
+        sequence="15"
+        groups="fleet_maintenance_schedule.group_fleet_manager,fleet_maintenance_schedule.group_technician"/>
+
+    <menuitem
+        id="menu_fleet_maintenance_schedule_all"
+        name="Schedules"
+        parent="menu_fleet_maintenance_root"
+        action="action_fleet_maintenance_schedule"
+        sequence="10"
+        groups="fleet_maintenance_schedule.group_fleet_manager,fleet_maintenance_schedule.group_technician"/>
+
+    <record id="action_fleet_maintenance_schedule_my" model="ir.actions.act_window">
+        <field name="name">My Maintenance Assignments</field>
+        <field name="res_model">fleet.maintenance.schedule</field>
+        <field name="view_mode">list,form,calendar</field>
+        <field name="domain">[('technician_id', '=', uid)]</field>
+        <field name="context">{'search_default_my_assignments': 1}</field>
+    </record>
+
+    <menuitem
+        id="menu_fleet_maintenance_schedule_my"
+        name="My Assignments"
+        parent="menu_fleet_maintenance_root"
+        action="action_fleet_maintenance_schedule_my"
+        sequence="20"
+        groups="fleet_maintenance_schedule.group_technician"/>
+
+</odoo>

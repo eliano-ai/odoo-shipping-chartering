@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <menuitem id="menu_vessel_crew_root"
+            name="Crew Management"
+            parent="fleet.menu_root"
+            sequence="20"/>
+
+  <menuitem id="menu_vessel_crew_assignment"
+            name="Penugasan ABK"
+            parent="menu_vessel_crew_root"
+            action="action_vessel_crew_assignment"
+            sequence="10"/>
+
+  <menuitem id="menu_vessel_seafarer"
+            name="Daftar ABK"
+            parent="menu_vessel_crew_root"
+            action="action_vessel_seafarer"
+            sequence="20"/>
+
+  <menuitem id="menu_vessel_crew_schedule"
+            name="Jadwal Rotasi"
+            parent="menu_vessel_crew_root"
+            action="action_vessel_crew_schedule"
+            sequence="30"/>
+
+  <menuitem id="menu_vessel_crew_config"
+            name="Konfigurasi"
+            parent="menu_vessel_crew_root"
+            sequence="90"
+            groups="vessel_crew_management.group_vessel_crew_manager"/>
+
+  <menuitem id="menu_vessel_crew_rank"
+            name="Master Jabatan ABK"
+            parent="menu_vessel_crew_config"
+            action="action_vessel_crew_rank"
+            sequence="10"/>
+</odoo>

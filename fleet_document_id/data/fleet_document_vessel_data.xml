@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         MASTER TIPE KAPAL
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="vessel_type_tug" model="fleet.document.vessel.type">
+        <field name="name">Kapal Tunda (Tug)</field>
+        <field name="code">TUG</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="vessel_type_barge" model="fleet.document.vessel.type">
+        <field name="name">Tongkang (Barge)</field>
+        <field name="code">BARGE</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="vessel_type_cargo" model="fleet.document.vessel.type">
+        <field name="name">Kapal Kargo / Bulk Carrier</field>
+        <field name="code">CARGO</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="vessel_type_tanker" model="fleet.document.vessel.type">
+        <field name="name">Kapal Tanker</field>
+        <field name="code">TANKER</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="vessel_type_passenger" model="fleet.document.vessel.type">
+        <field name="name">Kapal Penumpang</field>
+        <field name="code">PAX</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="vessel_type_ferry" model="fleet.document.vessel.type">
+        <field name="name">Kapal Feri</field>
+        <field name="code">FERRY</field>
+        <field name="sequence">60</field>
+    </record>
+    <record id="vessel_type_supply" model="fleet.document.vessel.type">
+        <field name="name">Kapal Suplai / OSV</field>
+        <field name="code">OSV</field>
+        <field name="sequence">70</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         MASTER TIPE DOKUMEN — KENDARAAN DARAT
+         (Migrasi dari DOC_TYPE_SELECTION yang lama)
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="doc_type_stnk" model="fleet.document.type">
+        <field name="name">STNK (Surat Tanda Nomor Kendaraan)</field>
+        <field name="code">STNK</field>
+        <field name="category">land</field>
+        <field name="sequence">10</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Surat Tanda Nomor Kendaraan — diterbitkan Samsat. Wajib diperpanjang setiap tahun (pajak) dan 5 tahun (plat nomor).</field>
+    </record>
+    <record id="doc_type_bpkb" model="fleet.document.type">
+        <field name="name">BPKB (Buku Pemilik Kendaraan Bermotor)</field>
+        <field name="code">BPKB</field>
+        <field name="category">land</field>
+        <field name="sequence">20</field>
+        <field name="default_alert_days">30</field>
+    </record>
+    <record id="doc_type_kir" model="fleet.document.type">
+        <field name="name">KIR / Uji Berkala Kendaraan</field>
+        <field name="code">KIR</field>
+        <field name="category">land</field>
+        <field name="sequence">30</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Uji berkala kendaraan bermotor wajib — diterbitkan Dishub. Berlaku 6 bulan untuk angkutan umum dan barang.</field>
+    </record>
+    <record id="doc_type_sim" model="fleet.document.type">
+        <field name="name">SIM (Surat Izin Mengemudi)</field>
+        <field name="code">SIM</field>
+        <field name="category">land</field>
+        <field name="sequence">40</field>
+        <field name="requires_driver">True</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Surat Izin Mengemudi — melekat pada pengemudi. Kategori: A, A Umum, B1, B1 Umum, B2, B2 Umum, C, D.</field>
+    </record>
+    <record id="doc_type_asuransi_darat" model="fleet.document.type">
+        <field name="name">Asuransi Kendaraan Darat</field>
+        <field name="code">ASURANSI_DARAT</field>
+        <field name="category">land</field>
+        <field name="sequence">50</field>
+        <field name="default_alert_days">30</field>
+    </record>
+    <record id="doc_type_emisi" model="fleet.document.type">
+        <field name="name">Uji Emisi Kendaraan</field>
+        <field name="code">EMISI</field>
+        <field name="category">land</field>
+        <field name="sequence">60</field>
+        <field name="default_alert_days">30</field>
+    </record>
+    <record id="doc_type_dispensasi" model="fleet.document.type">
+        <field name="name">Dispensasi Tonase / Rute</field>
+        <field name="code">DISPENSASI</field>
+        <field name="category">land</field>
+        <field name="sequence">70</field>
+        <field name="default_alert_days">30</field>
+    </record>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         MASTER TIPE DOKUMEN — KAPAL LAUT
+         Kategori 1: Statutory (Kemenhub / DJPL) — semua kapal
+    ══════════════════════════════════════════════════════════════════════ -->
+    <record id="doc_type_surat_laut" model="fleet.document.type">
+        <field name="name">Surat Laut / Pas Besar</field>
+        <field name="code">SURAT_LAUT</field>
+        <field name="category">vessel</field>
+        <field name="sequence">100</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Dokumen kebangsaan kapal — diterbitkan Ditjen Hubla. Berlaku seumur hidup kapal kecuali ada perubahan kepemilikan / data.</field>
+    </record>
+    <record id="doc_type_surat_ukur" model="fleet.document.type">
+        <field name="name">Surat Ukur Kapal</field>
+        <field name="code">SURAT_UKUR</field>
+        <field name="category">vessel</field>
+        <field name="sequence">110</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Dokumen tonase resmi kapal (GT/NT) — diterbitkan Ditjen Hubla atau surveyor yang ditunjuk.</field>
+    </record>
+    <record id="doc_type_sertifikat_keselamatan_konstruksi" model="fleet.document.type">
+        <field name="name">Sertifikat Keselamatan Konstruksi</field>
+        <field name="code">SKK</field>
+        <field name="category">vessel</field>
+        <field name="sequence">120</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Cargo Ship Safety Construction Certificate (CSSCC) — wajib untuk kapal kargo. Berlaku 5 tahun dengan annual survey.</field>
+    </record>
+    <record id="doc_type_sertifikat_keselamatan_perlengkapan" model="fleet.document.type">
+        <field name="name">Sertifikat Keselamatan Perlengkapan</field>
+        <field name="code">SKP</field>
+        <field name="category">vessel</field>
+        <field name="sequence">130</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Cargo Ship Safety Equipment Certificate (CSSEC) — life saving appliances, fire fighting. Berlaku 5 tahun.</field>
+    </record>
+    <record id="doc_type_sertifikat_radio" model="fleet.document.type">
+        <field name="name">Sertifikat Keselamatan Radio</field>
+        <field name="code">RADIO</field>
+        <field name="category">vessel</field>
+        <field name="sequence">140</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Cargo Ship Safety Radio Certificate (CSSRC) — GMDSS equipment. Berlaku 5 tahun dengan annual survey.</field>
+    </record>
+    <record id="doc_type_garis_muat" model="fleet.document.type">
+        <field name="name">Sertifikat Garis Muat (Load Line)</field>
+        <field name="code">LOADLINE</field>
+        <field name="category">vessel</field>
+        <field name="sequence">150</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="applicable_vessel_types" eval="[(6, 0, [ref('vessel_type_cargo'), ref('vessel_type_tanker'), ref('vessel_type_passenger'), ref('vessel_type_ferry'), ref('vessel_type_supply')])]"/>
+        <field name="description">International Load Line Certificate — Konvensi LL 1966. Berlaku 5 tahun dengan annual survey. Tidak wajib untuk kapal tunda dan tongkang.</field>
+    </record>
+    <record id="doc_type_iopp" model="fleet.document.type">
+        <field name="name">Sertifikat IOPP (Oil Pollution Prevention)</field>
+        <field name="code">IOPP</field>
+        <field name="category">vessel</field>
+        <field name="sequence">160</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">30</field>
+        <field name="description">International Oil Pollution Prevention Certificate (MARPOL Annex I) — wajib untuk kapal >= 400 GT. Berlaku 5 tahun.</field>
+    </record>
+    <record id="doc_type_spb" model="fleet.document.type">
+        <field name="name">Surat Persetujuan Berlayar (SPB)</field>
+        <field name="code">SPB</field>
+        <field name="category">vessel</field>
+        <field name="sequence">170</field>
+        <field name="default_alert_days">3</field>
+        <field name="description">Port Clearance — diterbitkan Syahbandar setiap sebelum berlayar. Berlaku untuk satu pelayaran.</field>
+    </record>
+    <record id="doc_type_snpp" model="fleet.document.type">
+        <field name="name">Sertifikat Bebas Tikus (Deratting)</field>
+        <field name="code">DERATTING</field>
+        <field name="category">vessel</field>
+        <field name="sequence">180</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Ship Sanitation Control Exemption Certificate / Deratting Certificate — diterbitkan Kantor Kesehatan Pelabuhan (KKP). Berlaku 6 bulan.</field>
+    </record>
+
+    <!-- Kategori 2: BKI / Klasifikasi ───────────────────────────────── -->
+    <record id="doc_type_bki_lambung" model="fleet.document.type">
+        <field name="name">Sertifikat Klas Lambung (BKI)</field>
+        <field name="code">BKI_HULL</field>
+        <field name="category">vessel</field>
+        <field name="sequence">200</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Class Certificate Hull — diterbitkan BKI / biro klasifikasi. Berlaku 5 tahun dengan annual survey dan special survey 2.5 tahun.</field>
+    </record>
+    <record id="doc_type_bki_mesin" model="fleet.document.type">
+        <field name="name">Sertifikat Klas Mesin (BKI)</field>
+        <field name="code">BKI_MACH</field>
+        <field name="category">vessel</field>
+        <field name="sequence">210</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Class Certificate Machinery — mencakup mesin induk, mesin bantu, poros, dan baling-baling.</field>
+    </record>
+    <record id="doc_type_bki_tongkang" model="fleet.document.type">
+        <field name="name">Sertifikat Klas Tongkang / Tunda (BKI)</field>
+        <field name="code">BKI_TUG</field>
+        <field name="category">vessel</field>
+        <field name="sequence">220</field>
+        <field name="applicable_vessel_types" eval="[(6, 0, [ref('vessel_type_tug'), ref('vessel_type_barge')])]"/>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+    </record>
+
+    <!-- Kategori 3: ISM / ISPS ──────────────────────────────────────── -->
+    <record id="doc_type_smc" model="fleet.document.type">
+        <field name="name">Safety Management Certificate (SMC)</field>
+        <field name="code">SMC</field>
+        <field name="category">vessel</field>
+        <field name="sequence">300</field>
+        <field name="default_alert_days">90</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">30</field>
+        <field name="description">ISM Code — SMC diterbitkan untuk kapal oleh Administration atau recognized organization. Berlaku 5 tahun.</field>
+    </record>
+    <record id="doc_type_issc" model="fleet.document.type">
+        <field name="name">ISPS — International Ship Security Certificate</field>
+        <field name="code">ISSC</field>
+        <field name="category">vessel</field>
+        <field name="sequence">310</field>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">30</field>
+        <field name="description">International Ship Security Certificate (ISSC) — SOLAS Chapter XI-2 / ISPS Code. Berlaku 5 tahun.</field>
+    </record>
+
+    <!-- Kategori 4: Asuransi ─────────────────────────────────────────── -->
+    <record id="doc_type_hm" model="fleet.document.type">
+        <field name="name">Asuransi H&amp;M (Hull &amp; Machinery)</field>
+        <field name="code">HM</field>
+        <field name="category">vessel</field>
+        <field name="sequence">400</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Hull and Machinery Insurance — asuransi rangka kapal dan mesin. Biasanya diperpanjang tahunan.</field>
+    </record>
+    <record id="doc_type_pi" model="fleet.document.type">
+        <field name="name">P&amp;I Club Certificate</field>
+        <field name="code">PI</field>
+        <field name="category">vessel</field>
+        <field name="sequence">410</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Protection and Indemnity Insurance — menanggung tanggung jawab perdata pemilik kapal. Wajib untuk kapal yang bersandar di pelabuhan internasional.</field>
+    </record>
+
+    <!-- Kategori 5: Crew / Sijil ─────────────────────────────────────── -->
+    <record id="doc_type_sijil" model="fleet.document.type">
+        <field name="name">Sijil Awak Kapal</field>
+        <field name="code">SIJIL</field>
+        <field name="category">vessel</field>
+        <field name="sequence">500</field>
+        <field name="requires_crew">True</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Sijil Awak Kapal — diterbitkan Syahbandar. Mencantumkan seluruh nama ABK dan jabatan untuk satu pelayaran.</field>
+    </record>
+    <record id="doc_type_coc" model="fleet.document.type">
+        <field name="name">Sertifikat Kompetensi (COC / ATKAPAL)</field>
+        <field name="code">COC</field>
+        <field name="category">vessel</field>
+        <field name="sequence">510</field>
+        <field name="requires_crew">True</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Certificate of Competency — STCW 1978 as amended. Untuk Nahkoda, KKM, Mualim, Masinis. Diterbitkan Ditjen Hubla.</field>
+    </record>
+    <record id="doc_type_cop" model="fleet.document.type">
+        <field name="name">Sertifikat Keahlian / Endorsement (COP)</field>
+        <field name="code">COP</field>
+        <field name="category">vessel</field>
+        <field name="sequence">520</field>
+        <field name="requires_crew">True</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Certificate of Proficiency / Endorsement — STCW. Meliputi: BST, SCRB, AFF, MEFA, GMDSS, dll.</field>
+    </record>
+    <record id="doc_type_buku_pelaut" model="fleet.document.type">
+        <field name="name">Buku Pelaut (Seaman Book)</field>
+        <field name="code">SEAMAN_BOOK</field>
+        <field name="category">vessel</field>
+        <field name="sequence">530</field>
+        <field name="requires_crew">True</field>
+        <field name="default_alert_days">60</field>
+        <field name="description">Buku Pelaut — identitas resmi pelaut Indonesia. Diterbitkan Ditjen Hubla. Berlaku 5 tahun.</field>
+    </record>
+    <record id="doc_type_kesehatan_pelaut" model="fleet.document.type">
+        <field name="name">Sertifikat Kesehatan Pelaut</field>
+        <field name="code">MED_CERT</field>
+        <field name="category">vessel</field>
+        <field name="sequence">540</field>
+        <field name="requires_crew">True</field>
+        <field name="default_alert_days">30</field>
+        <field name="description">Medical Fitness Certificate (STCW Reg. I/9) — diterbitkan dokter yang ditunjuk. Berlaku 2 tahun (1 tahun untuk usia &gt; 55 tahun).</field>
+    </record>
+
+    <!-- Kategori 6: Tanker spesifik ─────────────────────────────────── -->
+    <record id="doc_type_cof" model="fleet.document.type">
+        <field name="name">Certificate of Fitness (CoF) — Tanker</field>
+        <field name="code">COF_TANKER</field>
+        <field name="category">vessel</field>
+        <field name="sequence">600</field>
+        <field name="applicable_vessel_types" eval="[(6, 0, [ref('vessel_type_tanker')])]"/>
+        <field name="default_alert_days">60</field>
+        <field name="has_survey_interval">True</field>
+        <field name="survey_interval_months">12</field>
+        <field name="description">Certificate of Fitness for Carriage of Liquids in Bulk — untuk tanker kimia, CPO, dan minyak. IBC Code / IGC Code.</field>
+    </record>
+    <record id="doc_type_marpol_annex2" model="fleet.document.type">
+        <field name="name">Sertifikat MARPOL Annex II (NLS)</field>
+        <field name="code">MARPOL_NLS</field>
+        <field name="category">vessel</field>
+        <field name="sequence">610</field>
+        <field name="applicable_vessel_types" eval="[(6, 0, [ref('vessel_type_tanker')])]"/>
+        <field name="default_alert_days">60</field>
+        <field name="description">Noxious Liquid Substance — untuk tanker kimia dan CPO. MARPOL Annex II.</field>
+    </record>
+
+</odoo>

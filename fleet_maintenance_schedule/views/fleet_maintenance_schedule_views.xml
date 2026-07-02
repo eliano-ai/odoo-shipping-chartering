@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_fleet_maintenance_schedule" model="ir.actions.act_window">
+        <field name="name">Maintenance Schedules</field>
+        <field name="res_model">fleet.maintenance.schedule</field>
+        <field name="view_mode">list,form,calendar,pivot</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada jadwal maintenance.</p>
+            <p>Buat jadwal maintenance baru untuk memastikan armada selalu dalam kondisi prima.</p>
+        </field>
+    </record>
+
+    <record id="view_fleet_maintenance_schedule_list" model="ir.ui.view">
+        <field name="name">fleet.maintenance.schedule.list</field>
+        <field name="model">fleet.maintenance.schedule</field>
+        <field name="arch" type="xml">
+            <list string="Maintenance Schedules">
+				<field name="name"/>
+				<field name="vehicle_id"/>
+				<field name="scheduled_date"/>
+				<field name="state" widget="badge"/>
+			</list>
+        </field>
+    </record>
+
+    <record id="view_fleet_maintenance_schedule_form" model="ir.ui.view">
+        <field name="name">fleet.maintenance.schedule.form</field>
+        <field name="model">fleet.maintenance.schedule</field>
+        <field name="arch" type="xml">
+            <form string="Maintenance Schedule">
+                <header>
+                    <button name="action_confirm" string="Confirm" type="object"
+                        class="btn-primary"
+                        invisible="state != 'draft'"
+                        groups="fleet_maintenance_schedule.group_fleet_manager"/>
+                    <button name="action_start" string="Start Maintenance" type="object"
+                        class="btn-primary"
+                        invisible="state != 'confirmed'"
+                        groups="fleet_maintenance_schedule.group_fleet_manager,fleet_maintenance_schedule.group_technician"/>
+                    <button name="action_done" string="Mark as Done" type="object"
+                        class="btn-primary"
+                        invisible="state != 'in_progress'"
+                        groups="fleet_maintenance_schedule.group_fleet_manager,fleet_maintenance_schedule.group_technician"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                        class="btn-secondary"
+                        invisible="state in ('done', 'cancelled')"
+                        groups="fleet_maintenance_schedule.group_fleet_manager"/>
+                    <button name="action_reset_draft" string="Reset to Draft" type="object"
+                        invisible="state != 'cancelled'"
+                        groups="fleet_maintenance_schedule.group_fleet_manager"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="draft,confirmed,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_maintenance_request"
+                            class="oe_stat_button" icon="fa-wrench"
+                            invisible="not maintenance_request_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Maintenance</span>
+                                <span class="o_stat_text">Request</span>
+                            </div>
+                        </button>
+                        <button type="object" name="action_view_stock_picking"
+                            class="oe_stat_button" icon="fa-cubes"
+                            invisible="not stock_picking_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Parts</span>
+                                <span class="o_stat_text">Transfer</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group string="Vehicle Information">
+                            <field name="vehicle_id" readonly="state in ('done', 'cancelled')"/>
+                            <field name="vehicle_license_plate" readonly="1"/>
+                            <field name="current_odometer" readonly="1" widget="float"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Maintenance Details">
+                            <field name="maintenance_type"
+                                readonly="state in ('done', 'cancelled')"/>
+                            <field name="fleet_manager_id"
+                                domain="[('share', '=', False)]"
+                                readonly="state in ('done', 'cancelled')"/>
+                            <field name="technician_id"
+                                domain="[('share', '=', False)]"
+                                readonly="state in ('done', 'cancelled')"/>
+                        </group>
+                    </group>
+                    <group string="Schedule Trigger">
+                        <group>
+                            <field name="schedule_basis"
+                                readonly="state in ('done', 'cancelled')"/>
+                            <field name="scheduled_date"
+                                readonly="state in ('done', 'cancelled')"
+                                invisible="schedule_basis == 'odometer'"
+                                required="schedule_basis in ('date', 'both')"/>
+                            <field name="completed_date" readonly="1"
+                                invisible="state not in ('done')"/>
+                        </group>
+                        <group>
+                            <field name="odometer_trigger"
+                                readonly="state in ('done', 'cancelled')"
+                                invisible="schedule_basis == 'date'"
+                                required="schedule_basis in ('odometer', 'both')"/>
+                            <field name="odometer_unit" readonly="1"
+                                invisible="schedule_basis == 'date'"/>
+                            <field name="reminder_days"
+                                readonly="state in ('done', 'cancelled')"
+                                invisible="schedule_basis == 'odometer'"/>
+                            <field name="reminder_sent" readonly="1"
+                                invisible="schedule_basis == 'odometer'"/>
+                        </group>
+                    </group>
+                    <group string="Cost Estimation">
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="estimated_cost"
+                                readonly="state in ('done', 'cancelled')"/>
+                        </group>
+                        <group>
+                            <field name="actual_cost" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Work Order Description">
+                        <field name="description" nolabel="1"
+                            placeholder="Describe the maintenance work to be performed..."
+                            readonly="state in ('done', 'cancelled')"/>
+                    </group>
+                    <notebook>
+                        <page string="Spare Parts" name="spare_parts">
+                            <field name="part_ids"
+                                readonly="state in ('done', 'cancelled')"
+                                widget="one2many">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id" required="1"/>
+                                    <field name="product_uom_id" readonly="1"/>
+                                    <field name="qty_planned" required="1"/>
+                                    <field name="state" column_invisible="1"/>
+                                    <field name="qty_used" readonly="state != 'in_progress'"/>
+                                    <field name="unit_cost" readonly="1"/>
+                                    <field name="subtotal_cost" readonly="1" sum="Total"/>
+                                    <field name="note" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Internal Notes" name="notes">
+                            <field name="notes" widget="html"
+                                readonly="state in ('done', 'cancelled')"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_fleet_maintenance_schedule_search" model="ir.ui.view">
+		<field name="name">fleet.maintenance.schedule.search</field>
+		<field name="model">fleet.maintenance.schedule</field>
+		<field name="arch" type="xml">
+			<search string="Search Maintenance Schedules">
+				<field name="name"/>
+			</search>
+		</field>
+	</record>
+
+    <record id="view_fleet_maintenance_schedule_calendar" model="ir.ui.view">
+        <field name="name">fleet.maintenance.schedule.calendar</field>
+        <field name="model">fleet.maintenance.schedule</field>
+        <field name="arch" type="xml">
+            <calendar string="Maintenance Schedule Calendar"
+                date_start="scheduled_date"
+                color="maintenance_type"
+                mode="month"
+                quick_create="0">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="maintenance_type"/>
+                <field name="technician_id"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_fleet_maintenance_schedule_pivot" model="ir.ui.view">
+        <field name="name">fleet.maintenance.schedule.pivot</field>
+        <field name="model">fleet.maintenance.schedule</field>
+        <field name="arch" type="xml">
+            <pivot string="Maintenance Cost Analysis" disable_linking="0">
+                <field name="vehicle_id" type="row"/>
+                <field name="maintenance_type" type="col"/>
+                <field name="estimated_cost" type="measure"/>
+                <field name="actual_cost" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="email_template_maintenance_reminder" model="mail.template">
+        <field name="name">Fleet Maintenance - Reminder</field>
+        <field name="model_id" ref="model_fleet_maintenance_schedule"/>
+        <field name="subject">Reminder: Maintenance Scheduled - {{ object.name }}</field>
+        <field name="email_to">{{ object.technician_id.email or object.fleet_manager_id.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #875A7B;">Maintenance Schedule Reminder</h2>
+                <p>Halo <strong>{{ object.technician_id.name or object.fleet_manager_id.name }}</strong>,</p>
+                <p>Berikut adalah pengingat jadwal maintenance yang akan datang:</p>
+                <table style="width:100%; border-collapse:collapse; margin: 16px 0;">
+                    <tr style="background:#f5f5f5;">
+                        <td style="padding:8px; border:1px solid #ddd;"><strong>Reference</strong></td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd;"><strong>Vehicle</strong></td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ object.vehicle_id.name }}</td>
+                    </tr>
+                    <tr style="background:#f5f5f5;">
+                        <td style="padding:8px; border:1px solid #ddd;"><strong>Scheduled Date</strong></td>
+                        <td style="padding:8px; border:1px solid #ddd; color:#e74c3c;">
+                            <strong>{{ object.scheduled_date }}</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px; border:1px solid #ddd;"><strong>Technician</strong></td>
+                        <td style="padding:8px; border:1px solid #ddd;">{{ object.technician_id.name or '-' }}</td>
+                    </tr>
+                </table>
+                <p style="color:#888; font-size:12px;">Email ini dikirim otomatis oleh sistem Fleet Maintenance.</p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+</odoo>

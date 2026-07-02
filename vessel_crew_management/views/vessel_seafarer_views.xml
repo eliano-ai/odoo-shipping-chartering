@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="vessel_seafarer_view_form" model="ir.ui.view">
+    <field name="name">vessel.seafarer.form</field>
+    <field name="model">vessel.seafarer</field>
+    <field name="arch" type="xml">
+      <form string="Data ABK">
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_assignments" type="object"
+                    class="oe_stat_button" icon="fa-ship">
+              <field name="assignment_count" widget="statinfo" string="Penugasan"/>
+            </button>
+            <button name="action_view_sea_service" type="object"
+                    class="oe_stat_button" icon="fa-anchor"
+                    invisible="total_sea_service_days == 0">
+              <field name="total_sea_service_days" widget="statinfo" string="Hari di Laut"/>
+            </button>
+          </div>
+          <field name="image_128" widget="image" class="oe_avatar"/>
+          <div class="oe_title">
+            <h1><field name="name" readonly="1"/></h1>
+            <h3><field name="vessel_rank_id" placeholder="Jabatan..."/></h3>
+          </div>
+          <div class="alert alert-danger" role="alert"
+               invisible="cert_expired_count == 0">
+            ABK ini memiliki <b><field name="cert_expired_count" readonly="1" nolabel="1"/> sertifikat EXPIRED</b>.
+            Sign on akan diblokir sampai sertifikat diperbarui.
+          </div>
+          <group>
+            <group string="Data Pelaut">
+              <field name="employee_id" options="{'no_create': False}"/>
+              <field name="manning_pool_status" widget="badge"
+                     decoration-success="manning_pool_status == 'available'"
+                     decoration-info="manning_pool_status == 'on_board'"
+                     decoration-warning="manning_pool_status == 'standby'"
+                     decoration-danger="manning_pool_status == 'terminated'"/>
+              <field name="current_vessel_id" readonly="1"
+                     invisible="manning_pool_status != 'on_board'"/>
+              <field name="buku_pelaut_no"/>
+              <field name="buku_pelaut_expiry"/>
+              <field name="coc_number"/>
+              <field name="coc_grade"/>
+              <field name="coc_expiry"/>
+            </group>
+            <group string="Kontak &amp; Pribadi">
+              <field name="work_email" readonly="1"/>
+              <field name="mobile_phone" readonly="1"/>
+              <field name="whatsapp_number"/>
+              <field name="nationality"/>
+              <field name="home_port"/>
+              <field name="emergency_contact_name"/>
+              <field name="emergency_contact_phone"/>
+              <field name="emergency_contact_relation"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Sertifikat &amp; Dokumen">
+              <field name="cert_document_ids">
+                <list>
+                  <field name="doc_type_id"/>
+                  <field name="doc_number"/>
+                  <field name="expiry_date"/>
+                  <field name="days_remaining"/>
+                  <field name="state" widget="badge"
+                         decoration-success="state == 'valid'"
+                         decoration-warning="state == 'expiring_soon'"
+                         decoration-danger="state == 'expired'"/>
+                </list>
+              </field>
+            </page>
+            <page string="Riwayat Penugasan">
+              <field name="assignment_ids" readonly="1">
+                <list>
+                  <field name="vehicle_id"/>
+                  <field name="rank_id"/>
+                  <field name="sign_on_date"/>
+                  <field name="sign_off_actual_date"/>
+                  <field name="sea_service_days"/>
+                  <field name="state" widget="badge"/>
+                </list>
+              </field>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="vessel_seafarer_view_list" model="ir.ui.view">
+    <field name="name">vessel.seafarer.list</field>
+    <field name="model">vessel.seafarer</field>
+    <field name="arch" type="xml">
+      <list string="Daftar ABK"
+            decoration-danger="has_critical_cert_issue">
+        <field name="name"/>
+        <field name="vessel_rank_id"/>
+        <field name="manning_pool_status" widget="badge"
+               decoration-success="manning_pool_status == 'available'"
+               decoration-info="manning_pool_status == 'on_board'"
+               decoration-warning="manning_pool_status == 'standby'"/>
+        <field name="current_vessel_id"/>
+        <field name="coc_grade"/>
+        <field name="coc_expiry"/>
+        <field name="cert_expiring_count" optional="show" string="Cert Akan Exp."/>
+        <field name="cert_expired_count" optional="show" string="Cert Expired"/>
+        <field name="total_sea_service_days" optional="show"/>
+        <field name="whatsapp_number" optional="hide"/>
+        <field name="has_critical_cert_issue" column_invisible="1"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="action_vessel_seafarer" model="ir.actions.act_window">
+    <field name="name">Daftar ABK</field>
+    <field name="res_model">vessel.seafarer</field>
+    <field name="view_mode">list,form</field>
+  </record>
+</odoo>

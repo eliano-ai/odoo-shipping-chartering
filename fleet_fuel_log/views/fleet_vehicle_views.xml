@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fleet_vehicle_form_inherit_fuel" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.fuel.log</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Smart buttons -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button type="object" name="action_view_fuel_logs"
+                    class="oe_stat_button" icon="fa-tint">
+                    <field name="fuel_log_count" widget="statinfo" string="Fuel Logs"/>
+                </button>
+                <button type="object" name="action_view_trips"
+                    class="oe_stat_button" icon="fa-ship"
+                    invisible="trip_count == 0">
+                    <field name="trip_count" widget="statinfo" string="Trips"/>
+                </button>
+            </xpath>
+
+            <!-- Tab Fuel -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Fuel Logs" name="fuel_logs">
+
+                    <!-- KPI row -->
+                    <div class="o_statusbar_status mb-3" style="display:flex;gap:24px;padding:12px 0;">
+                        <div>
+                            <span style="font-size:11px;color:var(--color-text-secondary);">Fuel Cost YTD</span><br/>
+                            <strong><field name="total_fuel_cost_ytd" readonly="1" nolabel="1"/></strong>
+                        </div>
+                        <div>
+                            <span style="font-size:11px;color:var(--color-text-secondary);">Avg Consumption</span><br/>
+                            <strong><field name="avg_consumption" readonly="1" nolabel="1"/> L/100km</strong>
+                        </div>
+                    </div>
+
+                    <!-- Inline list -->
+                    <field name="fuel_log_ids"
+                        context="{'default_vehicle_id': id}"
+                        widget="one2many"
+                    >
+                        <list
+                            open_form_view="1"
+                            decoration-danger="is_anomaly == True and state not in ('cancelled')"
+                            decoration-success="state == 'posted'"
+                            decoration-muted="state == 'cancelled'"
+                        >
+                            <field name="name"/>
+                            <field name="date"/>
+                            <field name="fuel_type_id"/>
+                            <field name="transaction_type" optional="hide"/>
+                            <field name="qty_liters" sum="Total L"/>
+                            <field name="total_cost" sum="Total Cost"/>
+                            <field name="consumption_rate" string="L/100km"
+                                decoration-danger="is_anomaly == True"
+                            />
+                            <field name="is_anomaly" optional="hide"/>
+                            <field name="state" widget="badge"
+                                decoration-secondary="state == 'draft'"
+                                decoration-warning="state == 'to_approve'"
+                                decoration-success="state in ('approved','posted')"
+                                decoration-danger="state == 'cancelled'"
+                            />
+                        </list>
+                    </field>
+
+                    <!-- Hidden -->
+                    <field name="fuel_log_count" invisible="1"/>
+                    <field name="total_fuel_cost_ytd" invisible="1"/>
+                    <field name="avg_consumption" invisible="1"/>
+                    <field name="trip_count" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

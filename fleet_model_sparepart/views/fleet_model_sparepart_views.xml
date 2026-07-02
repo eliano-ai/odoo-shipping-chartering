@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         ACTION
+    ================================================================ -->
+    <record id="action_fleet_model_sparepart" model="ir.actions.act_window">
+        <field name="name">Spareparts</field>
+        <field name="res_model">fleet.model.sparepart</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_grp_vehicle': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada data sparepart.</p>
+            <p>
+                Tambahkan sparepart melalui tab <b>Sparepart</b> di form Kendaraan/Kapal.
+                Pastikan produk sudah dikategorikan sebagai <b>Vessel Inventory</b>
+                di menu Inventory &gt; Configuration &gt; Product Categories.
+            </p>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         LIST VIEW (standalone)
+    ================================================================ -->
+    <record id="view_fleet_model_sparepart_list" model="ir.ui.view">
+        <field name="name">fleet.model.sparepart.list</field>
+        <field name="model">fleet.model.sparepart</field>
+        <field name="arch" type="xml">
+            <list string="Spareparts"
+                decoration-danger="qty_difference &lt; 0"
+                decoration-warning="qty_difference == 0 and qty_allocated &gt; 0"
+            >
+                <field name="display_name" string="Sparepart" optional="show"/>
+                <field name="part_number" optional="show"/>
+                <field name="product_category_id" optional="show"/>
+                <field name="vehicle_id" optional="show"/>
+                <field name="vehicle_model_id" optional="show"/>
+                <field name="vendor_id" optional="show"/>
+                <field name="qty_onhand" optional="show" string="On-Hand"/>
+                <field name="qty_allocated" optional="show" string="Allocated" sum="Total Allocated"/>
+                <field name="qty_difference" optional="show" string="Difference"
+                    decoration-danger="qty_difference &lt; 0"
+                    decoration-warning="qty_difference == 0"
+                />
+                <field name="uom_id" optional="show"/>
+                <field name="price_unit" optional="show"/>
+                <field name="subtotal" optional="show" sum="Total Value"/>
+                <field name="active" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         FORM VIEW
+    ================================================================ -->
+    <record id="view_fleet_model_sparepart_form" model="ir.ui.view">
+        <field name="name">fleet.model.sparepart.form</field>
+        <field name="model">fleet.model.sparepart</field>
+        <field name="arch" type="xml">
+            <form string="Sparepart">
+                <sheet>
+                    <!-- Smart button: buka produk di Inventory -->
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                            name="action_open_product"
+                            class="oe_stat_button"
+                            icon="fa-archive"
+                            invisible="not product_id"
+                        >
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">View in</span>
+                                <span class="o_stat_text">Inventory</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <label for="product_id" string="Sparepart"/>
+                        <h1>
+                            <field name="product_id"
+                                required="1"
+                                options="{'no_create': True, 'no_open': False}"
+                                domain="[('categ_id.complete_name', 'ilike', 'Vessel Inventory')]"
+                            />
+                        </h1>
+                    </div>
+
+                    <!-- Banner: stok kurang -->
+                    <div class="alert alert-danger mb-2" role="alert"
+                        invisible="qty_difference &gt;= 0 or not product_id"
+                    >
+                        <strong>Stok Kurang!</strong>
+                        On-hand
+                        (<field name="qty_onhand" readonly="1" nolabel="1"/>
+                        <field name="uom_id" readonly="1" nolabel="1"/>)
+                        tidak cukup untuk allocated
+                        (<field name="qty_allocated" readonly="1" nolabel="1"/>).
+                    </div>
+
+                    <group>
+                        <group string="Product Info (from Inventory)">
+                            <field name="part_number"
+                                placeholder="Auto dari Internal Reference produk"
+                            />
+                            <field name="product_category_id" readonly="1"/>
+                            <field name="uom_id"/>
+                            <field name="vendor_id"
+                                placeholder="Auto dari vendor utama produk"
+                            />
+                            <field name="price_unit"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Vehicle / Vessel">
+                            <field name="vehicle_id" required="1"/>
+                            <field name="vehicle_model_id" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Stock &amp; Allocation">
+                        <group>
+                            <field name="qty_onhand" readonly="1"
+                                decoration-danger="qty_onhand == 0"
+                            />
+                            <field name="qty_allocated"/>
+                        </group>
+                        <group>
+                            <field name="qty_difference" readonly="1"
+                                decoration-danger="qty_difference &lt; 0"
+                                decoration-warning="qty_difference == 0 and qty_allocated &gt; 0"
+                            />
+                            <field name="currency_id" invisible="1"/>
+                            <field name="subtotal" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Notes">
+                        <field name="note" nolabel="1"
+                            placeholder="Spesifikasi teknis, interval penggantian, catatan instalasi..."
+                        />
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         SUB-LIST
+    ================================================================ -->
+    <record id="view_fleet_model_sparepart_sublist" model="ir.ui.view">
+        <field name="name">fleet.model.sparepart.sublist</field>
+        <field name="model">fleet.model.sparepart</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Spareparts"
+                open_form_view="1"
+                decoration-danger="qty_difference &lt; 0"
+                decoration-warning="qty_difference == 0 and qty_allocated &gt; 0"
+            >
+                <field name="sequence" widget="handle"/>
+                <field name="product_id" string="Sparepart" required="1"
+                    options="{'no_create': True}"
+                    domain="[('categ_id.complete_name', 'ilike', 'Vessel Inventory')]"
+                />
+                <field name="part_number" optional="show"/>
+                <field name="product_category_id" optional="show" string="Category"/>
+                <field name="vendor_id" optional="show"/>
+                <field name="qty_onhand" optional="show" string="On-Hand"
+                    decoration-danger="qty_onhand == 0"
+                />
+                <field name="qty_allocated" optional="show" string="Allocated"
+                    sum="Total Allocated"
+                />
+                <field name="qty_difference" optional="show" string="Diff"
+                    decoration-danger="qty_difference &lt; 0"
+                />
+                <field name="uom_id" optional="show"/>
+                <field name="price_unit" optional="show"/>
+                <field name="subtotal" optional="show" sum="Total Value"/>
+                <field name="note" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         SEARCH VIEW
+    ================================================================ -->
+    <record id="view_fleet_model_sparepart_search" model="ir.ui.view">
+        <field name="name">fleet.model.sparepart.search</field>
+        <field name="model">fleet.model.sparepart</field>
+        <field name="arch" type="xml">
+            <search string="Search Spareparts">
+                <field name="display_name" string="Sparepart Name"/>
+                <field name="part_number"/>
+                <field name="product_id"/>
+                <field name="vehicle_id"/>
+                <field name="vehicle_model_id"/>
+                <field name="vendor_id"/>
+                <field name="product_category_id"/>               
+            </search>
+        </field>
+    </record>
+
+</odoo>

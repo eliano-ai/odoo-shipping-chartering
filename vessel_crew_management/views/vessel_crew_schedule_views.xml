@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="vessel_crew_schedule_view_list" model="ir.ui.view">
+    <field name="name">vessel.crew.schedule.list</field>
+    <field name="model">vessel.crew.schedule</field>
+    <field name="arch" type="xml">
+      <list string="Jadwal Rotasi Crew"
+            decoration-success="schedule_type == 'on_board'"
+            decoration-info="schedule_type == 'training'">
+        <field name="start_date"/>
+        <field name="end_date"/>
+        <field name="seafarer_id"/>
+        <field name="vehicle_id"/>
+        <field name="rank_id"/>
+        <field name="schedule_type" widget="badge"/>
+        <field name="port"/>
+        <field name="state" widget="badge"/>
+        <field name="assignment_id" optional="show"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="vessel_crew_schedule_view_form" model="ir.ui.view">
+    <field name="name">vessel.crew.schedule.form</field>
+    <field name="model">vessel.crew.schedule</field>
+    <field name="arch" type="xml">
+      <form string="Jadwal Rotasi Crew">
+        <header>
+          <button name="action_confirm" type="object" string="Konfirmasi Jadwal"
+                  invisible="state != 'draft'" class="btn-primary"/>
+          <button name="action_create_assignment" type="object"
+                  string="Buat Assignment"
+                  invisible="state != 'confirmed' or assignment_id"/>
+          <field name="state" widget="statusbar"/>
+        </header>
+        <sheet>
+          <group>
+            <group string="ABK &amp; Kapal">
+              <field name="seafarer_id"/>
+              <field name="vehicle_id" domain="[('is_vessel','=',True)]"/>
+              <field name="rank_id"/>
+              <field name="schedule_type"/>
+              <field name="port"/>
+            </group>
+            <group string="Periode">
+              <field name="start_date"/>
+              <field name="end_date"/>
+              <field name="create_calendar_event"/>
+              <field name="calendar_event_id" readonly="1"
+                     invisible="not calendar_event_id"/>
+              <field name="assignment_id" readonly="1"
+                     invisible="not assignment_id"/>
+            </group>
+          </group>
+          <field name="notes" placeholder="Catatan..."/>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="vessel_crew_schedule_view_calendar" model="ir.ui.view">
+    <field name="name">vessel.crew.schedule.calendar</field>
+    <field name="model">vessel.crew.schedule</field>
+    <field name="arch" type="xml">
+      <calendar string="Jadwal Rotasi Crew"
+                date_start="start_date" date_stop="end_date"
+                color="vehicle_id" mode="month">
+        <field name="seafarer_id"/>
+        <field name="schedule_type"/>
+      </calendar>
+    </field>
+  </record>
+
+  <record id="action_vessel_crew_schedule" model="ir.actions.act_window">
+    <field name="name">Jadwal Rotasi Crew</field>
+    <field name="res_model">vessel.crew.schedule</field>
+    <field name="view_mode">list,calendar,form</field>
+  </record>
+</odoo>

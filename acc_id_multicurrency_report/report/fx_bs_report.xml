@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<template id="fx_bs_report_template" name="Neraca Dual-Currency">
+<t t-call="web.html_container">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="stylesheet"
+        href="/web/static/lib/bootstrap/css/bootstrap.min.css"/>
+  <link rel="stylesheet"
+        href="/acc_id_multicurrency_report/static/src/css/fx_report.css"/>
+</head>
+<body class="fx-report-body">
+<div class="container-fluid px-4 py-3">
+
+  <!-- Header -->
+  <div class="text-center mb-3">
+    <h4 class="fw-bold mb-1"><t t-esc="company.name"/></h4>
+    <h5 class="mb-1">NERACA — MANAJEMEN</h5>
+    <p class="text-muted mb-0">
+      Per: <t t-esc="config.bs_closing_date.strftime('%d %B %Y')"/>
+    </p>
+  </div>
+
+  <!-- Nav -->
+  <div class="d-flex gap-2 mb-3 align-items-center">
+    <div class="btn-group">
+      <button class="btn btn-sm btn-outline-primary fx-tab active"
+              onclick="switchView('cfo', this)">CFO View</button>
+      <button class="btn btn-sm btn-outline-primary fx-tab"
+              onclick="switchView('acc', this)">Accounting View</button>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+      <a t-attf-href="/acc_id_fx/pl_report/#{config.id}"
+         class="btn btn-sm btn-outline-secondary">← Laba Rugi</a>
+      <a t-attf-href="/web#id=#{config.id}&amp;model=acc.id.fx.report.config&amp;view_type=form"
+         class="btn btn-sm btn-outline-dark">⚙ Config</a>
+    </div>
+  </div>
+
+  <!-- Stale warning -->
+  <t t-if="is_stale">
+    <div class="alert alert-warning mb-3">
+      <i class="fa fa-exclamation-triangle me-1"/>
+      <strong>Data Berubah.</strong>
+      <t t-esc="config.stale_reason or ''"/>
+    </div>
+  </t>
+
+  <!-- Balance warning -->
+  <t t-if="not grouped['is_balanced']">
+    <div class="alert alert-danger mb-3">
+      <i class="fa fa-times-circle me-1"/>
+      <strong>Neraca Tidak Seimbang.</strong>
+      Selisih: Rp
+      <t t-esc="'{:,.2f}'.format(grouped['diff_idr'])"/>
+      (USD <t t-esc="'{:,.4f}'.format(grouped['diff_usd'])"/>).
+      Periksa apakah semua akun ekuitas sudah ter-include.
+    </div>
+  </t>
+
+  <!-- Tabel Neraca — shared macro untuk kedua view -->
+  <t t-set="show_drill" t-value="False"/>
+
+  <!-- CFO VIEW -->
+  <div id="view-cfo" class="fx-view">
+    <t t-call="acc_id_multicurrency_report.fx_bs_table_macro">
+      <t t-set="show_drill" t-value="False"/>
+    </t>
+  </div>
+
+  <!-- ACCOUNTING VIEW -->
+  <div id="view-acc" class="fx-view d-none">
+    <t t-call="acc_id_multicurrency_report.fx_bs_table_macro">
+      <t t-set="show_drill" t-value="True"/>
+    </t>
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-2">
+    <small class="text-muted">
+      Kurs closing: Rp <t t-esc="'{:,.2f}'.format(config.bs_closing_rate)"/>
+      | Dihitung:
+      <t t-esc="config.last_calculated_at.strftime('%d %b %Y %H:%M') if config.last_calculated_at else '-'"/>
+      oleh <t t-esc="config.last_calculated_by.name if config.last_calculated_by else '-'"/>
+    </small>
+  </div>
+
+  <!-- Disclaimer -->
+  <div class="alert alert-light border mt-3 py-2">
+    <small class="text-muted fst-italic">
+      <strong>Catatan Penting:</strong>
+      Neraca ini disajikan dalam Rupiah (IDR) sebagai mata uang fungsional
+      <t t-esc="company.name"/>.
+      Kolom ekuivalen USD menggunakan kurs penutup BI JISDOR
+      Rp <t t-esc="'{:,.2f}'.format(config.bs_closing_rate)"/> per USD 1
+      (per <t t-esc="config.bs_closing_date.strftime('%d %B %Y')"/>).
+      <strong>Penyajian ini bukan merupakan translasi laporan keuangan
+      sebagaimana dimaksud dalam PSAK 10.</strong>
+    </small>
+  </div>
+
+</div>
+<script src="/web/static/lib/jquery/jquery.js"/>
+<script src="/acc_id_multicurrency_report/static/src/js/fx_report.js"/>
+</body>
+</t>
+</template>
+
+<!-- Macro tabel Neraca (reused di CFO dan Accounting view) -->
+<template id="fx_bs_table_macro">
+  <table class="table table-sm table-bordered fx-table">
+    <thead class="fx-thead">
+      <tr>
+        <th t-if="show_drill" style="width:8%">Kode</th>
+        <th>Uraian</th>
+        <th class="text-end" style="width:22%">IDR (Rp)</th>
+        <th class="text-center" style="width:10%">Kurs</th>
+        <th class="text-end" style="width:18%">USD ($)</th>
+        <th class="text-center" style="width:6%">Tipe</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- ASET -->
+      <tr class="fx-section-header">
+        <td t-if="show_drill"/>
+        <td colspan="5">ASET</td>
+      </tr>
+      <t t-foreach="grouped['asset_lines']" t-as="line">
+        <tr t-attf-class="#{show_drill and 'fx-drillable' or ''}"
+            t-att-data-account-id="line.account_id.id if show_drill else None"
+            t-att-data-config-id="config.id if show_drill else None"
+            t-attf-onclick="#{show_drill and 'toggleDrilldown(this)' or ''}">
+          <td t-if="show_drill" class="text-muted small">
+            <t t-esc="line.account_code"/>
+          </td>
+          <td t-attf-class="#{not show_drill and 'ps-4' or ''}">
+            <t t-if="not show_drill">
+              <span class="text-muted small me-1"><t t-esc="line.account_code"/></span>
+            </t>
+            <t t-esc="line.account_name"/>
+            <t t-if="show_drill">
+              <i class="fa fa-caret-right drill-caret ms-1 text-muted"/>
+            </t>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+          </td>
+          <td class="text-center text-muted small">
+            <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+          </td>
+          <td class="text-center">
+            <span class="badge bg-secondary small">
+              <t t-esc="(line.rate_type_applied or '')[:3].upper()"/>
+            </span>
+          </td>
+        </tr>
+        <t t-if="show_drill">
+          <tr t-attf-id="drill-#{line.account_id.id}"
+              class="fx-drilldown-row d-none">
+            <td colspan="6" class="p-0">
+              <div class="fx-drilldown-content p-3">
+                <div class="fx-loading text-center text-muted py-2">
+                  <i class="fa fa-spinner fa-spin me-1"/> Memuat data...
+                </div>
+              </div>
+            </td>
+          </tr>
+        </t>
+      </t>
+      <tr class="fx-subtotal">
+        <td t-if="show_drill"/>
+        <td class="ps-3">Jumlah Aset</td>
+        <td class="text-end">
+          <t t-esc="'{:,.0f}'.format(grouped['total_asset_idr'])"/>
+        </td>
+        <td class="text-center text-muted small">closing</td>
+        <td class="text-end">
+          <t t-esc="'{:,.2f}'.format(grouped['total_asset_usd'])"/>
+        </td>
+        <td/>
+      </tr>
+
+      <!-- LIABILITAS -->
+      <tr class="fx-section-header">
+        <td t-if="show_drill"/>
+        <td colspan="5">LIABILITAS</td>
+      </tr>
+      <t t-foreach="grouped['liability_lines']" t-as="line">
+        <tr t-attf-class="#{show_drill and 'fx-drillable' or ''}"
+            t-att-data-account-id="line.account_id.id if show_drill else None"
+            t-att-data-config-id="config.id if show_drill else None"
+            t-attf-onclick="#{show_drill and 'toggleDrilldown(this)' or ''}">
+          <td t-if="show_drill" class="text-muted small">
+            <t t-esc="line.account_code"/>
+          </td>
+          <td class="ps-4">
+            <t t-if="not show_drill">
+              <span class="text-muted small me-1"><t t-esc="line.account_code"/></span>
+            </t>
+            <t t-esc="line.account_name"/>
+            <t t-if="show_drill">
+              <i class="fa fa-caret-right drill-caret ms-1 text-muted"/>
+            </t>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+          </td>
+          <td class="text-center text-muted small">
+            <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+          </td>
+          <td class="text-center">
+            <span class="badge bg-secondary small">CLO</span>
+          </td>
+        </tr>
+        <t t-if="show_drill">
+          <tr t-attf-id="drill-#{line.account_id.id}"
+              class="fx-drilldown-row d-none">
+            <td colspan="6" class="p-0">
+              <div class="fx-drilldown-content p-3">
+                <div class="fx-loading text-center text-muted py-2">
+                  <i class="fa fa-spinner fa-spin me-1"/> Memuat data...
+                </div>
+              </div>
+            </td>
+          </tr>
+        </t>
+      </t>
+      <tr class="fx-subtotal">
+        <td t-if="show_drill"/>
+        <td class="ps-3">Jumlah Liabilitas</td>
+        <td class="text-end">
+          <t t-esc="'{:,.0f}'.format(grouped['total_liability_idr'])"/>
+        </td>
+        <td class="text-center text-muted small">closing</td>
+        <td class="text-end">
+          <t t-esc="'{:,.2f}'.format(grouped['total_liability_usd'])"/>
+        </td>
+        <td/>
+      </tr>
+
+      <!-- EKUITAS -->
+      <tr class="fx-section-header">
+        <td t-if="show_drill"/>
+        <td colspan="5">EKUITAS</td>
+      </tr>
+      <t t-foreach="grouped['equity_lines']" t-as="line">
+        <tr>
+          <td t-if="show_drill" class="text-muted small">
+            <t t-esc="line.account_code"/>
+          </td>
+          <td class="ps-4">
+            <t t-if="not show_drill">
+              <span class="text-muted small me-1"><t t-esc="line.account_code"/></span>
+            </t>
+            <t t-esc="line.account_name"/>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.0f}'.format(line.balance_functional)"/>
+          </td>
+          <td class="text-center text-muted small">
+            <t t-esc="'{:,.2f}'.format(line.rate_used)"/>
+          </td>
+          <td class="text-end">
+            <t t-esc="'{:,.2f}'.format(line.balance_presentation)"/>
+          </td>
+          <td class="text-center">
+            <span class="badge bg-secondary small">CLO</span>
+          </td>
+        </tr>
+      </t>
+      <tr class="fx-subtotal">
+        <td t-if="show_drill"/>
+        <td class="ps-3">Jumlah Ekuitas</td>
+        <td class="text-end">
+          <t t-esc="'{:,.0f}'.format(grouped['total_equity_idr'])"/>
+        </td>
+        <td class="text-center text-muted small">closing</td>
+        <td class="text-end">
+          <t t-esc="'{:,.2f}'.format(grouped['total_equity_usd'])"/>
+        </td>
+        <td/>
+      </tr>
+
+      <!-- Total Liab + Ekuitas -->
+      <tr class="fx-total">
+        <td t-if="show_drill"/>
+        <td>JUMLAH LIABILITAS &amp; EKUITAS</td>
+        <td class="text-end">
+          <t t-esc="'{:,.0f}'.format(grouped['total_liab_equity_idr'])"/>
+        </td>
+        <td/>
+        <td class="text-end">
+          <t t-esc="'{:,.2f}'.format(grouped['total_liab_equity_usd'])"/>
+        </td>
+        <td/>
+      </tr>
+
+    </tbody>
+  </table>
+</template>
+
+</odoo>

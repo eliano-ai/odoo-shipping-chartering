@@ -1,0 +1,113 @@
+/* ============================================================
+   fx_report.css
+   Sunartha ID — Multi-Currency Financial Reporting
+   ============================================================ */
+
+/* ── Page ─────────────────────────────────────────────────── */
+.fx-report-body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    background: #f8f9fa;
+}
+
+/* ── Report Table ─────────────────────────────────────────── */
+.fx-table {
+    font-size: 12px;
+    background: #fff;
+}
+
+.fx-table td,
+.fx-table th {
+    vertical-align: middle;
+    padding: 5px 8px;
+}
+
+.fx-thead th {
+    background-color: #1F3864;
+    color: #fff;
+    font-weight: 600;
+    border-color: #1a3155 !important;
+    white-space: nowrap;
+}
+
+.fx-section-header td {
+    background-color: #D9E1F2;
+    font-weight: 600;
+    color: #1F3864;
+    padding: 6px 10px;
+}
+
+.fx-subtotal td {
+    font-weight: 600;
+    border-top: 2px solid #6c757d !important;
+    background-color: #f8f9fa;
+}
+
+.fx-total td {
+    font-weight: 700;
+    font-size: 13px;
+    background-color: #1F3864;
+    color: #fff;
+    border-color: #1a3155 !important;
+}
+
+/* ── Drillable rows ───────────────────────────────────────── */
+.fx-drillable {
+    cursor: pointer;
+    transition: background-color 0.12s;
+}
+
+.fx-drillable:hover td {
+    background-color: #eef2ff !important;
+}
+
+.drill-caret {
+    font-size: 11px;
+    transition: transform 0.15s;
+}
+
+/* ── Drilldown panel ──────────────────────────────────────── */
+.fx-drilldown-row td {
+    padding: 0 !important;
+    background-color: #f0f4ff;
+}
+
+.fx-drilldown-content {
+    border-left: 4px solid #1F3864;
+    background: #f0f4ff;
+}
+
+.fx-drill-table {
+    font-size: 11px;
+    margin-bottom: 0;
+}
+
+.fx-drill-wrapper {
+    padding: 8px 12px;
+}
+
+/* ── Loading spinner ──────────────────────────────────────── */
+.fx-loading {
+    color: #6c757d;
+    font-size: 12px;
+}
+
+/* ── KPI Cards ────────────────────────────────────────────── */
+.card {
+    border-radius: 8px;
+}
+
+/* ── Stale / warning badges ───────────────────────────────── */
+.badge.bg-warning {
+    color: #212529 !important;
+}
+
+/* ── Print overrides ──────────────────────────────────────── */
+@media print {
+    .btn, .alert, #view-acc { display: none !important; }
+    #view-cfo { display: block !important; }
+    .fx-report-body { background: #fff; font-size: 11px; }
+    .fx-table { font-size: 10px; }
+    .fx-thead th { background-color: #1F3864 !important; color: #fff !important; }
+    .fx-total td { background-color: #1F3864 !important; color: #fff !important; }
+}

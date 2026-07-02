@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- DUIT DECK -->
+    <record id="rank_master" model="vessel.crew.rank">
+        <field name="name">Nahkoda (Master)</field>
+        <field name="code">MASTER</field>
+        <field name="sequence">10</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">deck</field>
+        <field name="required_coc_grade">ANT-I</field>
+    </record>
+    <record id="rank_chief_officer" model="vessel.crew.rank">
+        <field name="name">Mualim I (Chief Officer)</field>
+        <field name="code">CHIEF_OFFICER</field>
+        <field name="sequence">20</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">deck</field>
+        <field name="required_coc_grade">ANT-II</field>
+    </record>
+    <record id="rank_second_officer" model="vessel.crew.rank">
+        <field name="name">Mualim II (Second Officer)</field>
+        <field name="code">SECOND_OFFICER</field>
+        <field name="sequence">30</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">deck</field>
+        <field name="required_coc_grade">ANT-III</field>
+    </record>
+    <record id="rank_third_officer" model="vessel.crew.rank">
+        <field name="name">Mualim III (Third Officer)</field>
+        <field name="code">THIRD_OFFICER</field>
+        <field name="sequence">40</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">deck</field>
+        <field name="required_coc_grade">ANT-IV</field>
+    </record>
+    <record id="rank_bosun" model="vessel.crew.rank">
+        <field name="name">Bosun (Serang)</field>
+        <field name="code">BOSUN</field>
+        <field name="sequence">50</field>
+        <field name="is_officer">False</field>
+        <field name="department">deck</field>
+    </record>
+    <record id="rank_ab" model="vessel.crew.rank">
+        <field name="name">Kelasi (Able Seaman)</field>
+        <field name="code">AB</field>
+        <field name="sequence">60</field>
+        <field name="department">deck</field>
+    </record>
+    <!-- ENGINE -->
+    <record id="rank_kkm" model="vessel.crew.rank">
+        <field name="name">KKM (Chief Engineer)</field>
+        <field name="code">CHIEF_ENGINEER</field>
+        <field name="sequence">70</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">engine</field>
+        <field name="required_coc_grade">ATT-I</field>
+    </record>
+    <record id="rank_masinis_2" model="vessel.crew.rank">
+        <field name="name">Masinis II (Second Engineer)</field>
+        <field name="code">SECOND_ENGINEER</field>
+        <field name="sequence">80</field>
+        <field name="is_officer">True</field>
+        <field name="is_watchkeeper">True</field>
+        <field name="department">engine</field>
+        <field name="required_coc_grade">ATT-II</field>
+    </record>
+    <record id="rank_masinis_3" model="vessel.crew.rank">
+        <field name="name">Masinis III (Third Engineer)</field>
+        <field name="code">THIRD_ENGINEER</field>
+        <field name="sequence">90</field>
+        <field name="is_officer">True</field>
+        <field name="department">engine</field>
+        <field name="required_coc_grade">ATT-III</field>
+    </record>
+    <record id="rank_oiler" model="vessel.crew.rank">
+        <field name="name">Juru Minyak (Oiler / Motorman)</field>
+        <field name="code">OILER</field>
+        <field name="sequence">100</field>
+        <field name="department">engine</field>
+    </record>
+    <!-- CATERING -->
+    <record id="rank_cook" model="vessel.crew.rank">
+        <field name="name">Juru Masak (Cook)</field>
+        <field name="code">COOK</field>
+        <field name="sequence">110</field>
+        <field name="department">catering</field>
+    </record>
+</odoo>

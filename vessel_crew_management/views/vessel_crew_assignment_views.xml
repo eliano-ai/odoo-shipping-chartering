@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="vessel_crew_assignment_view_form" model="ir.ui.view">
+    <field name="name">vessel.crew.assignment.form</field>
+    <field name="model">vessel.crew.assignment</field>
+    <field name="arch" type="xml">
+      <form string="Penugasan ABK">
+        <header>
+          <button name="action_confirm" type="object" string="Konfirmasi &amp; Kirim Notifikasi"
+                  invisible="state != 'draft'" class="btn-primary"/>
+          <button name="action_sign_on" type="object" string="Sign On"
+                  invisible="state != 'confirmed'"/>
+          <button name="action_sign_off" type="object" string="Sign Off"
+                  invisible="state != 'on_board'" class="btn-primary"/>
+          <button name="action_cancel" type="object" string="Batalkan"
+                  invisible="state not in ('draft','confirmed')"
+                  confirm="Yakin ingin membatalkan penugasan ini?"/>
+          <button name="action_reset_to_draft" type="object" string="Reset ke Draft"
+                  invisible="state != 'cancelled'"/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="draft,confirmed,on_board,completed"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_sea_service" type="object"
+                    class="oe_stat_button" icon="fa-anchor"
+                    invisible="not sea_service_log_ids">
+              <field name="sea_service_days" widget="statinfo" string="Hari di Laut"/>
+            </button>
+          </div>
+          <div class="alert alert-warning" role="alert"
+               invisible="not has_cert_warning or state == 'completed'">
+            <b>Peringatan Sertifikat:</b>
+            <field name="cert_warning_details" readonly="1" nolabel="1"/>
+          </div>
+          <group>
+            <group string="Penugasan">
+              <field name="vehicle_id" options="{'no_create': True}"/>
+              <field name="seafarer_id"/>
+              <field name="rank_id"/>
+              <field name="notification_channel"/>
+            </group>
+            <group string="Validasi &amp; Notifikasi">
+              <field name="cert_validated" readonly="1"/>
+              <field name="cert_validation_date" readonly="1"/>
+              <field name="notification_sent" readonly="1"/>
+              <field name="notification_sent_date" readonly="1"/>
+            </group>
+          </group>
+          <group string="Jadwal">
+            <group string="Sign On">
+              <field name="sign_on_date"/>
+              <field name="sign_on_port"/>
+              <field name="sign_on_actual_date"/>
+            </group>
+            <group string="Sign Off">
+              <field name="sign_off_date"/>
+              <field name="sign_off_port"/>
+              <field name="sign_off_actual_date" readonly="1"/>
+              <field name="sign_off_reason" readonly="1"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="contract_duration_days" readonly="1"/>
+            </group>
+            <group>
+              <field name="sea_service_days" readonly="1"/>
+            </group>
+          </group>
+          <notebook>
+            <page string="Log Notifikasi">
+              <field name="notification_log_ids" readonly="1">
+                <list>
+                  <field name="sent_at"/>
+                  <field name="notification_type"/>
+                  <field name="channel"/>
+                  <field name="status" widget="badge"
+                         decoration-success="status == 'sent'"
+                         decoration-danger="status == 'failed'"/>
+                  <field name="notes"/>
+                </list>
+              </field>
+            </page>
+            <page string="Sea Service Log">
+              <field name="sea_service_log_ids" readonly="1">
+                <list>
+                  <field name="from_date"/>
+                  <field name="to_date"/>
+                  <field name="days"/>
+                  <field name="sign_on_port"/>
+                  <field name="sign_off_port"/>
+                </list>
+              </field>
+            </page>
+            <page string="Catatan">
+              <field name="notes"/>
+              <field name="cert_validation_notes" readonly="1"
+                     string="Catatan Validasi Sertifikat"/>
+            </page>
+          </notebook>
+          <field name="has_cert_warning" invisible="1"/>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <record id="vessel_crew_assignment_view_list" model="ir.ui.view">
+    <field name="name">vessel.crew.assignment.list</field>
+    <field name="model">vessel.crew.assignment</field>
+    <field name="arch" type="xml">
+      <list string="Penugasan ABK"
+            decoration-success="state == 'on_board'"
+            decoration-muted="state == 'completed'"
+            decoration-danger="state == 'cancelled'">
+        <field name="seafarer_id"/>
+        <field name="vehicle_id"/>
+        <field name="rank_id"/>
+        <field name="sign_on_date"/>
+        <field name="sign_off_date"/>
+        <field name="sea_service_days"/>
+        <field name="state" widget="badge"
+               decoration-muted="state == 'draft'"
+               decoration-warning="state == 'confirmed'"
+               decoration-success="state == 'on_board'"
+               decoration-info="state == 'completed'"
+               decoration-danger="state == 'cancelled'"/>
+        <field name="notification_sent" optional="show"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="vessel_crew_assignment_view_search" model="ir.ui.view">
+    <field name="name">vessel.crew.assignment.search</field>
+    <field name="model">vessel.crew.assignment</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="seafarer_id"/>
+        <field name="vehicle_id"/>
+        <filter string="On Board" name="on_board" domain="[('state','=','on_board')]"/>
+        <filter string="Confirmed" name="confirmed" domain="[('state','=','confirmed')]"/>
+        <filter string="Ada Peringatan Cert" name="cert_warn"
+                domain="[('has_cert_warning','=',True)]"/>
+        <filter string="Belum Notifikasi" name="no_notif"
+                domain="[('notification_sent','=',False),('state','=','confirmed')]"/>
+        <group>
+          <filter string="Kapal" name="by_vessel" context="{'group_by':'vehicle_id'}"/>
+          <filter string="Status" name="by_state" context="{'group_by':'state'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="action_vessel_crew_assignment" model="ir.actions.act_window">
+    <field name="name">Penugasan ABK</field>
+    <field name="res_model">vessel.crew.assignment</field>
+    <field name="view_mode">list,form</field>
+    <field name="context">{'search_default_on_board': 1}</field>
+  </record>
+</odoo>

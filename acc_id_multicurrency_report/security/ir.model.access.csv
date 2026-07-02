@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fx_report_config_user,fx.report.config.user,model_acc_id_fx_report_config,group_fx_user,1,0,0,0
+access_fx_report_config_manager,fx.report.config.manager,model_acc_id_fx_report_config,group_fx_manager,1,1,1,0
+access_fx_report_config_admin,fx.report.config.admin,model_acc_id_fx_report_config,group_fx_admin,1,1,1,1
+access_fx_calc_log_user,fx.calc.log.user,model_acc_id_fx_calc_log,group_fx_user,1,0,0,0
+access_fx_calc_log_manager,fx.calc.log.manager,model_acc_id_fx_calc_log,group_fx_manager,1,0,1,0
+access_fx_calc_log_admin,fx.calc.log.admin,model_acc_id_fx_calc_log,group_fx_admin,1,0,1,1
+access_fx_report_line_user,fx.report.line.user,model_acc_id_fx_report_line,group_fx_user,1,0,0,0
+access_fx_report_line_manager,fx.report.line.manager,model_acc_id_fx_report_line,group_fx_manager,1,1,1,1
+access_fx_rate_override_user,fx.rate.override.user,model_acc_id_fx_rate_override,group_fx_user,1,0,0,0
+access_fx_rate_override_manager,fx.rate.override.manager,model_acc_id_fx_rate_override,group_fx_manager,1,1,1,1

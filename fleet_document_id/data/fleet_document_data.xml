@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Product untuk expense perpanjangan dokumen -->
+    <record id="product_fleet_doc_renewal" model="product.product">
+        <field name="name">Perpanjangan Dokumen Kendaraan</field>
+        <field name="type">service</field>
+        <field name="can_be_expensed">True</field>
+        <field name="default_code">FLEET-DOC-RENEWAL</field>
+        <field name="description_sale">Biaya perpanjangan dokumen legal kendaraan (STNK, KIR, SIM, Asuransi, dll)</field>
+    </record>
+</odoo>

@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- ═══ List View ═══════════════════════════════════════════════════════ -->
+  <record id="view_fx_report_config_list" model="ir.ui.view">
+    <field name="name">acc.id.fx.report.config.list</field>
+    <field name="model">acc.id.fx.report.config</field>
+    <field name="arch" type="xml">
+      <list decoration-warning="state == 'stale'"
+            decoration-muted="state == 'draft'"
+            decoration-success="state == 'calculated'">
+        <field name="name"/>
+        <field name="pl_date_from" string="Dari"/>
+        <field name="pl_date_to"   string="Sampai"/>
+        <field name="pl_avg_rate"      string="Kurs Avg" optional="show"/>
+        <field name="bs_closing_rate"  string="Kurs Closing" optional="show"/>
+        <field name="rate_source"      optional="show"/>
+        <field name="state" widget="badge"
+               decoration-success="state == 'calculated'"
+               decoration-warning="state == 'stale'"
+               decoration-info="state == 'draft'"/>
+        <field name="last_calculated_at" string="Terakhir Dihitung"
+               optional="show"/>
+        <field name="last_calculated_by" string="Oleh" optional="show"/>
+        <field name="pl_line_count"  string="Baris P&amp;L"  optional="hide"/>
+        <field name="bs_line_count"  string="Baris BS"       optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- ═══ Form View ════════════════════════════════════════════════════════ -->
+  <record id="view_fx_report_config_form" model="ir.ui.view">
+    <field name="name">acc.id.fx.report.config.form</field>
+    <field name="model">acc.id.fx.report.config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <!-- Hitung Laporan: hanya saat draft -->
+          <button name="action_calculate" type="object"
+                  string="⚙ Hitung Laporan"
+                  class="btn-primary"
+                  groups="acc_id_multicurrency_report.group_fx_manager"
+                  invisible="state != 'draft'"/>
+          <!-- Hitung Ulang: hanya saat stale -->
+          <button name="action_calculate" type="object"
+                  string="⚙ Hitung Ulang"
+                  class="btn-warning"
+                  groups="acc_id_multicurrency_report.group_fx_manager"
+                  invisible="state != 'stale'"/>
+          <!-- Buka laporan: hanya setelah dihitung -->
+          <button name="action_open_pl_report" type="object"
+                  string="📊 Laba Rugi"
+                  class="btn-secondary"
+                  invisible="state == 'draft'"/>
+          <button name="action_open_bs_report" type="object"
+                  string="📊 Neraca"
+                  class="btn-secondary"
+                  invisible="state == 'draft'"/>
+          <button name="action_export_xlsx" type="object"
+                  string="⬇ Export XLSX"
+                  class="btn-secondary"
+                  invisible="state == 'draft'"/>
+          <field name="state" widget="statusbar"
+                 statusbar_visible="draft,calculated,stale"/>
+        </header>
+
+        <!-- Stale warning banner -->
+        <div class="alert alert-warning d-flex align-items-center"
+             role="alert" invisible="state != 'stale'">
+          <i class="fa fa-exclamation-triangle me-2"/>
+          <div>
+            <strong>Data Berubah Sejak Kalkulasi Terakhir.</strong>
+            <field name="stale_reason" readonly="1" nolabel="1"
+                   class="d-inline ms-1"/>
+          </div>
+        </div>
+
+        <sheet>
+          <div class="oe_title">
+            <h1>
+              <field name="name" placeholder="Nama laporan..."/>
+            </h1>
+          </div>
+
+          <group>
+            <group string="Identitas">
+              <field name="company_id"
+                     groups="base.group_multi_company"/>
+              <field name="functional_currency_id" readonly="1"/>
+              <field name="report_currency_id"/>
+              <field name="scenario"/>
+            </group>
+            <group string="Status Kalkulasi">
+              <field name="last_calculated_at" readonly="1"/>
+              <field name="last_calculated_by" readonly="1"/>
+              <field name="pl_line_count" readonly="1"/>
+              <field name="bs_line_count" readonly="1"/>
+            </group>
+          </group>
+
+          <group string="Periode &amp; Kurs">
+            <group>
+              <field name="pl_date_from"/>
+              <field name="pl_date_to"/>
+              <field name="bs_closing_date"/>
+            </group>
+            <group>
+              <field name="pl_avg_rate"/>
+              <field name="bs_closing_rate"/>
+              <field name="rate_source"/>
+              <field name="rate_override_note"/>
+            </group>
+          </group>
+
+          <notebook>
+            <page string="Override Kurs per Akun" name="overrides">
+              <p class="text-muted" style="font-size:12px">
+                Override kurs untuk akun tertentu yang membutuhkan
+                perlakuan berbeda dari default. Alasan override wajib diisi
+                untuk keperluan audit trail.
+              </p>
+              <field name="rate_override_ids">
+                <list editable="bottom">
+                  <field name="account_id"/>
+                  <field name="rate_type_override"/>
+                  <field name="manual_rate"
+                         optional="show"
+                         readonly="rate_type_override != 'manual'"/>
+                  <field name="reason"/>
+                </list>
+              </field>
+            </page>
+
+            <page string="Log Kalkulasi" name="calc_logs">
+              <field name="calc_log_ids" readonly="1">
+                <list>
+                  <field name="run_at"/>
+                  <field name="run_by"/>
+                  <field name="pl_avg_rate_used"  string="Kurs Avg"/>
+                  <field name="bs_closing_rate_used" string="Kurs Closing"/>
+                  <field name="lines_computed"    string="Baris"/>
+                  <field name="duration_seconds"  string="Durasi (dtk)"/>
+                  <field name="trigger_reason"    string="Trigger"/>
+                  <field name="result" widget="badge"
+                         decoration-success="result == 'success'"
+                         decoration-danger="result  == 'error'"/>
+                </list>
+              </field>
+            </page>
+
+            <page string="Catatan" name="notes">
+              <field name="notes"
+                     placeholder="Catatan tambahan untuk laporan ini..."/>
+            </page>
+          </notebook>
+        </sheet>
+        <chatter/>
+      </form>
+    </field>
+  </record>
+
+  <!-- ═══ Search View ══════════════════════════════════════════════════════ -->
+  <record id="view_fx_report_config_search" model="ir.ui.view">
+    <field name="name">acc.id.fx.report.config.search</field>
+    <field name="model">acc.id.fx.report.config</field>
+    <field name="arch" type="xml">
+      <search>
+        <field name="name"/>
+        <filter name="calculated" string="Sudah Dihitung"
+                domain="[('state','=','calculated')]"/>
+        <filter name="stale" string="Data Berubah"
+                domain="[('state','=','stale')]"/>
+        <filter name="draft" string="Draft"
+                domain="[('state','=','draft')]"/>
+        <separator/>
+        <group>
+          <filter name="group_year" string="Tahun"
+                  context="{'group_by':'pl_date_to:year'}"/>
+          <filter name="group_state" string="Status"
+                  context="{'group_by':'state'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <!-- ═══ Actions ═════════════════════════════════════════════════════════ -->
+  <record id="action_fx_report_config_list" model="ir.actions.act_window">
+    <field name="name">Riwayat Laporan Dual-Currency</field>
+    <field name="res_model">acc.id.fx.report.config</field>
+    <field name="view_mode">list,form</field>
+    <field name="search_view_id" ref="view_fx_report_config_search"/>
+        <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Belum ada laporan dual-currency.
+      </p>
+      <p>
+        Klik <strong>Buat Laporan Baru</strong> untuk membuat laporan
+        Laba Rugi dan Neraca dengan kolom IDR dan USD.
+      </p>
+    </field>
+  </record>
+
+  <record id="action_fx_report_wizard" model="ir.actions.act_window">
+    <field name="name">Buat Laporan Dual-Currency</field>
+    <field name="res_model">fx.report.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+  </record>
+
+</odoo>

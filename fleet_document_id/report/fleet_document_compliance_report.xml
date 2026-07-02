@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_fleet_doc_compliance" model="ir.actions.report">
+        <field name="name">Laporan Compliance Dokumen Kendaraan</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fleet_document_id.report_fleet_doc_compliance</field>
+        <field name="report_file">fleet_document_id.report_fleet_doc_compliance</field>
+        <field name="print_report_name">'Compliance_Dokumen_%s' % (object.license_plate or object.name)</field>
+        <field name="binding_model_id" ref="fleet.model_fleet_vehicle"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <record id="action_report_fleet_doc_compliance_all" model="ir.actions.report">
+        <field name="name">Compliance Summary — Semua Kendaraan</field>
+        <field name="model">fleet.vehicle.document</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">fleet_document_id.report_fleet_doc_summary</field>
+        <field name="report_file">fleet_document_id.report_fleet_doc_summary</field>
+        <field name="print_report_name">'Fleet_Compliance_Summary'</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+</odoo>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_fleet_vehicle_trip" model="ir.actions.act_window">
+        <field name="name">Trips / Voyages</field>
+        <field name="res_model">fleet.vehicle.trip</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="view_fleet_vehicle_trip_list" model="ir.ui.view">
+        <field name="name">fleet.vehicle.trip.list</field>
+        <field name="model">fleet.vehicle.trip</field>
+        <field name="arch" type="xml">
+            <list string="Trips / Voyages"
+                decoration-success="state == 'done'"
+                decoration-warning="state == 'ongoing'"
+                decoration-muted="state == 'cancelled'"
+            >
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="departure_port" optional="show"/>
+                <field name="arrival_port" optional="show"/>
+                <field name="departure_date"/>
+                <field name="arrival_date" optional="show"/>
+                <field name="distance_km" optional="show"/>
+                <field name="total_fuel_qty" optional="show" sum="Total Fuel"/>
+                <field name="total_fuel_cost" optional="show" sum="Total Cost"/>
+                <field name="avg_consumption" optional="show"/>
+                <field name="fuel_log_count" optional="hide"/>
+                <field name="state" widget="badge"
+                    decoration-info="state == 'planned'"
+                    decoration-warning="state == 'ongoing'"
+                    decoration-success="state == 'done'"
+                    decoration-danger="state == 'cancelled'"
+                />
+            </list>
+        </field>
+    </record>
+
+    <record id="view_fleet_vehicle_trip_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.trip.form</field>
+        <field name="model">fleet.vehicle.trip</field>
+        <field name="arch" type="xml">
+            <form string="Trip / Voyage">
+                <header>
+                    <button name="action_start" string="Start" type="object"
+                        class="btn-primary" invisible="state != 'planned'"/>
+                    <button name="action_done" string="Complete" type="object"
+                        class="btn-primary" invisible="state != 'ongoing'"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                        invisible="state in ('done','cancelled')"/>
+                    <button name="action_reset" string="Reset" type="object"
+                        invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                        statusbar_visible="planned,ongoing,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_fuel_logs"
+                            class="oe_stat_button" icon="fa-tint">
+                            <field name="fuel_log_count" widget="statinfo" string="Fuel Logs"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="Nama trip / voyage..."/></h1>
+                    </div>
+                    <group>
+                        <group string="Trip Details">
+                            <field name="vehicle_id" readonly="state != 'planned'"/>
+                            <field name="driver_id" readonly="1"/>
+                            <field name="departure_port" readonly="state != 'planned'"/>
+                            <field name="arrival_port" readonly="state not in ('planned','ongoing')"/>
+                        </group>
+                        <group string="Schedule">
+                            <field name="departure_date" readonly="state != 'planned'"/>
+                            <field name="arrival_date" readonly="state not in ('planned','ongoing')"/>
+                        </group>
+                    </group>
+                    <group string="Odometer / Distance">
+                        <group>
+                            <field name="odometer_start" readonly="state != 'planned'"/>
+                            <field name="odometer_end" readonly="state not in ('planned','ongoing')"/>
+                        </group>
+                        <group>
+                            <field name="distance_km" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Fuel Summary (Approved &amp; Posted)">
+                        <group>
+                            <field name="total_fuel_qty" readonly="1"/>
+                            <field name="avg_consumption" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="total_fuel_cost" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Fuel Logs" name="fuel_logs">
+                            <field name="fuel_log_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="date"/>
+                                    <field name="fuel_type_id"/>
+                                    <field name="qty_liters"/>
+                                    <field name="total_cost"/>
+                                    <field name="consumption_rate"/>
+                                    <field name="is_anomaly" widget="boolean_toggle"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="note" nolabel="1" placeholder="Catatan perjalanan..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+</odoo>

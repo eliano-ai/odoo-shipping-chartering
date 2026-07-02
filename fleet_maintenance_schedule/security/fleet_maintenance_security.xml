@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         GROUPS
+         FIX: Odoo 19 menghapus field category_id dari res.groups
+              Hapus <record> ir.module.category dan field category_id
+    ================================================================ -->
+
+    <!-- Fleet Manager: full CRUD on all records -->
+    <record id="group_fleet_manager" model="res.groups">
+        <field name="name">Fleet Manager</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_manager'))]"/>
+    </record>
+
+    <!-- Maintenance Technician: limited access (own + assigned) -->
+    <record id="group_technician" model="res.groups">
+        <field name="name">Maintenance Technician</field>
+    </record>
+
+    <!-- ================================================================
+         RECORD RULES
+    ================================================================ -->
+
+    <!-- Fleet Manager: read all -->
+    <record id="rule_fleet_manager_all" model="ir.rule">
+        <field name="name">Fleet Manager: access all schedules</field>
+        <field name="model_id" ref="model_fleet_maintenance_schedule"/>
+        <field name="groups" eval="[(4, ref('group_fleet_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- Technician: only their own assigned records -->
+    <record id="rule_technician_own" model="ir.rule">
+        <field name="name">Technician: own assigned schedules only</field>
+        <field name="model_id" ref="model_fleet_maintenance_schedule"/>
+        <field name="groups" eval="[(4, ref('group_technician'))]"/>
+        <field name="domain_force">[('technician_id', '=', user.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+</odoo>

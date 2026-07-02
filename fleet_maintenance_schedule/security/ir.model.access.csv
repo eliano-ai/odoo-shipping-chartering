@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fleet_maintenance_schedule_manager,fleet.maintenance.schedule.manager,model_fleet_maintenance_schedule,fleet_maintenance_schedule.group_fleet_manager,1,1,1,1
+access_fleet_maintenance_schedule_technician,fleet.maintenance.schedule.technician,model_fleet_maintenance_schedule,fleet_maintenance_schedule.group_technician,1,1,0,0
+access_fleet_maintenance_part_manager,fleet.maintenance.part.manager,model_fleet_maintenance_part,fleet_maintenance_schedule.group_fleet_manager,1,1,1,1
+access_fleet_maintenance_part_technician,fleet.maintenance.part.technician,model_fleet_maintenance_part,fleet_maintenance_schedule.group_technician,1,1,0,0

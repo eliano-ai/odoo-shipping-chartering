@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem
+        id="menu_fleet_model_sparepart"
+        name="Spareparts"
+        parent="fleet.menu_root"
+        action="action_fleet_model_sparepart"
+        sequence="25"
+        groups="fleet_model_sparepart.group_fleet_sparepart_manager"
+    />
+
+</odoo>

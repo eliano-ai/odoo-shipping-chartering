@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ================================================================
+         ACTION
+    ================================================================ -->
+    <record id="action_fleet_fuel_log" model="ir.actions.act_window">
+        <field name="name">Fuel Logs</field>
+        <field name="res_model">fleet.fuel.log</field>
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada catatan fuel.</p>
+            <p>Catat pengisian BBM, pemakaian harian, atau konsumsi per trip.</p>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         LIST VIEW
+    ================================================================ -->
+    <record id="view_fleet_fuel_log_list" model="ir.ui.view">
+        <field name="name">fleet.fuel.log.list</field>
+        <field name="model">fleet.fuel.log</field>
+        <field name="arch" type="xml">
+            <list string="Fuel Logs">
+                <field name="name" optional="show"/>
+                <field name="date" optional="show"/>
+                <field name="vehicle_id" optional="show"/>
+                <field name="vehicle_license_plate" optional="show"/>
+                <field name="fuel_type_id" optional="show"/>
+                <field name="transaction_type" optional="show"/>
+                <field name="qty_liters" optional="show" sum="Total Liters"/>
+                <field name="price_per_liter" optional="hide"/>
+                <field name="total_cost" optional="show" sum="Total Cost"/>
+                <field name="consumption_rate" optional="show"/>
+                <field name="distance" optional="show"/>
+                <field name="trip_id" optional="hide"/>
+                <field name="location_name" optional="hide"/>
+                <field name="is_anomaly" optional="hide"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         FORM VIEW
+    ================================================================ -->
+    <record id="view_fleet_fuel_log_form" model="ir.ui.view">
+        <field name="name">fleet.fuel.log.form</field>
+        <field name="model">fleet.fuel.log</field>
+        <field name="arch" type="xml">
+            <form string="Fuel Log">
+                <header>
+					<button name="action_submit"
+						string="Submit for Approval"
+						type="object"
+						class="btn-primary"
+						invisible="state != 'draft'"
+					/>
+					<button name="action_approve"
+						string="Approve"
+						type="object"
+						class="btn-primary"
+						invisible="state != 'to_approve' or not is_fleet_manager"
+					/>
+					<button name="action_post"
+						string="Post to Accounting"
+						type="object"
+						class="btn-primary"
+						invisible="state != 'approved' or not is_fleet_manager"
+					/>
+					<button name="action_cancel"
+						string="Cancel"
+						type="object"
+						class="btn-secondary"
+						invisible="state in ('approved','posted','cancelled')"
+					/>
+					<button name="action_reset_draft"
+						string="Reset to Draft"
+						type="object"
+						invisible="state != 'cancelled' or not is_fleet_manager"
+					/>
+					<field name="state" widget="statusbar"
+						statusbar_visible="draft,to_approve,approved,posted"
+					/>
+				</header>
+
+                <sheet>
+				    <field name="is_fleet_manager" invisible="1"/>
+					<field name="is_multi_company" invisible="1"/>
+                    <!-- Anomaly Banner -->
+                    <div class="alert alert-danger mb-2" role="alert"
+                        invisible="not is_anomaly or state == 'cancelled'"
+                    >
+                        <strong>Anomali Terdeteksi:</strong>
+                        <field name="anomaly_reason" readonly="1" nolabel="1"/>
+                    </div>
+
+                    <!-- Smart Buttons -->
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_stock_move"
+                            class="oe_stat_button" icon="fa-cubes"
+                            invisible="not stock_move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Stock</span>
+                                <span class="o_stat_text">Move</span>
+                            </div>
+                        </button>
+                        <button type="object" name="action_view_journal_entry"
+                            class="oe_stat_button" icon="fa-book"
+                            invisible="not account_move_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Journal</span>
+                                <span class="o_stat_text">Entry</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+
+                    <group>
+                        <group string="Transaction">
+                            <field name="transaction_type"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="date"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="vehicle_id"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="vehicle_license_plate" readonly="1"/>
+                            <field name="fuel_type_id"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="trip_id"
+                                readonly="state not in ('draft','to_approve')"
+                                invisible="transaction_type != 'trip'"
+                            />
+                        </group>
+                        <group string="Responsible">
+							<field name="is_fleet_manager" invisible="1"/>
+							<field name="is_multi_company" invisible="1"/>
+							<field name="driver_id" readonly="1"/>
+							<field name="fleet_manager_id"
+								readonly="state not in ('draft','to_approve')"
+								invisible="not is_fleet_manager"
+							/>
+							<field name="logged_by" readonly="1"/>
+							<field name="location_name"
+								readonly="state not in ('draft','to_approve')"
+								placeholder="Nama SPBU / pelabuhan / bunker station"
+							/>
+							<field name="company_id"
+								invisible="not is_multi_company"
+							/>
+						</group>
+                    </group>
+
+                    <group string="Odometer / Distance">
+                        <group>
+                            <field name="odometer_start"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="odometer_end"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="odometer_unit" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="distance" readonly="1"/>
+                            <field name="engine_hours"
+                                readonly="state not in ('draft','to_approve')"
+                                invisible="transaction_type == 'refuel'"
+                            />
+                        </group>
+                    </group>
+
+                    <group string="Fuel Quantity &amp; Cost">
+                        <group>
+                            <field name="qty_liters"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="price_per_liter"
+                                readonly="state not in ('draft','to_approve')"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="total_cost" readonly="1"/>
+                            <field name="consumption_rate" readonly="1"
+                                invisible="transaction_type == 'refuel'"
+                            />
+                            <field name="consumption_per_hour"
+                                readonly="state not in ('draft','to_approve')"
+                                invisible="transaction_type == 'refuel'"
+                            />
+                        </group>
+                    </group>
+
+                    <group string="Notes">
+                        <field name="note" nolabel="1"
+                            readonly="state in ('posted','cancelled')"
+                            placeholder="Catatan pengisian, kondisi mesin, lokasi khusus..."
+                        />
+                    </group>
+
+                    <!-- Hidden anomaly fields -->
+                    <field name="is_anomaly" invisible="1"/>
+                    <field name="anomaly_notified" invisible="1"/>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         SEARCH VIEW
+    ================================================================ -->
+    <record id="view_fleet_fuel_log_search" model="ir.ui.view">
+        <field name="name">fleet.fuel.log.search</field>
+        <field name="model">fleet.fuel.log</field>
+        <field name="arch" type="xml">
+            <search string="Search Fuel Logs">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="vehicle_license_plate"/>
+                <field name="fuel_type_id"/>
+                <field name="trip_id"/>
+                <field name="location_name"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         PIVOT VIEW
+    ================================================================ -->
+    <record id="view_fleet_fuel_log_pivot" model="ir.ui.view">
+        <field name="name">fleet.fuel.log.pivot</field>
+        <field name="model">fleet.fuel.log</field>
+        <field name="arch" type="xml">
+            <pivot string="Fuel Cost Analysis" disable_linking="0">
+                <field name="vehicle_id" type="row"/>
+                <field name="fuel_type_id" type="col"/>
+                <field name="qty_liters" type="measure"/>
+                <field name="total_cost" type="measure"/>
+                <field name="consumption_rate" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         GRAPH VIEW
+    ================================================================ -->
+    <record id="view_fleet_fuel_log_graph" model="ir.ui.view">
+        <field name="name">fleet.fuel.log.graph</field>
+        <field name="model">fleet.fuel.log</field>
+        <field name="arch" type="xml">
+            <graph string="Fuel Consumption Trend" type="line">
+                <field name="date" type="row"/>
+                <field name="total_cost" type="measure"/>
+                <field name="qty_liters" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- ================================================================
+         EMAIL TEMPLATE — Anomaly Notification
+    ================================================================ -->
+    <record id="email_template_fuel_anomaly" model="mail.template">
+        <field name="name">Fleet Fuel — Anomaly Alert</field>
+        <field name="model_id" ref="model_fleet_fuel_log"/>
+        <field name="subject">Anomali Konsumsi BBM: {{ object.name }} - {{ object.vehicle_id.name }}</field>
+        <field name="email_to">{{ ctx.get('manager_email') or object.fleet_manager_id.email }}</field>
+        <field name="body_html" type="html">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #d63031;">Anomali Konsumsi BBM Terdeteksi</h2>
+                <p>Sistem mendeteksi konsumsi BBM yang tidak normal pada log berikut:</p>
+                <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+                    <tr style="background:#fff3cd;">
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Reference</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Vehicle</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.vehicle_id.name }} ({{ object.vehicle_license_plate or '-' }})</td>
+                    </tr>
+                    <tr style="background:#f8f9fa;">
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Tanggal</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.date }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Jenis BBM</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.fuel_type_id.name }}</td>
+                    </tr>
+                    <tr style="background:#f8f9fa;">
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Volume</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.qty_liters }} L</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Konsumsi</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;color:#d63031;"><strong>{{ '%.2f'|format(object.consumption_rate) }} L/100km</strong></td>
+                    </tr>
+                    <tr style="background:#fff3cd;">
+                        <td style="padding:8px;border:1px solid #ddd;"><strong>Alasan Anomali</strong></td>
+                        <td style="padding:8px;border:1px solid #ddd;">{{ object.anomaly_reason }}</td>
+                    </tr>
+                </table>
+                <p>Harap lakukan verifikasi sebelum menyetujui log ini.</p>
+                <p style="color:#888;font-size:12px;">Email ini dikirim otomatis oleh sistem Fleet Fuel Log.</p>
+            </div>
+        </field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+
+</odoo>

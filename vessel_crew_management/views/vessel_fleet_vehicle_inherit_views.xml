@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="fleet_vehicle_crew_inherit_view" model="ir.ui.view">
+    <field name="name">fleet.vehicle.crew.inherit</field>
+    <field name="model">fleet.vehicle</field>
+    <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+    <field name="arch" type="xml">
+
+      <!-- FIX BUG-004: vessel_type_id ditempatkan di form utama fleet.vehicle
+           tepat setelah license_plate, tanpa kondisi invisible apapun.
+           Sebelumnya field ini tersembunyi di tab "Data Kapal" (fleet_document_id)
+           yang hanya muncul jika is_vessel=True, sedangkan is_vessel dihitung
+           dari vessel_type_id itu sendiri — circular dependency.
+           Fix ini memastikan kapal bisa dipilih di dropdown Penugasan ABK. -->
+      <field name="license_plate" position="after">
+        <field name="vessel_type_id"
+               placeholder="Kosongkan untuk kendaraan darat"
+               help="Pilih tipe kapal jika ini adalah kapal laut. Tab Data Kapal akan muncul otomatis setelah terisi. Biarkan kosong untuk kendaraan darat."/>
+        <field name="is_vessel" invisible="1"/>
+      </field>
+
+      <!-- Smart buttons crew — tetap invisible jika bukan vessel -->
+      <div class="oe_button_box" position="inside">
+        <button name="action_view_active_crew" type="object"
+                class="oe_stat_button" icon="fa-users"
+                invisible="not is_vessel or active_crew_count == 0">
+          <field name="active_crew_count" widget="statinfo" string="ABK On Board"/>
+        </button>
+        <button name="action_view_crew_schedule" type="object"
+                class="oe_stat_button" icon="fa-calendar"
+                invisible="not is_vessel">
+          <div class="o_field_widget o_stat_info">
+            <span class="o_stat_text">Jadwal Crew</span>
+          </div>
+        </button>
+      </div>
+
+    </field>
+  </record>
+</odoo>

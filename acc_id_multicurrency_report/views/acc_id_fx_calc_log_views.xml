@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <record id="view_fx_calc_log_list" model="ir.ui.view">
+    <field name="name">acc.id.fx.calc.log.list</field>
+    <field name="model">acc.id.fx.calc.log</field>
+    <field name="arch" type="xml">
+      <list create="false" edit="false" delete="false">
+        <field name="run_at"            string="Waktu"/>
+        <field name="config_id"         string="Config Laporan"/>
+        <field name="run_by"            string="Dijalankan Oleh"/>
+        <field name="pl_avg_rate_used"  string="Kurs Avg P&amp;L"/>
+        <field name="bs_closing_rate_used" string="Kurs Closing BS"/>
+        <field name="rate_source"       string="Sumber Kurs"/>
+        <field name="lines_computed"    string="Baris"/>
+        <field name="duration_seconds"  string="Durasi (dtk)"/>
+        <field name="trigger_reason"    string="Trigger"/>
+        <field name="result" widget="badge"
+               decoration-success="result == 'success'"
+               decoration-danger="result  == 'error'"/>
+        <field name="error_message"     optional="hide"/>
+      </list>
+    </field>
+  </record>
+
+  <record id="action_fx_calc_log_list" model="ir.actions.act_window">
+    <field name="name">Log Kalkulasi Dual-Currency</field>
+    <field name="res_model">acc.id.fx.calc.log</field>
+    <field name="view_mode">list</field>
+    <field name="context">{'create': False}</field>
+  </record>
+
+</odoo>

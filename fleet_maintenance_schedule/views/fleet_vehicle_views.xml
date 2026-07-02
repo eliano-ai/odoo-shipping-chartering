@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fleet_vehicle_form_inherit_maintenance" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.maintenance.schedule</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button
+                    type="object"
+                    name="action_view_maintenance_schedules"
+                    class="oe_stat_button"
+                    icon="fa-calendar-check-o">
+                    <field name="maintenance_schedule_count"
+                        widget="statinfo"
+                        string="Maintenance"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Maintenance Schedule" name="maintenance_schedule">
+
+                    <div class="alert alert-warning mb-2"
+                        role="alert"
+                        invisible="maintenance_schedule_due_count == 0">
+                        <i class="fa fa-exclamation-triangle me-1"/>
+                        Ada <strong>
+                            <field name="maintenance_schedule_due_count" readonly="1" nolabel="1"/>
+                        </strong> jadwal maintenance yang jatuh tempo dalam 7 hari ke depan atau sudah melewati batas.
+                    </div>
+
+                    <field name="maintenance_schedule_ids"
+						context="{'default_vehicle_id': id}"
+						widget="one2many">
+                        <list
+                            string="Maintenance Schedules"
+                            decoration-danger="state in ('draft','confirmed') and scheduled_date and scheduled_date &lt; today"
+                            decoration-warning="state in ('draft','confirmed') and scheduled_date and scheduled_date &gt;= today"
+                            decoration-success="state == 'done'"
+                            decoration-muted="state == 'cancelled'"
+                            open_form_view="1">
+                            <field name="name"/>
+                            <field name="maintenance_type"
+                                widget="badge"
+                                decoration-info="maintenance_type == 'preventive'"
+                                decoration-warning="maintenance_type == 'corrective'"
+                                decoration-primary="maintenance_type == 'predictive'"
+                                decoration-danger="maintenance_type == 'overhaul'"/>
+                            <field name="schedule_basis" optional="hide"/>
+                            <field name="scheduled_date" optional="show"/>
+                            <field name="odometer_trigger" optional="show"/>
+                            <field name="technician_id" optional="show"/>
+                            <field name="estimated_cost" optional="show" sum="Total Estimated"/>
+                            <field name="actual_cost" optional="show" sum="Total Actual"/>
+                            <field name="state"
+                                widget="badge"
+                                decoration-secondary="state == 'draft'"
+                                decoration-info="state == 'confirmed'"
+                                decoration-warning="state == 'in_progress'"
+                                decoration-success="state == 'done'"
+                                decoration-danger="state == 'cancelled'"/>
+                            <button name="action_confirm"
+                                type="object"
+                                string="Confirm"
+                                icon="fa-check"
+                                invisible="state != 'draft'"
+                                groups="fleet_maintenance_schedule.group_fleet_manager"/>
+                            <button name="action_start"
+                                type="object"
+                                string="Start"
+                                icon="fa-play"
+                                invisible="state != 'confirmed'"/>
+                            <button name="action_done"
+                                type="object"
+                                string="Done"
+                                icon="fa-flag-checkered"
+                                invisible="state != 'in_progress'"/>
+                        </list>
+                    </field>
+
+                    <div class="o_form_label text-muted mt-2" style="font-size: 12px;">
+                        <i class="fa fa-info-circle me-1"/>
+                        Klik baris untuk membuka detail jadwal. Gunakan tombol <strong>New</strong>
+                        di atas tabel atau buka menu <em>Fleet &gt; Maintenance &gt; Schedules</em>
+                        untuk membuat jadwal baru.
+                    </div>
+
+                    <field name="maintenance_schedule_count" invisible="1"/>
+                    <field name="maintenance_schedule_due_count" invisible="1"/>
+
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>

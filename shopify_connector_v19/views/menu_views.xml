@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_shopify_root"
+              name="Shopify"
+              sequence="90"
+              web_icon="shopify_connector_v19,static/description/icon.png"/>
+
+    <!-- Dashboard -->
+    <menuitem id="menu_shopify_dashboard"
+              name="Dashboard"
+              parent="menu_shopify_root"
+              action="shopify_connector_v19.action_shopify_dashboard"
+              sequence="10"/>
+
+    <!-- Configuration -->
+    <menuitem id="menu_shopify_config"
+              name="Store Configuration"
+              parent="menu_shopify_root"
+              action="shopify_connector_v19.action_shopify_config"
+              sequence="20"
+              groups="shopify_connector_v19.group_shopify_manager"/>
+
+    <!-- Logs -->
+    <menuitem id="menu_shopify_logs"
+              name="Sync Logs"
+              parent="menu_shopify_root"
+              sequence="30"/>
+
+    <menuitem id="menu_shopify_logs_attention"
+              name="Needs Attention"
+              parent="menu_shopify_logs"
+              action="shopify_connector_v19.action_shopify_sync_log"
+              sequence="10"/>
+
+    <menuitem id="menu_shopify_logs_all"
+              name="All Logs"
+              parent="menu_shopify_logs"
+              action="shopify_connector_v19.action_shopify_sync_log_all"
+              sequence="20"/>
+</odoo>

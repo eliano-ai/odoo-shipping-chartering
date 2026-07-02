@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_fleet_fuel_log_manager,fleet.fuel.log.manager,model_fleet_fuel_log,fleet_fuel_log.group_fleet_manager,1,1,1,1
+access_fleet_fuel_log_driver,fleet.fuel.log.driver,model_fleet_fuel_log,fleet_fuel_log.group_driver,1,1,1,0
+access_fleet_fuel_type_manager,fleet.fuel.type.manager,model_fleet_fuel_type,fleet_fuel_log.group_fleet_manager,1,1,1,1
+access_fleet_fuel_type_driver,fleet.fuel.type.driver,model_fleet_fuel_type,fleet_fuel_log.group_driver,1,0,0,0
+access_fleet_vehicle_trip_manager,fleet.vehicle.trip.manager,model_fleet_vehicle_trip,fleet_fuel_log.group_fleet_manager,1,1,1,1
+access_fleet_vehicle_trip_driver,fleet.vehicle.trip.driver,model_fleet_vehicle_trip,fleet_fuel_log.group_driver,1,0,0,0

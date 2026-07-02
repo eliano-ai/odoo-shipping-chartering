@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Fleet User: hanya bisa edit dokumen di mana dia adalah renewal_pic_id -->
+    <record id="fleet_document_rule_user" model="ir.rule">
+        <field name="name">Fleet Document: User only edits own PIC docs</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="domain_force">[
+            '|',
+            ('renewal_pic_id', '=', False),
+            ('renewal_pic_id', '=', user.id)
+        ]</field>
+        <field name="groups" eval="[(4, ref('fleet.fleet_group_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- Fleet Manager: akses penuh semua dokumen di company-nya -->
+    <record id="fleet_document_rule_manager" model="ir.rule">
+        <field name="name">Fleet Document: Manager full access same company</field>
+        <field name="model_id" ref="model_fleet_vehicle_document"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        <field name="groups" eval="[(4, ref('fleet.fleet_group_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+</odoo>

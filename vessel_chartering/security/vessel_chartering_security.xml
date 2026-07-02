@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="group_chartering_user" model="res.groups">
+        <field name="name">Chartering Operations</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_user'))]"/>
+    </record>
+
+    <record id="group_chartering_manager" model="res.groups">
+        <field name="name">Chartering Manager</field>
+        <field name="implied_ids" eval="[(4, ref('vessel_chartering.group_chartering_user')), (4, ref('fleet.fleet_group_manager'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+</odoo>

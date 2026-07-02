@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_vessel_chartering_root"
+              name="Chartering"
+              parent="fleet.menu_root"
+              sequence="18"/>
+
+    <menuitem id="menu_vessel_chartering_config"
+              name="Konfigurasi"
+              parent="menu_vessel_chartering_root"
+              sequence="90"
+              groups="vessel_chartering.group_chartering_manager"/>
+
+    <menuitem id="menu_vessel_cargo_type"
+              name="Tipe Cargo"
+              parent="menu_vessel_chartering_config"
+              action="action_vessel_cargo_type"
+              sequence="10"
+              groups="vessel_chartering.group_chartering_manager"/>
+
+    <menuitem id="menu_vessel_charter_terms"
+              name="Charter Terms"
+              parent="menu_vessel_chartering_config"
+              action="action_vessel_charter_terms"
+              sequence="20"
+              groups="vessel_chartering.group_chartering_manager"/>
+
+    <menuitem id="menu_vessel_laytime_interruption_type"
+              name="Tipe Interupsi Laytime"
+              parent="menu_vessel_chartering_config"
+              action="action_vessel_laytime_interruption_type"
+              sequence="30"
+              groups="vessel_chartering.group_chartering_manager"/>
+
+    <menuitem id="menu_vessel_chartering_port"
+              name="Pelabuhan"
+              parent="menu_vessel_chartering_config"
+              action="action_res_partner_port"
+              sequence="40"
+              groups="vessel_chartering.group_chartering_manager"/>
+
+</odoo>

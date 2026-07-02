@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Cargo Types ─────────────────────────────────────────────────── -->
+    <record id="demo_cargo_type_coal" model="vessel.cargo.type">
+        <field name="name">Batubara</field>
+        <field name="is_dangerous" eval="False"/>
+        <field name="default_stowage_factor">1.25</field>
+    </record>
+
+    <record id="demo_cargo_type_nickel" model="vessel.cargo.type">
+        <field name="name">Nikel</field>
+        <field name="is_dangerous" eval="True"/>
+        <field name="default_stowage_factor">0.55</field>
+    </record>
+
+    <record id="demo_cargo_type_general" model="vessel.cargo.type">
+        <field name="name">General Cargo</field>
+        <field name="is_dangerous" eval="False"/>
+        <field name="default_stowage_factor">1.5</field>
+    </record>
+
+    <!-- ─── Charter Terms ───────────────────────────────────────────────── -->
+    <record id="demo_charter_terms_fiost" model="vessel.charter.terms">
+        <field name="name">FIOST 8,000/8,000 SHINC</field>
+        <field name="loading_terms">FIOST</field>
+        <field name="sundays_holidays_included" eval="True"/>
+        <field name="laytime_reversible_default" eval="True"/>
+    </record>
+
+    <record id="demo_charter_terms_cqd" model="vessel.charter.terms">
+        <field name="name">CQD SHEX</field>
+        <field name="loading_terms">CQD (Customary Quick Despatch)</field>
+        <field name="sundays_holidays_included" eval="False"/>
+        <field name="laytime_reversible_default" eval="False"/>
+    </record>
+
+    <!-- ─── Ports (res.partner) ─────────────────────────────────────────── -->
+    <record id="demo_port_tanjung_priok" model="res.partner">
+        <field name="name">Pelabuhan Tanjung Priok</field>
+        <field name="is_port" eval="True"/>
+        <field name="unlocode">IDTPP</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Jakarta</field>
+    </record>
+
+    <record id="demo_port_balikpapan" model="res.partner">
+        <field name="name">Pelabuhan Balikpapan</field>
+        <field name="is_port" eval="True"/>
+        <field name="unlocode">IDBPN</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Balikpapan</field>
+    </record>
+
+    <record id="demo_port_tarahan" model="res.partner">
+        <field name="name">Pelabuhan Tarahan</field>
+        <field name="is_port" eval="True"/>
+        <field name="unlocode">IDTRH</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Lampung</field>
+    </record>
+
+    <record id="demo_port_satui" model="res.partner">
+        <field name="name">Pelabuhan Satui</field>
+        <field name="is_port" eval="True"/>
+        <field name="unlocode">IDSAT</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Tanah Bumbu</field>
+    </record>
+
+    <record id="demo_port_singapore" model="res.partner">
+        <field name="name">Port of Singapore</field>
+        <field name="is_port" eval="True"/>
+        <field name="unlocode">SGSIN</field>
+        <field name="country_id" ref="base.sg"/>
+        <field name="city">Singapore</field>
+    </record>
+
+</odoo>

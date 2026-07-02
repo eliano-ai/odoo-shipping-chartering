@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vessel_cargo_type_manager,vessel.cargo.type.manager,model_vessel_cargo_type,vessel_chartering.group_chartering_manager,1,1,1,1
+access_vessel_cargo_type_user,vessel.cargo.type.user,model_vessel_cargo_type,vessel_chartering.group_chartering_user,1,0,0,0
+access_vessel_charter_terms_manager,vessel.charter.terms.manager,model_vessel_charter_terms,vessel_chartering.group_chartering_manager,1,1,1,1
+access_vessel_charter_terms_user,vessel.charter.terms.user,model_vessel_charter_terms,vessel_chartering.group_chartering_user,1,0,0,0
+access_vessel_laytime_interruption_type_manager,vessel.laytime.interruption.type.manager,model_vessel_laytime_interruption_type,vessel_chartering.group_chartering_manager,1,1,1,1
+access_vessel_laytime_interruption_type_user,vessel.laytime.interruption.type.user,model_vessel_laytime_interruption_type,vessel_chartering.group_chartering_user,1,0,0,0

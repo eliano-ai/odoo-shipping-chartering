@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="laytime_interruption_rain" model="vessel.laytime.interruption.type">
+        <field name="name">Hujan</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+    <record id="laytime_interruption_shifting" model="vessel.laytime.interruption.type">
+        <field name="name">Shifting</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+    <record id="laytime_interruption_breakdown_shore" model="vessel.laytime.interruption.type">
+        <field name="name">Equipment Breakdown (Shore)</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+    <record id="laytime_interruption_breakdown_vessel" model="vessel.laytime.interruption.type">
+        <field name="name">Equipment Breakdown (Vessel)</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+    <record id="laytime_interruption_waiting_berth" model="vessel.laytime.interruption.type">
+        <field name="name">Waiting Berth</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+    <record id="laytime_interruption_force_majeure" model="vessel.laytime.interruption.type">
+        <field name="name">Force Majeure</field>
+        <field name="is_counting" eval="False"/>
+    </record>
+
+</odoo>

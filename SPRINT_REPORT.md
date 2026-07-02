@@ -158,6 +158,26 @@ Tidak ada blocker baru di sprint ini — proses lancar berkat pelajaran RNG sche
 - ✅ `action_create_estimate` dari kontrak — auto-generate nomor revisi benar (EST-001 untuk kontrak yang belum punya estimate)
 
 ### Catatan
-- `usd_rate` default menggunakan asumsi representasi `res.currency.rate.rate` = company_currency per unit foreign currency (invers) — perlu dicek ulang saat company currency benar-benar IDR di data produksi nyata (saat ini `My Company` default currency masih USD di database dev, jadi `_default_usd_rate` return 0.0 karena `usd == company_currency`). Tidak blocking untuk MVP karena field tetap manual-editable.
+- `usd_rate` default menggunakan asumsi representasi `res.currency.rate.rate` = company_currency per unit foreign currency (invers) — perlu dicek ulang saat company currency benar-benar IDR di data produksi nyata (saat ini `My Company` default currency masih USD di database dev, jadi `_default_usd_rate` return 0.0 karena `usd == company_currency`). **Update: sudah diperbaiki di entry "Setup Tambahan — Lokalisasi Indonesia" di bawah.**
+
+---
+
+## Setup Tambahan — Lokalisasi Indonesia (Currency IDR + CoA) — 2026-07-02
+
+Atas instruksi user: company default currency diubah ke IDR, dan modul terkait accounting pakai default Indonesia.
+
+- `res.company` (My Company): `country_id` → Indonesia, `currency_id` → IDR (sebelumnya USD/United States, default Odoo demo)
+- Install modul `l10n_id` (Chart of Accounts Indonesia, tersedia di Community)
+- Load chart template `id` via `account.chart.template.try_loading('id', ...)` — 51 akun generic lama dihapus otomatis, diganti 118 akun CoA Indonesia + 16 tax + 8 journal
+- Seed dummy kurs USD/IDR (`res.currency.rate`, rate 1 USD = 16.250 IDR, sesuai angka contoh acceptance criteria §10.5 tech spec) — dipindah ke `data/vessel_chartering_demo.xml` (xmlid `demo_currency_rate_usd`) supaya reproducible & idempotent, bukan cuma perubahan ad-hoc di database
+
+### Verifikasi
+- ✅ `vessel_chartering` tetap install/upgrade bersih setelah perubahan currency & CoA
+- ✅ `_default_usd_rate()` di `vessel.voyage.estimate` sekarang mengembalikan nilai riil (16250.0) alih-alih 0.0 — dites dengan create estimate baru, lalu rollback
+- ✅ Idempotent — re-run `-u`, jumlah currency rate USD tetap 1 (tidak duplikat)
+
+### Catatan
+- Perubahan currency/CoA ini di level **database/environment**, bukan di level kode modul (`vessel.company`/`account.chart.template` bukan tanggung jawab `vessel_chartering`) — tidak ada file baru di modul untuk ini kecuali seed rate dummy
+- Field `currency_id` di `vessel.charter.contract` tetap default **USD** (bukan ikut company currency) — sengaja, sesuai §2.4 tech spec: "Freight rate, hire rate, demurrage rate dalam USD (praktik pasar)" — ini keputusan bisnis charter party, independen dari currency fungsional perusahaan
 
 ---

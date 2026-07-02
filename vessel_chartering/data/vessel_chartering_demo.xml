@@ -288,4 +288,12 @@
         <field name="state">selected</field>
     </record>
 
+    <!-- ─── Kurs USD/IDR dummy (company currency = IDR) ────────────────────── -->
+    <record id="demo_currency_rate_usd" model="res.currency.rate">
+        <field name="currency_id" ref="base.USD"/>
+        <field name="name" eval="datetime.today().strftime('%Y-%m-%d')"/>
+        <field name="rate" eval="1/16250.0"/>
+        <field name="company_id" ref="base.main_company"/>
+    </record>
+
 </odoo>

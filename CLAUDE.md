@@ -6,6 +6,7 @@ Odoo Shipping adalah kumpulan modul custom Odoo 19 untuk perusahaan pelayaran/fl
 - **Platform**: Odoo 19.0 **Community** (lokal), Python 3.12
 - **Database**: PostgreSQL 16
 - **Runtime lokal**: Docker Compose (`docker-compose.yml` di root) — `docker compose up -d`, akses di `http://localhost:8069`, database dev: `shipping_dev`
+- **Company & Accounting**: company default = Indonesia, currency **IDR**, Chart of Accounts `l10n_id` (118 akun, 16 tax, 8 journal). Kontrak charter (`vessel.charter.contract.currency_id`) tetap default **USD** — sengaja beda dari company currency, sesuai praktik pasar charter party (§2.4 tech spec). Ada dummy kurs USD/IDR (16.250) di demo data `vessel_chartering` untuk testing.
 - **Package manager**: tidak ada (struktur modul Odoo standar — folder per modul dengan `__manifest__.py`)
 - **Lisensi modul**: LGPL-3
 

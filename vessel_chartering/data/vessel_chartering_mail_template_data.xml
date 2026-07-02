@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="email_template_fixture_confirmed" model="mail.template">
+        <field name="name">Vessel Chartering: Fixture Confirmed (Internal)</field>
+        <field name="model_id" ref="model_vessel_charter_contract"/>
+        <field name="subject">✅ Fixture dikonfirmasi: {{ object.name }}</field>
+        <field name="email_to">{{ object.user_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0F6E56; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Fixture Dikonfirmasi</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Kontrak <b>{{ object.name }}</b> (<t t-out="object.contract_type"/> — <t t-out="object.direction"/>) telah dikonfirmasi.</p>
+        <p>Kapal: <b><t t-out="object.vessel_id.display_name or '-'"/></b><br/>
+           Charterer/Owner: <t t-out="object.partner_id.name"/><br/>
+           Laycan/Periode: <t t-out="object.date_start"/> s.d. <t t-out="object.date_end or '-'"/></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_laycan_reminder" model="mail.template">
+        <field name="name">Vessel Chartering: Laycan Reminder</field>
+        <field name="model_id" ref="model_vessel_charter_contract"/>
+        <field name="subject">⏰ Laycan reminder: {{ object.name }}</field>
+        <field name="email_to">{{ object.user_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #854F0B; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Pengingat Laycan</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Kontrak <b>{{ object.name }}</b> laycan pada <b><t t-out="object.date_start"/></b>.</p>
+        <p>Kapal: <t t-out="object.vessel_id.display_name or '-'"/><br/>
+           NOR belum ditender — segera koordinasi dengan operasional.</p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_demurrage_approved" model="mail.template">
+        <field name="name">Vessel Chartering: Demurrage Approved</field>
+        <field name="model_id" ref="model_vessel_laytime_calculation"/>
+        <field name="subject">Demurrage disetujui: {{ object.contract_id.name }}</field>
+        <field name="email_to">{{ object.contract_id.partner_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #A61E1E; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Demurrage Disetujui</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Perhitungan laytime untuk kontrak <b><t t-out="object.contract_id.name"/></b>
+           (<t t-out="object.port_call_type"/>) telah disetujui.</p>
+        <p>Laytime Allowed: <t t-out="object.laytime_allowed_hours"/> jam<br/>
+           Laytime Used: <t t-out="object.laytime_used_hours"/> jam<br/>
+           Balance: <t t-out="object.balance_hours"/> jam<br/>
+           Demurrage: <b><t t-out="object.demurrage_amount"/> <t t-out="object.currency_id.name"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_hire_due" model="mail.template">
+        <field name="name">Vessel Chartering: Hire Due</field>
+        <field name="model_id" ref="model_vessel_hire_statement_line"/>
+        <field name="subject">Hire statement jatuh tempo: {{ object.contract_id.name }}</field>
+        <field name="email_to">{{ object.contract_id.user_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #1F4E79; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Hire Statement Jatuh Tempo</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Hire statement kontrak <b><t t-out="object.contract_id.name"/></b>
+           periode <t t-out="object.period_start"/> s.d. <t t-out="object.period_end"/> jatuh tempo 5 hari lagi.</p>
+        <p>Total Amount: <b><t t-out="object.total_amount"/> <t t-out="object.currency_id.name"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+</odoo>

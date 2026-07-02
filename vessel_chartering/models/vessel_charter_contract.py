@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta
+import logging
+from datetime import date, timedelta
 
 from dateutil.relativedelta import relativedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
+
+_logger = logging.getLogger(__name__)
 
 
 CONTRACT_TYPE = [
@@ -244,6 +247,13 @@ class VesselCharterContract(models.Model):
     laytime_count = fields.Integer(string='Jumlah Laytime', compute='_compute_smart_button_counts')
     invoice_count = fields.Integer(string='Jumlah Invoice', compute='_compute_smart_button_counts')
 
+    demurrage_exposure = fields.Monetary(
+        string='Demurrage Exposure', currency_field='currency_id',
+        default=0.0, copy=False,
+        help='Estimasi demurrage dari laytime yang belum approved (draft/submitted) '
+             'dengan balance negatif. Diupdate oleh cron harian untuk monitoring dashboard, '
+             'bukan nilai final (final hanya dari laytime approved/invoiced).',
+    )
     note = fields.Text(string='Catatan')
 
     # ─────────────────────────────────────────────────────────────────────
@@ -413,9 +423,22 @@ class VesselCharterContract(models.Model):
                 if rec.contract_type == 'time' and rec.hire_rate <= 0:
                     raise ValidationError(_('Hire rate harus lebih besar dari 0.'))
             rec._check_vessel_overlap()
+            rec._check_vessel_document_warning()
             rec._ensure_voyage_analytic_account()
             rec.state = 'confirmed'
             rec.message_post(body=_('Fixture dikonfirmasi.'))
+            rec._send_fixture_confirmed_email()
+
+    def _send_fixture_confirmed_email(self):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_chartering.email_template_fixture_confirmed', raise_if_not_found=False,
+        )
+        if template and self.user_id and self.user_id.email:
+            try:
+                template.send_mail(self.id, force_send=True, raise_exception=False)
+            except Exception as e:
+                _logger.warning('Gagal kirim email fixture confirmed untuk %s: %s', self.name, e)
 
     def action_start(self):
         for rec in self:
@@ -423,8 +446,43 @@ class VesselCharterContract(models.Model):
                 raise UserError(_('Hanya kontrak Confirmed yang bisa dimulai.'))
             if rec.contract_type == 'time' and not rec.delivery_date:
                 rec.delivery_date = fields.Datetime.now()
+            rec._check_vessel_manning_warning()
             rec.state = 'in_progress'
             rec.message_post(body=_('Kontrak dimulai (in progress).'))
+
+    def _check_vessel_document_warning(self):
+        """Integrasi soft ke fleet_document_id — warning (bukan block) jika kapal
+        punya dokumen expired/segera expired. Reuse doc_status compute yang sudah ada."""
+        for rec in self:
+            vessel = rec.vessel_id
+            if not vessel or 'doc_status' not in vessel._fields:
+                continue
+            if vessel.doc_status in ('critical', 'warning'):
+                label = _('EXPIRED') if vessel.doc_status == 'critical' else _('segera expired')
+                rec.message_post(body=_(
+                    '⚠️ Peringatan: kapal %(vessel)s punya dokumen %(status)s '
+                    '(%(count)s dokumen). Cek tab Dokumen Legal sebelum operasi.'
+                ) % {
+                    'vessel': vessel.display_name,
+                    'status': label,
+                    'count': vessel.expired_doc_count if vessel.doc_status == 'critical'
+                    else vessel.expiring_doc_count,
+                })
+
+    def _check_vessel_manning_warning(self):
+        """Integrasi soft ke vessel_crew_management (opsional, tidak di-depends) —
+        warning jika manning kosong saat voyage dimulai."""
+        for rec in self:
+            vessel = rec.vessel_id
+            if rec.contract_type != 'voyage' or not vessel:
+                continue
+            if 'active_crew_count' not in vessel._fields:
+                continue  # vessel_crew_management tidak terinstall — skip diam-diam
+            if vessel.active_crew_count == 0:
+                rec.message_post(body=_(
+                    '⚠️ Peringatan: kapal %(vessel)s belum punya ABK aktif (manning kosong) '
+                    'saat voyage dimulai.'
+                ) % {'vessel': vessel.display_name})
 
     def action_complete(self):
         for rec in self:
@@ -486,6 +544,79 @@ class VesselCharterContract(models.Model):
                 'company_id': rec.company_id.id,
             })
             rec.analytic_account_id = account
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Cron Jobs — Sprint 7
+    # ─────────────────────────────────────────────────────────────────────
+
+    @api.model
+    def _cron_laycan_alert(self):
+        """Harian — kontrak confirmed dengan laycan H-7/H-3/H-0 tanpa NOR tendered."""
+        today = date.today()
+        template = self.env.ref(
+            'vessel_chartering.email_template_laycan_reminder', raise_if_not_found=False,
+        )
+        for days in (7, 3, 0):
+            target_date = today + timedelta(days=days)
+            contracts = self.search([
+                ('state', '=', 'confirmed'),
+                ('date_start', '=', target_date),
+                ('contract_type', '!=', 'coa'),
+            ])
+            for rec in contracts:
+                if any(rec.laytime_ids.mapped('nor_tendered')):
+                    continue  # NOR sudah tendered, tidak perlu alert lagi
+                rec.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Laycan H-%s: %s') % (days, rec.name),
+                    note=_('Laycan kontrak %s jatuh pada %s (H-%s). Pastikan NOR segera ditender.')
+                    % (rec.name, target_date, days),
+                    user_id=rec.user_id.id or self.env.uid,
+                )
+                if template:
+                    try:
+                        template.send_mail(rec.id, force_send=True, raise_exception=False)
+                    except Exception as e:
+                        _logger.warning('Gagal kirim email laycan alert untuk %s: %s', rec.name, e)
+
+    @api.model
+    def _cron_coa_progress(self):
+        """Mingguan — COA dengan qty_remaining > 0 dan sisa periode < 60 hari."""
+        today = date.today()
+        coas = self.search([
+            ('contract_type', '=', 'coa'),
+            ('qty_remaining', '>', 0),
+            ('date_end', '!=', False),
+        ])
+        for rec in coas:
+            days_left = (rec.date_end - today).days
+            if 0 <= days_left < 60:
+                rec.message_post(body=_(
+                    '⚠️ Peringatan under-lifting: COA %(name)s masih tersisa %(qty).0f MT '
+                    'dengan sisa periode %(days)s hari lagi.'
+                ) % {'name': rec.name, 'qty': rec.qty_remaining, 'days': days_left})
+                rec.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('COA under-lifting: %s') % rec.name,
+                    note=_('Sisa qty %.0f MT, periode tinggal %s hari.') % (
+                        rec.qty_remaining, days_left,
+                    ),
+                    user_id=rec.user_id.id or self.env.uid,
+                )
+
+    @api.model
+    def _cron_demurrage_exposure(self):
+        """Harian — update demurrage_exposure dari laytime draft/submitted balance negatif."""
+        contracts = self.search([('contract_type', '=', 'voyage')])
+        for rec in contracts:
+            pending = rec.laytime_ids.filtered(
+                lambda l: l.state in ('draft', 'submitted') and l.balance_hours < 0
+            )
+            exposure = sum(
+                (abs(l.balance_hours) / 24.0) * rec.demurrage_rate for l in pending
+            )
+            if rec.demurrage_exposure != exposure:
+                rec.demurrage_exposure = exposure
 
     # ─────────────────────────────────────────────────────────────────────
     # Smart button actions — placeholder, diisi Sprint 3/4/6

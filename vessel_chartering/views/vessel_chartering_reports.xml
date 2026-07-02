@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Fixture Pipeline ────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_graph_pipeline" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.graph.pipeline</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <graph string="Fixture Pipeline" type="bar">
+                <field name="date_start" interval="month"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_vessel_fixture_pipeline" model="ir.actions.act_window">
+        <field name="name">Fixture Pipeline</field>
+        <field name="res_model">vessel.charter.contract</field>
+        <field name="view_mode">graph,kanban,list</field>
+        <field name="context">{'group_by': ['state']}</field>
+    </record>
+
+    <!-- ─── Demurrage Exposure ──────────────────────────────────────────── -->
+    <record id="vessel_laytime_calculation_view_pivot" model="ir.ui.view">
+        <field name="name">vessel.laytime.calculation.pivot</field>
+        <field name="model">vessel.laytime.calculation</field>
+        <field name="arch" type="xml">
+            <pivot string="Demurrage Exposure">
+                <field name="contract_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="balance_hours" type="measure"/>
+                <field name="demurrage_amount" type="measure"/>
+                <field name="despatch_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_vessel_demurrage_exposure" model="ir.actions.act_window">
+        <field name="name">Demurrage Exposure</field>
+        <field name="res_model">vessel.laytime.calculation</field>
+        <field name="view_mode">pivot,list</field>
+    </record>
+
+    <!-- ─── Analisa Voyage Estimate ─────────────────────────────────────── -->
+    <record id="vessel_voyage_estimate_view_graph" model="ir.ui.view">
+        <field name="name">vessel.voyage.estimate.graph</field>
+        <field name="model">vessel.voyage.estimate</field>
+        <field name="arch" type="xml">
+            <graph string="Analisa Voyage Estimate" type="bar">
+                <field name="contract_id"/>
+                <field name="voyage_result" type="measure"/>
+                <field name="tce_per_day" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_vessel_voyage_estimate_analysis" model="ir.actions.act_window">
+        <field name="name">Analisa Voyage Estimate</field>
+        <field name="res_model">vessel.voyage.estimate</field>
+        <field name="view_mode">graph,list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada voyage estimate</p>
+            <p>Analisa dasar estimate per kontrak — perbandingan estimate vs actual
+               lengkap akan ada di modul vessel_voyage_pnl (fase berikutnya).</p>
+        </field>
+    </record>
+
+    <!-- ─── Menu Laporan ────────────────────────────────────────────────── -->
+    <menuitem id="menu_vessel_chartering_reports"
+              name="Laporan"
+              parent="menu_vessel_chartering_root"
+              sequence="30"/>
+
+    <menuitem id="menu_vessel_fixture_pipeline"
+              name="Fixture Pipeline"
+              parent="menu_vessel_chartering_reports"
+              action="action_vessel_fixture_pipeline"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_demurrage_exposure"
+              name="Demurrage Exposure"
+              parent="menu_vessel_chartering_reports"
+              action="action_vessel_demurrage_exposure"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_voyage_estimate_analysis"
+              name="Analisa Voyage Estimate"
+              parent="menu_vessel_chartering_reports"
+              action="action_vessel_voyage_estimate_analysis"
+              sequence="30"/>
+
+</odoo>

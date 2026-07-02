@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ir_actions_server_laycan_alert" model="ir.actions.server">
+        <field name="name">Vessel Chartering: Laycan Alert</field>
+        <field name="model_id" ref="model_vessel_charter_contract"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_laycan_alert()</field>
+    </record>
+    <record id="cron_vessel_chartering_laycan_alert" model="ir.cron">
+        <field name="name">Vessel Chartering: Laycan Alert (H-7/H-3/H-0)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_laycan_alert"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=0, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_coa_progress" model="ir.actions.server">
+        <field name="name">Vessel Chartering: COA Progress Check</field>
+        <field name="model_id" ref="model_vessel_charter_contract"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_coa_progress()</field>
+    </record>
+    <record id="cron_vessel_chartering_coa_progress" model="ir.cron">
+        <field name="name">Vessel Chartering: COA Under-lifting Check</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_coa_progress"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=30, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_demurrage_exposure" model="ir.actions.server">
+        <field name="name">Vessel Chartering: Demurrage Exposure Update</field>
+        <field name="model_id" ref="model_vessel_charter_contract"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_demurrage_exposure()</field>
+    </record>
+    <record id="cron_vessel_chartering_demurrage_exposure" model="ir.cron">
+        <field name="name">Vessel Chartering: Demurrage Exposure Update</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_demurrage_exposure"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=0, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_hire_due" model="ir.actions.server">
+        <field name="name">Vessel Chartering: Hire Due Alert</field>
+        <field name="model_id" ref="model_vessel_hire_statement_line"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_hire_due()</field>
+    </record>
+    <record id="cron_vessel_chartering_hire_due" model="ir.cron">
+        <field name="name">Vessel Chartering: Hire Due Alert (H-5)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_hire_due"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=15, second=0)"/>
+    </record>
+
+</odoo>

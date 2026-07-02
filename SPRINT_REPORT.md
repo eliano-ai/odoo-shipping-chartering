@@ -300,3 +300,61 @@ Tidak ada blocker baru — pelajaran dari Sprint 2/4 (RNG schema, `group_ids`, `
 - MVP invoicing ini **melengkapi seluruh 7 sprint breakdown** kecuali Sprint 7 (cron, notifikasi, integrasi soft, acceptance criteria final) — modul sudah punya alur bisnis lengkap dari fixture sampai invoice
 
 ---
+
+## Sprint 7 — Cron, Notifikasi, Integrasi Soft, Laporan & Acceptance Final — 2026-07-02
+
+**Status**: ✅ Done — **sprint terakhir, MVP `vessel_chartering` selesai.**
+
+### Task Selesai
+- [x] 4 cron job: `_cron_laycan_alert` (harian, H-7/H-3/H-0), `_cron_hire_due` (harian, H-5), `_cron_coa_progress` (mingguan, under-lifting), `_cron_demurrage_exposure` (harian, update field baru `demurrage_exposure` di kontrak dari laytime draft/submitted balance negatif)
+- [x] 4 email template (fixture confirmed internal, laycan reminder, demurrage approved ke partner — opsional hanya jika demurrage>0 & partner punya email, hire due) — wired ke `action_confirm`/`action_approve`
+- [x] Integrasi soft `fleet_document_id`: `_check_vessel_document_warning()` — warning (bukan block) di `action_confirm` jika kapal `doc_status` critical/warning, reuse compute yang sudah ada
+- [x] Integrasi soft `vessel_crew_management`: `_check_vessel_manning_warning()` — warning di `action_start` jika `active_crew_count==0`, cek field existence dulu (`'active_crew_count' not in vessel._fields`) supaya tetap aman kalau modul itu tidak terinstall
+- [x] Laporan: Fixture Pipeline (graph by state & bulan laycan), Demurrage Exposure (pivot kontrak × state), Analisa Voyage Estimate (graph dasar) + menu Laporan
+- [x] Security review: record rule multi-company untuk `vessel.charter.contract` & `vessel.laytime.calculation`; field `total_qty_commitment`/`qty_remaining` COA dibatasi `groups="vessel_chartering.group_chartering_manager"` (chartering_user tidak lihat nilai total)
+- [x] **Ketemu & tutup gap §10.8**: dummy data COA cuma 2 shipment (harusnya 3 sesuai acceptance criteria) — ditambah shipment ke-3, plus unit test baru `test_coa.py` yang eksplisit menguji 3 shipment + 1 shipment draft yang TIDAK ikut terhitung
+- [x] **12 unit test total**, semua pass (0 failed, 0 error)
+- [x] Audit checklist §10.10: grep `display_name = fields` (field custom), `fields.Datetime.from_string`, `@api.depends()` kosong, `decoration-secondary` — **semua 0 hasil, bersih**
+
+### Blocker & Resolusi
+- **Vessel overlap validation ke-trigger saat testing manual** — `demo_contract_voyage_in_1` berbagi kapal (`demo_vessel_mv_01`) dengan `demo_contract_time_out_1` yang sudah in_progress. Ini bukan bug Sprint 7, melainkan constraint dari Sprint 2 yang bekerja benar pada dummy data yang kebetulan overlap. **Resolusi**: pilih kontrak lain (tug_01) untuk verifikasi manual integrasi warning dokumen.
+- **Gap §10.8** (lihat di atas) — ditemukan saat menjalankan checklist acceptance criteria secara sistematis, bukan dari error install/test. Menunjukkan pentingnya cross-check eksplisit terhadap daftar acceptance criteria, bukan cuma "modul jalan tanpa error".
+
+### Verifikasi — Checklist Acceptance Criteria §10 Tech Spec (FINAL)
+| # | Kriteria | Status |
+|---|---|---|
+| 10.1 | Install bersih Odoo 19 tanpa error, tanpa konflik 5 modul existing | ✅ (setiap sprint diverifikasi `-u` tanpa ERROR/CRITICAL) |
+| 10.2 | Voyage charter out USD confirm → analytic plan Voyage & Vessel terbentuk | ✅ (Sprint 2, diverifikasi shell) |
+| 10.3 | SOF interupsi hujan → laytime used benar termasuk once-on-demurrage (3 test case) | ✅ (Sprint 4, `test_laytime_calculation.py`) |
+| 10.4 | Laytime approved balance −36h, rate 10.000/day → demurrage invoice USD 15.000 + analytic 2 plan | ✅ (Sprint 6, test + verifikasi manual dummy data asli) |
+| 10.5 | Invoice IDR fixed rate 16.250 → amount & kurs benar | ✅ (Sprint 6, `test_invoicing.py`) |
+| 10.6 | Hire statement 15 hari, off-hire 12 jam → net hire days = 14.5 | ✅ (Sprint 5, dummy data + test) |
+| 10.7 | Charter-in → vendor bill draft, expense account & analytic benar | ✅ (Sprint 6, `test_invoicing.py`) |
+| 10.8 | COA 3 shipment child → qty_remaining benar | ✅ (Sprint 7 — gap ditemukan & ditutup, `test_coa.py`) |
+| 10.9 | Semua unit test TransactionCase compute laytime lulus | ✅ (12/12 pass) |
+| 10.10 | Audit: no `display_name` custom field, no `fields.Datetime.from_string`, no `@api.depends()` kosong | ✅ (grep bersih) |
+
+**Seluruh 10 acceptance criteria MVP `vessel_chartering` terpenuhi.**
+
+### Catatan
+- Model `vessel_voyage_operations` (noon report), `vessel_voyage_pnl` (estimate vs actual lengkap), `vessel_bunker_management`, PDA/FDA, CTMS LNG, billing floating crane per shift — semua eksplisit **out of scope** MVP ini sesuai §1.1 tech spec, jadi kandidat modul lanjutan
+- Kalender libur nasional untuk SHEX (§3.4 poin 3 tech spec) sengaja belum diimplementasi — masih Fase 2 sesuai keputusan desain awal
+- Bunker adjustment BOD/BOR otomatis, relet linking otomatis — Fase 3 sesuai §9 tech spec
+
+---
+
+## 🎉 MVP `vessel_chartering` Selesai — Ringkasan 7 Sprint
+
+| Sprint | Fokus | Status |
+|---|---|---|
+| 1 | Foundation & Master Data | ✅ |
+| 2 | Core Charter Contract Model & State Machine | ✅ |
+| 3 | Voyage Estimate | ✅ |
+| 4 | Laytime & Demurrage Calculator | ✅ |
+| 5 | Time Charter Hire Statement | ✅ |
+| 6 | Invoicing Integration | ✅ |
+| 7 | Cron, Notifikasi, Laporan, Acceptance Final | ✅ |
+
+**12/12 unit test pass. 10/10 acceptance criteria terpenuhi. Zero regresi sepanjang 7 sprint.**
+
+---

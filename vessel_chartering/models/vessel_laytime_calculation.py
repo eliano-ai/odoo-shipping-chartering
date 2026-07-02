@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import timedelta
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 
 PORT_CALL_TYPE = [
@@ -175,6 +178,23 @@ class VesselLaytimeCalculation(models.Model):
                 'dem': rec.demurrage_amount,
                 'des': rec.despatch_amount,
             })
+            if rec.demurrage_amount > 0:
+                rec._send_demurrage_approved_email()
+
+    def _send_demurrage_approved_email(self):
+        """Notifikasi ke partner — opsional, hanya jika ada email partner terisi."""
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_chartering.email_template_demurrage_approved', raise_if_not_found=False,
+        )
+        partner = self.contract_id.partner_id
+        if template and partner and partner.email:
+            try:
+                template.send_mail(self.id, force_send=True, raise_exception=False)
+            except Exception as e:
+                _logger.warning(
+                    'Gagal kirim email demurrage approved untuk %s: %s', self.contract_id.name, e,
+                )
 
     def action_reset_draft(self):
         for rec in self:

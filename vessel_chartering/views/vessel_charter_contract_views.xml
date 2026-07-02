@@ -108,9 +108,11 @@
                                     <field name="total_offhire_hours" readonly="1"/>
                                 </group>
                                 <group string="COA" invisible="contract_type != 'coa'">
-                                    <field name="total_qty_commitment"/>
+                                    <field name="total_qty_commitment"
+                                           groups="vessel_chartering.group_chartering_manager"/>
                                     <field name="qty_shipped" readonly="1"/>
-                                    <field name="qty_remaining" readonly="1"/>
+                                    <field name="qty_remaining" readonly="1"
+                                           groups="vessel_chartering.group_chartering_manager"/>
                                 </group>
                             </group>
                             <group string="Mata Uang &amp; Kurs">

@@ -252,6 +252,22 @@
         <field name="state">completed</field>
     </record>
 
+    <record id="demo_contract_coa_shipment_3" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">out</field>
+        <field name="coa_id" ref="demo_contract_coa_1"/>
+        <field name="partner_id" ref="demo_partner_charterer_b"/>
+        <field name="vessel_id" ref="demo_vessel_barge_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="cargo_qty">6500</field>
+        <field name="bl_qty">6500</field>
+        <field name="date_start" eval="(datetime.today() - timedelta(days=8)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() - timedelta(days=4)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">11.5</field>
+        <field name="state">completed</field>
+    </record>
+
     <!-- ─── Demo Voyage Estimates (untuk demo_contract_voyage_out_1) ───────── -->
     <record id="demo_estimate_voyage_out_1_rev1" model="vessel.voyage.estimate">
         <field name="contract_id" ref="demo_contract_voyage_out_1"/>

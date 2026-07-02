@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -112,6 +114,28 @@ class VesselHireStatementLine(models.Model):
                 raise ValidationError(_(
                     'Kontrak %(contract)s sudah punya hire statement untuk periode mulai %(date)s.'
                 ) % {'contract': rec.contract_id.name, 'date': rec.period_start})
+
+    @api.model
+    def _cron_hire_due(self):
+        """Harian — hire statement draft yang periode_end-nya jatuh tempo H-5, notif Finance."""
+        target_date = fields.Date.today() + timedelta(days=5)
+        lines = self.search([
+            ('state', '=', 'draft'),
+            ('period_end', '=', target_date),
+        ])
+        for line in lines:
+            line.contract_id.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Hire due H-5: %s') % line.contract_id.name,
+                note=_(
+                    'Hire statement periode %(start)s s.d. %(end)s jatuh tempo 5 hari lagi. '
+                    'Total amount: %(amount)s'
+                ) % {
+                    'start': line.period_start, 'end': line.period_end,
+                    'amount': line.total_amount,
+                },
+                user_id=line.contract_id.user_id.id or self.env.uid,
+            )
 
     def action_create_invoice(self):
         self.ensure_one()

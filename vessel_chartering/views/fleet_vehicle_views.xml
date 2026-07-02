@@ -10,10 +10,20 @@
                 <page string="Chartering" name="chartering" invisible="not is_vessel">
                     <group>
                         <field name="analytic_account_id" readonly="1"/>
+                        <field name="charter_status" readonly="1"/>
+                        <field name="active_charter_id" readonly="1"/>
                     </group>
-                    <p class="text-muted">
-                        Riwayat kontrak charter kapal ini akan tampil di sini mulai Sprint 2.
-                    </p>
+                    <field name="charter_contract_ids" readonly="1">
+                        <list>
+                            <field name="name"/>
+                            <field name="contract_type"/>
+                            <field name="direction"/>
+                            <field name="partner_id"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

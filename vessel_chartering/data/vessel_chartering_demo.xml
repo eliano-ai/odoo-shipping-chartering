@@ -76,4 +76,180 @@
         <field name="city">Singapore</field>
     </record>
 
+    <!-- ─── Demo Vessels (fleet.vehicle) ───────────────────────────────── -->
+    <record id="demo_vessel_brand" model="fleet.vehicle.model.brand">
+        <field name="name">Demo Shipyard</field>
+    </record>
+
+    <record id="demo_vessel_model_tug" model="fleet.vehicle.model">
+        <field name="name">Tug 1200HP</field>
+        <field name="brand_id" ref="demo_vessel_brand"/>
+    </record>
+
+    <record id="demo_vessel_model_barge" model="fleet.vehicle.model">
+        <field name="name">Barge 300ft</field>
+        <field name="brand_id" ref="demo_vessel_brand"/>
+    </record>
+
+    <record id="demo_vessel_model_mv" model="fleet.vehicle.model">
+        <field name="name">MV Bulk Carrier</field>
+        <field name="brand_id" ref="demo_vessel_brand"/>
+    </record>
+
+    <record id="demo_vessel_tug_01" model="fleet.vehicle">
+        <field name="model_id" ref="demo_vessel_model_tug"/>
+        <field name="vessel_type_id" ref="fleet_document_id.vessel_type_tug"/>
+        <field name="license_plate">TB. SAMUDRA 01</field>
+    </record>
+
+    <record id="demo_vessel_barge_01" model="fleet.vehicle">
+        <field name="model_id" ref="demo_vessel_model_barge"/>
+        <field name="vessel_type_id" ref="fleet_document_id.vessel_type_barge"/>
+        <field name="license_plate">BG. SAMUDRA 01</field>
+    </record>
+
+    <record id="demo_vessel_mv_01" model="fleet.vehicle">
+        <field name="model_id" ref="demo_vessel_model_mv"/>
+        <field name="vessel_type_id" ref="fleet_document_id.vessel_type_cargo"/>
+        <field name="license_plate">MV. NUSANTARA JAYA</field>
+    </record>
+
+    <!-- ─── Demo Partners (Charterer / Owner) ─────────────────────────────── -->
+    <record id="demo_partner_charterer_a" model="res.partner">
+        <field name="name">PT Tambang Bara Sejahtera</field>
+        <field name="is_company" eval="True"/>
+    </record>
+
+    <record id="demo_partner_charterer_b" model="res.partner">
+        <field name="name">PT Energi Nusantara Trading</field>
+        <field name="is_company" eval="True"/>
+    </record>
+
+    <record id="demo_partner_owner_a" model="res.partner">
+        <field name="name">Ocean Prime Shipowners Pte Ltd</field>
+        <field name="is_company" eval="True"/>
+    </record>
+
+    <!-- ─── Demo Charter Contracts ─────────────────────────────────────────── -->
+    <!-- Voyage Charter Out #1 — draft -->
+    <record id="demo_contract_voyage_out_1" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">out</field>
+        <field name="partner_id" ref="demo_partner_charterer_a"/>
+        <field name="vessel_id" ref="demo_vessel_tug_01"/>
+        <field name="tug_id" ref="demo_vessel_tug_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="cargo_qty">7500</field>
+        <field name="qty_tolerance_pct">10</field>
+        <field name="date_start" eval="(datetime.today() + timedelta(days=10)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() + timedelta(days=15)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">12.5</field>
+        <field name="load_port_id" ref="demo_port_satui"/>
+        <field name="discharge_port_id" ref="demo_port_tanjung_priok"/>
+        <field name="charter_terms_id" ref="demo_charter_terms_fiost"/>
+        <field name="laytime_allowed_load">96</field>
+        <field name="laytime_allowed_discharge">96</field>
+        <field name="demurrage_rate">10000</field>
+        <field name="despatch_rate">5000</field>
+    </record>
+
+    <!-- Voyage Charter Out #2 — confirmed -->
+    <record id="demo_contract_voyage_out_2" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">out</field>
+        <field name="partner_id" ref="demo_partner_charterer_b"/>
+        <field name="vessel_id" ref="demo_vessel_barge_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="cargo_qty">6000</field>
+        <field name="date_start" eval="(datetime.today() + timedelta(days=3)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() + timedelta(days=8)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">11.0</field>
+        <field name="load_port_id" ref="demo_port_balikpapan"/>
+        <field name="discharge_port_id" ref="demo_port_tarahan"/>
+        <field name="charter_terms_id" ref="demo_charter_terms_cqd"/>
+        <field name="laytime_allowed_load">72</field>
+        <field name="laytime_allowed_discharge">72</field>
+        <field name="demurrage_rate">8000</field>
+        <field name="despatch_rate">4000</field>
+        <field name="state">confirmed</field>
+    </record>
+
+    <!-- Voyage Charter In #1 — draft (relet scenario) -->
+    <record id="demo_contract_voyage_in_1" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">in</field>
+        <field name="partner_id" ref="demo_partner_owner_a"/>
+        <field name="vessel_id" ref="demo_vessel_mv_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_nickel"/>
+        <field name="cargo_qty">15000</field>
+        <field name="date_start" eval="(datetime.today() + timedelta(days=20)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() + timedelta(days=25)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">9.5</field>
+        <field name="load_port_id" ref="demo_port_balikpapan"/>
+        <field name="discharge_port_id" ref="demo_port_singapore"/>
+        <field name="demurrage_rate">12000</field>
+        <field name="despatch_rate">6000</field>
+    </record>
+
+    <!-- Time Charter Out #1 — in_progress -->
+    <record id="demo_contract_time_out_1" model="vessel.charter.contract">
+        <field name="contract_type">time</field>
+        <field name="direction">out</field>
+        <field name="partner_id" ref="demo_partner_charterer_a"/>
+        <field name="vessel_id" ref="demo_vessel_mv_01"/>
+        <field name="date_start" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() + timedelta(days=85)).strftime('%Y-%m-%d')"/>
+        <field name="hire_rate">8000</field>
+        <field name="hire_payment_term">15_days_advance</field>
+        <field name="delivery_place" ref="demo_port_tanjung_priok"/>
+        <field name="delivery_date" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="state">in_progress</field>
+    </record>
+
+    <!-- COA + 2 shipment children -->
+    <record id="demo_contract_coa_1" model="vessel.charter.contract">
+        <field name="contract_type">coa</field>
+        <field name="direction">out</field>
+        <field name="partner_id" ref="demo_partner_charterer_b"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="date_start" eval="(datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() + timedelta(days=335)).strftime('%Y-%m-%d')"/>
+        <field name="total_qty_commitment">100000</field>
+    </record>
+
+    <record id="demo_contract_coa_shipment_1" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">out</field>
+        <field name="coa_id" ref="demo_contract_coa_1"/>
+        <field name="partner_id" ref="demo_partner_charterer_b"/>
+        <field name="vessel_id" ref="demo_vessel_barge_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="cargo_qty">6000</field>
+        <field name="bl_qty">6000</field>
+        <field name="date_start" eval="(datetime.today() - timedelta(days=28)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() - timedelta(days=23)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">11.5</field>
+        <field name="state">completed</field>
+    </record>
+
+    <record id="demo_contract_coa_shipment_2" model="vessel.charter.contract">
+        <field name="contract_type">voyage</field>
+        <field name="direction">out</field>
+        <field name="coa_id" ref="demo_contract_coa_1"/>
+        <field name="partner_id" ref="demo_partner_charterer_b"/>
+        <field name="vessel_id" ref="demo_vessel_tug_01"/>
+        <field name="cargo_type_id" ref="demo_cargo_type_coal"/>
+        <field name="cargo_qty">7000</field>
+        <field name="bl_qty">7000</field>
+        <field name="date_start" eval="(datetime.today() - timedelta(days=15)).strftime('%Y-%m-%d')"/>
+        <field name="date_end" eval="(datetime.today() - timedelta(days=10)).strftime('%Y-%m-%d')"/>
+        <field name="freight_basis">per_mt</field>
+        <field name="freight_rate">11.5</field>
+        <field name="state">completed</field>
+    </record>
+
 </odoo>

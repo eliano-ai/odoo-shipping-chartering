@@ -6,6 +6,35 @@
               parent="fleet.menu_root"
               sequence="18"/>
 
+    <menuitem id="menu_vessel_chartering_fixtures"
+              name="Fixtures / Kontrak"
+              parent="menu_vessel_chartering_root"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_charter_contract_all"
+              name="Semua Kontrak"
+              parent="menu_vessel_chartering_fixtures"
+              action="action_vessel_charter_contract_all"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_charter_contract_out"
+              name="Charter Out"
+              parent="menu_vessel_chartering_fixtures"
+              action="action_vessel_charter_contract_out"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_charter_contract_in"
+              name="Charter In"
+              parent="menu_vessel_chartering_fixtures"
+              action="action_vessel_charter_contract_in"
+              sequence="30"/>
+
+    <menuitem id="menu_vessel_charter_contract_coa"
+              name="COA"
+              parent="menu_vessel_chartering_fixtures"
+              action="action_vessel_charter_contract_coa"
+              sequence="40"/>
+
     <menuitem id="menu_vessel_chartering_config"
               name="Konfigurasi"
               parent="menu_vessel_chartering_root"

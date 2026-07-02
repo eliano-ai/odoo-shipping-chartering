@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Form ────────────────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_form" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.form</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <form string="Charter Contract">
+                <header>
+                    <button name="action_send_negotiation" type="object"
+                            string="Kirim Penawaran" class="btn-secondary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_confirm" type="object"
+                            string="Konfirmasi Fixture" class="btn-primary"
+                            invisible="state not in ('draft', 'negotiation')"/>
+                    <button name="action_start" type="object"
+                            string="Mulai / Delivery" class="btn-primary"
+                            invisible="state != 'confirmed'"/>
+                    <button name="action_complete" type="object"
+                            string="Selesai / Redelivery" class="btn-primary"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_close" type="object"
+                            string="Tutup Kontrak" class="btn-secondary"
+                            invisible="state != 'completed'"/>
+                    <button name="action_cancel" type="object"
+                            string="Batalkan"
+                            invisible="state in ('cancelled', 'completed', 'closed', 'in_progress')"/>
+                    <button name="action_reset_draft" type="object"
+                            string="Reset ke Draft"
+                            invisible="state != 'cancelled'"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,negotiation,confirmed,in_progress,completed,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_estimates" type="object"
+                                class="oe_stat_button" icon="fa-calculator"
+                                invisible="estimate_count == 0">
+                            <field name="estimate_count" widget="statinfo" string="Estimates"/>
+                        </button>
+                        <button name="action_view_laytime" type="object"
+                                class="oe_stat_button" icon="fa-clock-o"
+                                invisible="laytime_count == 0">
+                            <field name="laytime_count" widget="statinfo" string="Laytime"/>
+                        </button>
+                        <button name="action_view_invoices" type="object"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="invoice_count == 0">
+                            <field name="invoice_count" widget="statinfo" string="Invoices"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="contract_type"/>
+                            <field name="direction"/>
+                            <field name="partner_id"/>
+                            <field name="vessel_id"
+                                   invisible="contract_type == 'coa'"
+                                   required="contract_type != 'coa'"/>
+                            <field name="tug_id" invisible="contract_type == 'coa'"/>
+                        </group>
+                        <group>
+                            <field name="cargo_type_id"/>
+                            <field name="cargo_qty" invisible="contract_type == 'time'"/>
+                            <field name="qty_tolerance_pct" invisible="contract_type == 'time'"/>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Komersial" name="commercial">
+                            <group>
+                                <group string="Voyage Charter"
+                                       invisible="contract_type != 'voyage'">
+                                    <field name="freight_basis"/>
+                                    <field name="freight_rate"
+                                           invisible="freight_basis != 'per_mt'"/>
+                                    <field name="lumpsum_amount"
+                                           invisible="freight_basis != 'lumpsum'"/>
+                                    <field name="load_port_id"/>
+                                    <field name="discharge_port_id"/>
+                                    <field name="charter_terms_id"/>
+                                    <field name="laytime_reversible"/>
+                                    <field name="laytime_allowed_load"/>
+                                    <field name="laytime_allowed_discharge"/>
+                                    <field name="turn_time_hours"/>
+                                    <field name="demurrage_rate"/>
+                                    <field name="despatch_rate"/>
+                                    <field name="bl_date"/>
+                                    <field name="bl_qty"/>
+                                    <field name="freight_amount_estimate"/>
+                                    <field name="freight_amount_final"/>
+                                </group>
+                                <group string="Time Charter"
+                                       invisible="contract_type != 'time'">
+                                    <field name="hire_rate"/>
+                                    <field name="hire_payment_term"/>
+                                    <field name="delivery_date"/>
+                                    <field name="delivery_place"/>
+                                    <field name="redelivery_date"/>
+                                    <field name="redelivery_place"/>
+                                    <field name="cve_rate"/>
+                                    <field name="total_offhire_hours" readonly="1"/>
+                                </group>
+                                <group string="COA" invisible="contract_type != 'coa'">
+                                    <field name="total_qty_commitment"/>
+                                    <field name="qty_shipped" readonly="1"/>
+                                    <field name="qty_remaining" readonly="1"/>
+                                </group>
+                            </group>
+                            <group string="Mata Uang &amp; Kurs">
+                                <group>
+                                    <field name="currency_id"/>
+                                    <field name="invoice_currency_id"/>
+                                </group>
+                                <group>
+                                    <field name="exchange_rate_policy"/>
+                                    <field name="fixed_exchange_rate"
+                                           invisible="exchange_rate_policy != 'fixed'"/>
+                                </group>
+                            </group>
+                            <group string="Broker">
+                                <field name="broker_id"/>
+                                <field name="brokerage_pct" invisible="not broker_id"/>
+                            </group>
+                        </page>
+
+                        <page string="COA — Shipment" name="coa_shipments"
+                              invisible="contract_type != 'coa'">
+                            <field name="shipment_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="vessel_id"/>
+                                    <field name="date_start"/>
+                                    <field name="bl_qty"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Estimate" name="estimate">
+                            <p class="text-muted">Voyage estimate — akan diisi Sprint 3.</p>
+                        </page>
+                        <page string="Laytime" name="laytime"
+                              invisible="contract_type != 'voyage'">
+                            <p class="text-muted">Laytime &amp; SOF — akan diisi Sprint 4.</p>
+                        </page>
+                        <page string="Hire &amp; Off-hire" name="hire"
+                              invisible="contract_type != 'time'">
+                            <p class="text-muted">Hire statement &amp; off-hire — akan diisi Sprint 5.</p>
+                        </page>
+                        <page string="Invoicing" name="invoicing">
+                            <group>
+                                <field name="invoiced_amount" readonly="1"/>
+                                <field name="residual_amount" readonly="1"/>
+                            </group>
+                            <p class="text-muted">Generate invoice — akan diisi Sprint 6.</p>
+                        </page>
+
+                        <page string="Lainnya" name="other">
+                            <group>
+                                <field name="coa_id" invisible="contract_type == 'coa'"/>
+                                <field name="relet_source_id" invisible="direction != 'out'"/>
+                                <field name="analytic_account_id" readonly="1"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <field name="user_id"/>
+                            </group>
+                            <field name="note" placeholder="Catatan tambahan..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── List ────────────────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_list" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.list</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <list string="Charter Contracts"
+                  decoration-muted="state in ('cancelled', 'closed')"
+                  decoration-info="state == 'in_progress'">
+                <field name="name"/>
+                <field name="contract_type"/>
+                <field name="direction" widget="badge"
+                       decoration-success="direction == 'out'"
+                       decoration-warning="direction == 'in'"/>
+                <field name="partner_id"/>
+                <field name="vessel_id"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="freight_amount_estimate" optional="show"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state in ('draft', 'negotiation')"
+                       decoration-warning="state == 'confirmed'"
+                       decoration-info="state == 'in_progress'"
+                       decoration-success="state in ('completed', 'closed')"
+                       decoration-danger="state == 'cancelled'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Kanban ──────────────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_kanban" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.kanban</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click">
+                            <strong><field name="name"/></strong>
+                            <div><field name="partner_id"/></div>
+                            <div><field name="vessel_id"/></div>
+                            <div>
+                                <field name="direction" widget="badge"/>
+                                <field name="contract_type" widget="badge"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ─── Calendar ────────────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_calendar" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.calendar</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <calendar string="Laycan" date_start="date_start" date_stop="date_end"
+                      color="direction" mode="month">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="vessel_id"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- ─── Search ──────────────────────────────────────────────────────── -->
+    <record id="vessel_charter_contract_view_search" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.search</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="arch" type="xml">
+            <search string="Cari Kontrak">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="vessel_id"/>
+                <filter string="Charter Out" name="filter_out" domain="[('direction','=','out')]"/>
+                <filter string="Charter In" name="filter_in" domain="[('direction','=','in')]"/>
+                <separator/>
+                <filter string="Voyage" name="filter_voyage" domain="[('contract_type','=','voyage')]"/>
+                <filter string="Time" name="filter_time" domain="[('contract_type','=','time')]"/>
+                <filter string="COA" name="filter_coa" domain="[('contract_type','=','coa')]"/>
+                <separator/>
+                <filter string="Aktif (In Progress)" name="filter_active" domain="[('state','=','in_progress')]"/>
+                <group>
+                    <filter string="Status" name="group_state" context="{'group_by':'state'}"/>
+                    <filter string="Kapal" name="group_vessel" context="{'group_by':'vessel_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Actions ─────────────────────────────────────────────────────── -->
+    <record id="action_vessel_charter_contract_all" model="ir.actions.act_window">
+        <field name="name">Semua Kontrak</field>
+        <field name="res_model">vessel.charter.contract</field>
+        <field name="view_mode">list,kanban,form,calendar</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada kontrak charter</p>
+            <p>Buat kontrak Voyage Charter, Time Charter, atau COA.</p>
+        </field>
+    </record>
+
+    <record id="action_vessel_charter_contract_out" model="ir.actions.act_window">
+        <field name="name">Charter Out</field>
+        <field name="res_model">vessel.charter.contract</field>
+        <field name="view_mode">list,kanban,form,calendar</field>
+        <field name="domain">[('direction', '=', 'out')]</field>
+        <field name="context">{'default_direction': 'out'}</field>
+    </record>
+
+    <record id="action_vessel_charter_contract_in" model="ir.actions.act_window">
+        <field name="name">Charter In</field>
+        <field name="res_model">vessel.charter.contract</field>
+        <field name="view_mode">list,kanban,form,calendar</field>
+        <field name="domain">[('direction', '=', 'in')]</field>
+        <field name="context">{'default_direction': 'in'}</field>
+    </record>
+
+    <record id="action_vessel_charter_contract_coa" model="ir.actions.act_window">
+        <field name="name">COA</field>
+        <field name="res_model">vessel.charter.contract</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('contract_type', '=', 'coa')]</field>
+        <field name="context">{'default_contract_type': 'coa'}</field>
+    </record>
+
+</odoo>

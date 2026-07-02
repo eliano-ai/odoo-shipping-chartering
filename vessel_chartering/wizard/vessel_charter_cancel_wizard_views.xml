@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="vessel_charter_cancel_wizard_view_form" model="ir.ui.view">
+        <field name="name">vessel.charter.cancel.wizard.form</field>
+        <field name="model">vessel.charter.cancel.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Batalkan Kontrak">
+                <group>
+                    <field name="contract_id" readonly="1"/>
+                    <field name="reason" placeholder="Jelaskan alasan pembatalan kontrak..."/>
+                </group>
+                <footer>
+                    <button name="action_confirm_cancel" type="object"
+                            string="Konfirmasi Batalkan" class="btn-danger"/>
+                    <button string="Tutup" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

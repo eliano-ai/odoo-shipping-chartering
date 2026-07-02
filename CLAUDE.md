@@ -44,12 +44,13 @@ Berbeda dari default `/sprint` skill (yang jalan tanpa henti sampai semua sprint
 4. Commit ke git
 5. **Berhenti, tunggu review/approval user sebelum lanjut ke sprint berikutnya** — jangan auto-lanjut
 
-## Reporting (bukan email — tidak ada Mail.app di Windows)
+## Reporting
 
 Setiap sprint selesai (atau ada progress signifikan), update `SPRINT_REPORT.md` di root:
 - Tambahkan entry baru di **bawah** (kronologis, bukan di atas)
 - Format: nama sprint, tanggal, task selesai, blocker ditemukan (+ cara resolve), hasil verifikasi
-- Tidak perlu kirim email — cukup catat di file ini dan laporkan ke user via chat
+
+**Email notifikasi**: tidak pakai AppleScript+Mail.app (macOS-only, tidak jalan di sini) — pakai Outlook desktop via PowerShell COM automation (`scripts/send_sprint_email.ps1`). Dikirim otomatis tiap sprint selesai (Langkah 12 di `.claude/commands/sprint.md`). Default: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id`. Prasyarat: Outlook desktop harus running (script auto-launch jika belum).
 
 ## Konvensi Kode (Odoo Module Development)
 

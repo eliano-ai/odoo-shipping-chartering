@@ -123,7 +123,21 @@ Tambahkan entry baru di **bawah** file `SPRINT_REPORT.md` (kronologis). Format:
 [Asumsi yang diambil, keputusan desain minor, dll]
 ```
 
-## Langkah 12 — Laporan Ringkas ke User & BERHENTI
+## Langkah 12 — Kirim Email Notifikasi (Outlook COM, Windows)
+
+Beda dari versi generic (AppleScript+Mail.app, macOS-only) — project ini pakai Outlook desktop via PowerShell COM automation.
+
+1. Tulis body email ke file sementara, misal `scripts/_sprint_N_email_body.txt`, isi ringkas: nama sprint, status, task selesai, blocker (atau "tidak ada"), commit hash, next sprint
+2. Jalankan:
+```powershell
+powershell -File "scripts/send_sprint_email.ps1" -Subject "[Sprint N/7] Odoo Shipping Vertical Solution — [nama sprint] selesai" -BodyFile "scripts/_sprint_N_email_body.txt"
+```
+3. Default recipient: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id` (sudah di-hardcode di script, tidak perlu parameter tambahan kecuali diminta ubah)
+4. **Prasyarat**: Outlook desktop harus running — script sudah auto-launch & tunggu 15 detik jika belum jalan, tapi kalau tetap gagal (`E_ABORT` atau error COM lain), laporkan ke user, jangan retry berkali-kali tanpa henti (maks 2x percobaan)
+5. Hapus file body sementara setelah terkirim
+6. Jika gagal kirim setelah 2x percobaan: catat di `SPRINT_REPORT.md` sebagai catatan minor (bukan blocker sprint), tetap lanjut ke langkah berikutnya
+
+## Langkah 13 — Laporan Ringkas ke User & BERHENTI
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -133,6 +147,7 @@ Tasks    : X/X selesai
 Blocker  : [ringkas atau "tidak ada"]
 Commit   : [hash]
 SPRINT_REPORT.md ✓ diupdate
+Email    : ✓ terkirim / ✗ gagal (lihat catatan)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Menunggu review Anda sebelum lanjut Sprint N+1.
 ```

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_vessel_charter_contract_out" model="ir.sequence">
+        <field name="name">Charter Contract — Out</field>
+        <field name="code">vessel.charter.contract.out</field>
+        <field name="prefix">CHO/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+    <record id="seq_vessel_charter_contract_in" model="ir.sequence">
+        <field name="name">Charter Contract — In</field>
+        <field name="code">vessel.charter.contract.in</field>
+        <field name="prefix">CHI/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

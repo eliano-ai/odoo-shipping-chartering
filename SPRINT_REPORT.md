@@ -69,3 +69,55 @@ Log kronologis progress development modul `vessel_chartering`. Entry baru ditamb
 - Keputusan menyimpang dari `sprints/sprint_01.md` (charter_contract_ids dkk digeser ke Sprint 2) dicatat di sini supaya Sprint 2 tahu field itu perlu ditambahkan dari awal, bukan sekadar "sudah ada tinggal diisi logic"
 
 ---
+
+## Setup Tambahan — Email Notifikasi Sprint (Outlook COM) — 2026-07-02
+
+Ditambahkan di luar scope sprint file resmi, atas permintaan user setelah melihat contoh email `/pm`/`/sprint` dari project lain (`wicara`, memakai AppleScript+Mail.app macOS).
+
+- `scripts/send_sprint_email.ps1` — kirim email via Outlook desktop COM automation (bukan AppleScript, karena environment ini Windows)
+- Auto-launch Outlook + tunggu 15 detik jika belum running (root cause kegagalan pertama: `E_ABORT` saat Outlook belum jalan)
+- Default recipient: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id` (dikonfirmasi user)
+- Diuji sukses kirim email test sebelum di-wire ke workflow
+- `.claude/commands/sprint.md` diupdate: Langkah 12 baru (kirim email), Langkah 13 lama jadi laporan akhir
+
+---
+
+## Sprint 2 — Core Charter Contract Model & State Machine — 2026-07-02
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.charter.contract` — semua field §3.2 (Umum, Voyage, Time Charter, COA, Compute/Monitoring)
+- [x] `ir.sequence` CHO/%(year)s (out) & CHI/%(year)s (in), dipilih otomatis berdasar `direction` di `create()`
+- [x] Constraints: `_check_dates`, `_check_coa_no_direct_laytime`, `_check_vessel_overlap` (warning, bukan blokir kecuali overlap penuh dgn in_progress)
+- [x] State machine lengkap: draft→negotiation→confirmed→in_progress→completed→closed + cancelled, **diverifikasi end-to-end** via shell (termasuk auto-create analytic account saat confirm, freight_amount_final terhitung benar saat complete)
+- [x] Wizard `vessel.charter.cancel.wizard` — **diverifikasi** alur cancel via shell
+- [x] Extend `fleet.vehicle`: `charter_contract_ids`, `active_charter_id`, `charter_status` (compute) — **diverifikasi** vessel dengan kontrak in_progress menampilkan status benar (on_time_charter/on_voyage_charter/chartered_in)
+- [x] COA: `shipment_ids`, `qty_shipped`/`qty_remaining` — **diverifikasi** agregasi dari 2 shipment child benar (13000 shipped, 87000 remaining dari komitmen 100000)
+- [x] Security access untuk `vessel.charter.contract` & wizard cancel
+- [x] Views form (notebook: Komersial, COA-Shipment, Estimate/Laytime/Hire/Invoicing placeholder, Lainnya), list, kanban (by state), calendar (by laycan), search (filter + group by)
+- [x] Menu Fixtures/Kontrak: Semua Kontrak, Charter Out, Charter In, COA
+- [x] Dummy data: 3 voyage charter (2 out beda state draft/confirmed, 1 in), 1 time charter in_progress, 1 COA + 2 shipment completed — plus demo vessel (tug/barge/MV) & demo partner karena belum ada data fleet.vehicle sama sekali di database
+
+### Blocker & Resolusi
+- **`decoration-secondary` invalid** di RNG schema Odoo 19 untuk list view (`Invalid attribute decoration-secondary for element field`) — schema Odoo 19 cuma kenal `muted`/`info`/`warning`/`success`/`danger`, tidak ada `secondary`. **Resolusi**: ganti ke `decoration-muted`.
+- **`<group expand="0" string="Group By">` invalid** di search view RNG schema Odoo 19 (`Invalid attribute expand for element group`) — pola classic Odoo <17 ini tidak lagi valid; schema search view group cuma izinkan `colspan/rowspan/fill/height/width/name/color/invisible`. **Resolusi**: hapus atribut `string`/`expand`, cukup `<group>` polos membungkus filter group-by.
+- **Tidak ada data `fleet.vehicle` sama sekali** di database (dicek — 0 rows) — tidak bisa buat dummy kontrak tanpa kapal. **Resolusi**: buat demo vessel (brand + model + 3 kapal: tug, barge, MV) sebagai bagian dummy data modul ini, di luar scope awal task 10 tapi diperlukan supaya dummy data kontrak realistis & bisa dipakai testing sprint berikutnya.
+
+### Verifikasi
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL setelah 2 fix RNG schema di atas
+- ✅ Idempotent — re-run `-u` kedua kali, count kontrak tetap 7, tidak ada error
+- ✅ Full state machine cycle (draft→...→closed) sukses via shell, di-rollback (tidak ubah demo data permanen)
+- ✅ Analytic account voyage auto-terbentuk saat action_confirm, terverifikasi nama & keberadaannya
+- ✅ freight_amount_final terhitung benar (12.5 × 7400 = 92500) saat action_complete
+- ✅ Constraint COA (tidak boleh vessel_id langsung) — raise ValidationError terverifikasi
+- ✅ Cancel wizard — alur lengkap terverifikasi, state jadi cancelled
+- ✅ COA qty_shipped/qty_remaining — 13000/87000 dari komitmen 100000, sesuai 2 shipment completed
+- ✅ fleet.vehicle.charter_status — vessel dengan kontrak in_progress tampil "on_time_charter" dengan active_charter_id benar
+
+### Catatan
+- Smart button Estimates/Laytime/Invoices di form kontrak sudah ada tombolnya tapi invisible (count selalu 0 di sprint ini) — method action_view_estimates/action_view_laytime mereferensikan model yang belum ada (`vessel.voyage.estimate`, `vessel.laytime.calculation`), aman karena tidak pernah diklik selama count=0; akan diisi Sprint 3/4
+- Field-level restriction "chartering_user tidak lihat COA nilai total" (§6 tech spec) belum diimplementasi — dicatat untuk Sprint 7 (task security review)
+- **Pelajaran RNG schema Odoo 19** (dicatat untuk sprint berikutnya): hindari `decoration-secondary`, hindari `string`/`expand` di `<group>` search view — beda dari kebiasaan Odoo versi lama
+
+---

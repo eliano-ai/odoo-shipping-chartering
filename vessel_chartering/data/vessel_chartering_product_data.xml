@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="product_freight_revenue" model="product.product">
+        <field name="name">Freight Revenue</field>
+        <field name="type">service</field>
+        <field name="invoice_policy">order</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+    <record id="product_demurrage" model="product.product">
+        <field name="name">Demurrage</field>
+        <field name="type">service</field>
+        <field name="invoice_policy">order</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+    <record id="product_charter_hire" model="product.product">
+        <field name="name">Charter Hire</field>
+        <field name="type">service</field>
+        <field name="invoice_policy">order</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="True"/>
+    </record>
+
+</odoo>

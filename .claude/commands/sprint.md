@@ -147,12 +147,15 @@ Tasks    : X/X selesai
 Blocker  : [ringkas atau "tidak ada"]
 Commit   : [hash]
 SPRINT_REPORT.md ✓ diupdate
-Email    : draft siap di scripts/_sprint_N_email_body.txt — menunggu instruksi kirim
+Email    : draft siap di scripts/_sprint_N_email_body.txt
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Menunggu review Anda sebelum lanjut Sprint N+1.
 ```
 
-**JANGAN lanjut otomatis ke sprint berikutnya.** Tunggu instruksi eksplisit dari user (mode checkpoint, sesuai kesepakatan project ini).
+**Urutan tanya ke user setelah laporan di atas (WAJIB dua langkah terpisah, jangan digabung):**
+1. Pertama, tanya apakah email mau dikirim sekarang atau tidak. Kirim (atau tidak) sesuai jawaban, baru lanjut ke poin 2.
+2. Baru setelah itu tanya apakah lanjut ke Sprint N+1 atau berhenti dulu.
+
+**JANGAN lanjut otomatis ke sprint berikutnya, dan JANGAN kirim email tanpa ditanya dulu.** Tunggu instruksi eksplisit dari user di kedua hal ini (mode checkpoint, sesuai kesepakatan project ini — dikoreksi user setelah Sprint 5: urutannya tanya email dulu, baru tanya lanjut sprint).
 
 ---
 

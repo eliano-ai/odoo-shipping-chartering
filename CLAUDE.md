@@ -60,7 +60,7 @@ Setiap sprint selesai (atau ada progress signifikan), update `SPRINT_REPORT.md` 
 
 **Email notifikasi**: tidak pakai AppleScript+Mail.app (macOS-only, tidak jalan di sini) — pakai Outlook desktop via PowerShell COM automation (`scripts/send_sprint_email.ps1`). Default: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id`. Prasyarat: Outlook desktop harus running (script auto-launch jika belum).
 
-**PENTING — jangan kirim email otomatis.** Siapkan body email & laporkan sprint selesai ke user via chat seperti biasa, tapi **tunggu instruksi eksplisit user** ("kirim email", "lanjut kirim", dst) sebelum benar-benar menjalankan `send_sprint_email.ps1`. Ini beda dari draft awal skill (yang mengirim otomatis tiap sprint) — dikoreksi user setelah Sprint 4.
+**PENTING — jangan kirim email otomatis, dan urutan tanya ke user WAJIB: email dulu, baru lanjut sprint.** Siapkan body email & laporkan sprint selesai ke user via chat, lalu tanya dua hal secara terpisah dan berurutan: (1) apakah email mau dikirim sekarang, (2) baru setelah itu apakah mau lanjut ke sprint berikutnya. Jangan gabung jadi satu pertanyaan, dan jangan lompat ke pertanyaan lanjut-sprint sebelum urusan email selesai ditanyakan. Ini dikoreksi user setelah Sprint 4 (awalnya email dikirim otomatis) dan Sprint 5 (urutan tanya diperjelas).
 
 ## Konvensi Kode (Odoo Module Development)
 

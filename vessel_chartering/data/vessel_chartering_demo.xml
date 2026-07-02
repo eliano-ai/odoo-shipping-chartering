@@ -252,4 +252,40 @@
         <field name="state">completed</field>
     </record>
 
+    <!-- ─── Demo Voyage Estimates (untuk demo_contract_voyage_out_1) ───────── -->
+    <record id="demo_estimate_voyage_out_1_rev1" model="vessel.voyage.estimate">
+        <field name="contract_id" ref="demo_contract_voyage_out_1"/>
+        <field name="name">EST-001</field>
+        <field name="distance_nm">350</field>
+        <field name="speed_knots">8</field>
+        <field name="port_days_load">2</field>
+        <field name="port_days_discharge">1.5</field>
+        <field name="fo_consumption_sea">1.2</field>
+        <field name="fo_consumption_port">0.3</field>
+        <field name="do_consumption_sea">0.4</field>
+        <field name="do_consumption_port">0.1</field>
+        <field name="fo_price_usd">650</field>
+        <field name="do_price_usd">900</field>
+        <field name="port_cost_estimate">1500</field>
+        <field name="other_cost_estimate">500</field>
+    </record>
+
+    <record id="demo_estimate_voyage_out_1_rev2" model="vessel.voyage.estimate">
+        <field name="contract_id" ref="demo_contract_voyage_out_1"/>
+        <field name="name">EST-002</field>
+        <field name="distance_nm">350</field>
+        <field name="speed_knots">8</field>
+        <field name="port_days_load">2</field>
+        <field name="port_days_discharge">1.5</field>
+        <field name="fo_consumption_sea">1.2</field>
+        <field name="fo_consumption_port">0.3</field>
+        <field name="do_consumption_sea">0.4</field>
+        <field name="do_consumption_port">0.1</field>
+        <field name="fo_price_usd">720</field>
+        <field name="do_price_usd">950</field>
+        <field name="port_cost_estimate">1500</field>
+        <field name="other_cost_estimate">500</field>
+        <field name="state">selected</field>
+    </record>
+
 </odoo>

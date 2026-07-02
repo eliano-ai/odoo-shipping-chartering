@@ -213,6 +213,9 @@ class VesselCharterContract(models.Model):
         default=0.0, copy=False,
         help='Diisi Sprint 6.',
     )
+    estimate_ids = fields.One2many(
+        'vessel.voyage.estimate', 'contract_id', string='Voyage Estimates',
+    )
     estimate_count = fields.Integer(string='Jumlah Estimate', compute='_compute_smart_button_counts')
     laytime_count = fields.Integer(string='Jumlah Laytime', compute='_compute_smart_button_counts')
     invoice_count = fields.Integer(string='Jumlah Invoice', compute='_compute_smart_button_counts')
@@ -247,10 +250,11 @@ class VesselCharterContract(models.Model):
         for rec in self:
             rec.total_offhire_hours = 0.0
 
+    @api.depends('estimate_ids')
     def _compute_smart_button_counts(self):
-        # estimate_ids/laytime_ids/invoice_ids belum ada — TODO Sprint 3/4/6
+        # laytime_ids/invoice_ids belum ada — TODO Sprint 4/6
         for rec in self:
-            rec.estimate_count = 0
+            rec.estimate_count = len(rec.estimate_ids)
             rec.laytime_count = 0
             rec.invoice_count = 0
 
@@ -437,6 +441,20 @@ class VesselCharterContract(models.Model):
             'view_mode': 'list,form',
             'domain': [('contract_id', '=', self.id)],
             'context': {'default_contract_id': self.id},
+        }
+
+    def action_create_estimate(self):
+        self.ensure_one()
+        estimate = self.env['vessel.voyage.estimate'].create({
+            'contract_id': self.id,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Voyage Estimate Baru — %s') % self.name,
+            'res_model': 'vessel.voyage.estimate',
+            'view_mode': 'form',
+            'res_id': estimate.id,
+            'target': 'current',
         }
 
     def action_view_laytime(self):

@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker *)",
+      "Bash(docker compose *)",
+      "Bash(MSYS_NO_PATHCONV=1 docker *)",
+      "Bash(MSYS_NO_PATHCONV=1 docker compose *)",
+      "Bash(git status*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push github *)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git branch*)",
+      "Bash(git checkout *)",
+      "Bash(git fetch github*)",
+      "Bash(git remote -v)",
+      "Bash(python3 *)",
+      "Bash(python -c *)",
+      "Bash(python -m py_compile *)",
+      "Bash(curl -s *localhost:8069*)",
+      "Bash(sed -n *)",
+      "Bash(sed -i *)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(wc -l *)",
+      "Bash(mkdir -p *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "PowerShell(powershell -File \"D:\\Odoo Shipping\\scripts\\*)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Start-Process outlook.exe*)",
+      "PowerShell(Test-Path *)",
+      "Skill(sprint)",
+      "Skill(retro)"
+    ],
+    "ask": [
+      "Bash(*dropdb*)",
+      "Bash(*pg_terminate_backend*)",
+      "Bash(docker compose down*)",
+      "Bash(docker compose restart*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push origin *)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(rm -rf *)",
+      "Bash(docker compose down -v*)",
+      "PowerShell(Remove-Item *-Recurse*)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}

@@ -43,6 +43,7 @@ Referensi: TECH_SPEC_vessel_chartering.md
         'views/vessel_laytime_interruption_type_views.xml',
         'views/res_partner_port_views.xml',
         'views/vessel_charter_contract_views.xml',
+        'views/vessel_voyage_estimate_views.xml',
         'wizard/vessel_charter_cancel_wizard_views.xml',
         'views/fleet_vehicle_views.xml',
         'views/vessel_chartering_menus.xml',

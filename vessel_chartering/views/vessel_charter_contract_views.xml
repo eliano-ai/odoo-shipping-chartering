@@ -144,7 +144,21 @@
                         </page>
 
                         <page string="Estimate" name="estimate">
-                            <p class="text-muted">Voyage estimate — akan diisi Sprint 3.</p>
+                            <div class="mb-2">
+                                <button name="action_create_estimate" type="object"
+                                        string="Buat Estimate Baru" class="btn-secondary"/>
+                            </div>
+                            <field name="estimate_ids">
+                                <list decoration-success="state == 'selected'">
+                                    <field name="name"/>
+                                    <field name="total_voyage_days"/>
+                                    <field name="revenue_estimate"/>
+                                    <field name="total_cost_estimate"/>
+                                    <field name="voyage_result"/>
+                                    <field name="tce_per_day"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
                         </page>
                         <page string="Laytime" name="laytime"
                               invisible="contract_type != 'voyage'">

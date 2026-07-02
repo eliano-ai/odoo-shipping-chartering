@@ -121,3 +121,43 @@ Ditambahkan di luar scope sprint file resmi, atas permintaan user setelah meliha
 - **Pelajaran RNG schema Odoo 19** (dicatat untuk sprint berikutnya): hindari `decoration-secondary`, hindari `string`/`expand` di `<group>` search view — beda dari kebiasaan Odoo versi lama
 
 ---
+
+## Setup Tambahan — Permission Allowlist (.claude/settings.json) — 2026-07-02
+
+Atas permintaan user untuk mempercepat alur sprint (kurangi prompt izin berulang). Dibuat `.claude/settings.json` (project-level, ikut ter-commit):
+- **Allow luas**: docker/docker compose, git read-ops + `git push github *` (hanya remote personal), python, grep/find/sed/cat/ls, script PowerShell di `scripts/`, skill `sprint`/`retro`
+- **Ask** (tetap prompt): dropdb, pg_terminate_backend, `docker compose down/restart`
+- **Deny total**: force-push, **`git push origin *`** (remote GitLab company — sengaja diblok permanen supaya tidak pernah ke-push otomatis dari workflow sprint), `git reset --hard`, `rm -rf`, `docker compose down -v` (hapus volume database dev), PowerShell destruktif (Remove-Item -Recurse, Stop-Process)
+
+---
+
+## Sprint 3 — Voyage Estimate — 2026-07-02
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.voyage.estimate` — semua field §3.3 (jarak/kecepatan, bunker section dual-currency, cost lain, hasil/TCE)
+- [x] Business rule single-selected — constraint `_check_single_selected`, **diverifikasi**: `action_select_baseline` otomatis un-select revisi lain, force-write manual ke `selected` kedua kali raise ValidationError
+- [x] Compute `usd_rate` default dari `res.currency.rate` (fallback 0.0 jika rate tidak ada / currency sama)
+- [x] Views form (grouped by section) + list (decoration selected)
+- [x] `estimate_ids` One2many ditambahkan ke kontrak, `_compute_smart_button_counts` sekarang pakai count asli (bukan hardcode 0)
+- [x] Tombol "Buat Estimate Baru" (`action_create_estimate`) + "Pilih sebagai Baseline" (`action_select_baseline`) — **diverifikasi** end-to-end via shell, termasuk auto-generate nomor revisi EST-001/EST-002
+- [x] Security access untuk `vessel.voyage.estimate`
+- [x] Dummy data: 2 revisi estimate untuk `demo_contract_voyage_out_1` (beda harga bunker FO 650→720, DO 900→950), rev2 di-set `selected`
+
+### Blocker & Resolusi
+Tidak ada blocker baru di sprint ini — proses lancar berkat pelajaran RNG schema dari Sprint 2.
+
+### Verifikasi
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL
+- ✅ Idempotent — re-run `-u`, count estimate tetap 2
+- ✅ `total_voyage_days` terhitung benar: 350nm/(8kn×24) + 2 + 1.5 = 5.323 hari
+- ✅ `revenue_estimate` terhitung benar dari `contract_id.freight_amount_estimate` (12.5 × 7500 = 93750)
+- ✅ `tce_per_day` masuk akal (~16.6k USD/day), beda tipis antar revisi sesuai perbedaan harga bunker
+- ✅ Constraint single-selected — `action_select_baseline` swap otomatis benar, force-write manual kedua kali raise error
+- ✅ `action_create_estimate` dari kontrak — auto-generate nomor revisi benar (EST-001 untuk kontrak yang belum punya estimate)
+
+### Catatan
+- `usd_rate` default menggunakan asumsi representasi `res.currency.rate.rate` = company_currency per unit foreign currency (invers) — perlu dicek ulang saat company currency benar-benar IDR di data produksi nyata (saat ini `My Company` default currency masih USD di database dev, jadi `_default_usd_rate` return 0.0 karena `usd == company_currency`). Tidak blocking untuk MVP karena field tetap manual-editable.
+
+---

@@ -82,6 +82,7 @@ docker compose up -d          # start Odoo + Postgres
 docker compose logs odoo -f   # lihat log
 docker compose exec odoo odoo --stop-after-init -d shipping_dev --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo -i <module1>,<module2> --without-demo=True   # install/update modul
 docker compose exec db psql -U odoo -d shipping_dev   # akses database langsung
+docker compose exec odoo odoo --stop-after-init -d shipping_dev --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo --http-port=8070 --test-enable --test-tags <module> -u <module>   # run unit test — WAJIB --http-port beda (container utama sudah pakai 8069, port conflict kalau tidak)
 ```
 
 `MSYS_NO_PATHCONV=1` wajib di-prefix untuk command `docker compose exec` di Git Bash Windows (mencegah path translation salah pada `/etc/...`, `/mnt/...`, dll).

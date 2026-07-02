@@ -296,4 +296,64 @@
         <field name="company_id" ref="base.main_company"/>
     </record>
 
+    <!-- ─── Demo Laytime Calculation — skenario once-on-demurrage ──────────
+         Replikasi acceptance criteria §10.3/10.4 tech spec: laytime_allowed=96h,
+         SOF termasuk interupsi hujan sebelum & sesudah titik on-demurrage,
+         hasil akhir: laytime_used=132h, balance=-36h, demurrage_rate USD 10,000/day
+         → demurrage_amount harus = USD 15,000. -->
+    <record id="demo_laytime_voyage_out_1_load" model="vessel.laytime.calculation">
+        <field name="contract_id" ref="demo_contract_voyage_out_1"/>
+        <field name="port_call_type">load</field>
+        <field name="port_id" ref="demo_port_satui"/>
+        <field name="nor_tendered" eval="(datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="nor_accepted" eval="(datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="laytime_allowed_hours">96</field>
+        <field name="laytime_completed" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=138)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="state">approved</field>
+    </record>
+
+    <record id="demo_sof_line_1" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=72)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Commenced loading</field>
+    </record>
+
+    <record id="demo_sof_line_2" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=72)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=78)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Rain stop (sebelum on-demurrage)</field>
+        <field name="interruption_type_id" ref="laytime_interruption_rain"/>
+    </record>
+
+    <record id="demo_sof_line_3" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=78)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=96)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Resumed loading</field>
+    </record>
+
+    <record id="demo_sof_line_4" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=96)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=102)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Loading continues (mencapai allowed 96h di akhir line ini)</field>
+    </record>
+
+    <record id="demo_sof_line_5" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=102)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=108)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Rain stop (SUDAH on-demurrage — tetap counting)</field>
+        <field name="interruption_type_id" ref="laytime_interruption_rain"/>
+    </record>
+
+    <record id="demo_sof_line_6" model="vessel.sof.line">
+        <field name="laytime_id" ref="demo_laytime_voyage_out_1_load"/>
+        <field name="datetime_start" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=108)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="((datetime.today() - timedelta(days=60)).replace(hour=8, minute=0, second=0, microsecond=0) + timedelta(hours=138)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="activity">Completed loading</field>
+    </record>
+
 </odoo>

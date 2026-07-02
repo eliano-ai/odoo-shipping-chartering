@@ -193,15 +193,18 @@ class VesselCharterContract(models.Model):
         string='Freight Final (B/L)', compute='_compute_freight_amounts',
         currency_field='currency_id', store=True,
     )
+    laytime_ids = fields.One2many(
+        'vessel.laytime.calculation', 'contract_id', string='Laytime Calculations',
+    )
     demurrage_amount_total = fields.Monetary(
-        string='Total Demurrage', currency_field='currency_id',
-        default=0.0, copy=False,
-        help='Diagregasi dari laytime approved — diisi Sprint 4.',
+        string='Total Demurrage', compute='_compute_demurrage_despatch_totals',
+        store=True, currency_field='currency_id',
+        help='Diagregasi dari laytime approved/invoiced. Jika laytime_reversible, '
+             'balance load+discharge digabung dulu sebelum dihitung $ (tidak dijumlah per-record).',
     )
     despatch_amount_total = fields.Monetary(
-        string='Total Despatch', currency_field='currency_id',
-        default=0.0, copy=False,
-        help='Diagregasi dari laytime approved — diisi Sprint 4.',
+        string='Total Despatch', compute='_compute_demurrage_despatch_totals',
+        store=True, currency_field='currency_id',
     )
     invoiced_amount = fields.Monetary(
         string='Sudah Diinvoice', currency_field='currency_id',
@@ -250,12 +253,38 @@ class VesselCharterContract(models.Model):
         for rec in self:
             rec.total_offhire_hours = 0.0
 
-    @api.depends('estimate_ids')
+    @api.depends(
+        'laytime_ids.state', 'laytime_ids.balance_hours', 'laytime_ids.laytime_used_hours',
+        'laytime_ids.laytime_allowed_hours', 'laytime_ids.demurrage_amount',
+        'laytime_ids.despatch_amount', 'laytime_reversible', 'demurrage_rate', 'despatch_rate',
+    )
+    def _compute_demurrage_despatch_totals(self):
+        for rec in self:
+            approved = rec.laytime_ids.filtered(lambda l: l.state in ('approved', 'invoiced'))
+            if not approved:
+                rec.demurrage_amount_total = 0.0
+                rec.despatch_amount_total = 0.0
+                continue
+            if rec.laytime_reversible and len(approved) > 1:
+                total_allowed = sum(approved.mapped('laytime_allowed_hours'))
+                total_used = sum(approved.mapped('laytime_used_hours'))
+                balance = total_allowed - total_used
+                if balance < 0:
+                    rec.demurrage_amount_total = (abs(balance) / 24.0) * rec.demurrage_rate
+                    rec.despatch_amount_total = 0.0
+                else:
+                    rec.despatch_amount_total = (balance / 24.0) * rec.despatch_rate
+                    rec.demurrage_amount_total = 0.0
+            else:
+                rec.demurrage_amount_total = sum(approved.mapped('demurrage_amount'))
+                rec.despatch_amount_total = sum(approved.mapped('despatch_amount'))
+
+    @api.depends('estimate_ids', 'laytime_ids')
     def _compute_smart_button_counts(self):
-        # laytime_ids/invoice_ids belum ada — TODO Sprint 4/6
+        # invoice_ids belum ada — TODO Sprint 6
         for rec in self:
             rec.estimate_count = len(rec.estimate_ids)
-            rec.laytime_count = 0
+            rec.laytime_count = len(rec.laytime_ids)
             rec.invoice_count = 0
 
     # ─────────────────────────────────────────────────────────────────────
@@ -455,6 +484,17 @@ class VesselCharterContract(models.Model):
             'view_mode': 'form',
             'res_id': estimate.id,
             'target': 'current',
+        }
+
+    def action_create_laytime(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Laytime Baru — %s') % self.name,
+            'res_model': 'vessel.laytime.calculation',
+            'view_mode': 'form',
+            'target': 'current',
+            'context': {'default_contract_id': self.id},
         }
 
     def action_view_laytime(self):

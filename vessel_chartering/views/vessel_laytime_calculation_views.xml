@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="vessel_laytime_calculation_view_form" model="ir.ui.view">
+        <field name="name">vessel.laytime.calculation.form</field>
+        <field name="model">vessel.laytime.calculation</field>
+        <field name="arch" type="xml">
+            <form string="Laytime Calculation">
+                <header>
+                    <button name="action_submit" type="object"
+                            string="Submit" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object"
+                            string="Approve" class="btn-primary"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" type="object"
+                            string="Reset ke Draft"
+                            invisible="state not in ('submitted', 'approved')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="contract_id" readonly="1"/>
+                            —
+                            <field name="port_call_type" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="port_id"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="nor_tendered"/>
+                            <field name="nor_accepted"/>
+                            <field name="laytime_commenced"/>
+                            <field name="laytime_completed"/>
+                        </group>
+                    </group>
+
+                    <group string="SOF Lines">
+                        <field name="sof_line_ids" nolabel="1">
+                            <list editable="bottom">
+                                <field name="datetime_start"/>
+                                <field name="datetime_end"/>
+                                <field name="duration_hours" sum="Total Jam" readonly="1"/>
+                                <field name="activity"/>
+                                <field name="interruption_type_id"/>
+                                <field name="is_counting" readonly="1"/>
+                                <field name="remarks"/>
+                            </list>
+                        </field>
+                    </group>
+
+                    <group string="Ringkasan">
+                        <group>
+                            <field name="laytime_allowed_hours"/>
+                            <field name="laytime_used_hours" readonly="1"/>
+                            <field name="balance_hours" readonly="1"
+                                   decoration-danger="balance_hours &lt; 0"
+                                   decoration-success="balance_hours &gt;= 0"/>
+                        </group>
+                        <group>
+                            <field name="time_on_demurrage_hours" readonly="1"/>
+                            <field name="demurrage_amount" readonly="1"/>
+                            <field name="despatch_amount" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <field name="notes" placeholder="Catatan tambahan mengenai laytime ini..."/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="vessel_laytime_calculation_view_list" model="ir.ui.view">
+        <field name="name">vessel.laytime.calculation.list</field>
+        <field name="model">vessel.laytime.calculation</field>
+        <field name="arch" type="xml">
+            <list string="Laytime Calculations"
+                  decoration-danger="balance_hours &lt; 0"
+                  decoration-success="state == 'approved' and balance_hours &gt;= 0">
+                <field name="contract_id"/>
+                <field name="port_call_type"/>
+                <field name="port_id"/>
+                <field name="laytime_allowed_hours"/>
+                <field name="laytime_used_hours"/>
+                <field name="balance_hours"/>
+                <field name="demurrage_amount"/>
+                <field name="despatch_amount"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state == 'draft'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-success="state in ('approved', 'invoiced')"/>
+            </list>
+        </field>
+    </record>
+
+</odoo>

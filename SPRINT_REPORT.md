@@ -181,3 +181,42 @@ Atas instruksi user: company default currency diubah ke IDR, dan modul terkait a
 - Field `currency_id` di `vessel.charter.contract` tetap default **USD** (bukan ikut company currency) — sengaja, sesuai §2.4 tech spec: "Freight rate, hire rate, demurrage rate dalam USD (praktik pasar)" — ini keputusan bisnis charter party, independen dari currency fungsional perusahaan
 
 ---
+
+## Sprint 4 — Laytime, SOF & Demurrage/Despatch Calculator — 2026-07-02
+
+**Status**: ✅ Done — bagian paling kompleks tech spec, semua acceptance criteria §10.3/§10.4/§10.9 terpenuhi.
+
+### Task Selesai
+- [x] Model `vessel.sof.line` — datetime_start/end, duration_hours (compute), interruption_type_id, is_counting (compute), constraint dates + overlap warning (bukan blokir)
+- [x] Model `vessel.laytime.calculation` — NOR tendered/accepted, laytime_commenced (compute editable-override dari nor_accepted+turn_time), laytime_allowed_hours (default via onchange sesuai port_call_type), state draft→submitted→approved
+- [x] **Compute `laytime_used_hours`** — implementasi presisi aturan "once on demurrage, always on demurrage": iterasi SOF terurut waktu, exclude non-counting SEBELUM threshold tercapai, sertakan SEMUA waktu (termasuk non-counting) SETELAH threshold tercapai
+- [x] Compute `balance_hours`, `time_on_demurrage_hours`, `demurrage_amount`, `despatch_amount`
+- [x] State machine: submit (siapa saja) → approve (**hanya Chartering Manager**, dicek via `has_group`)
+- [x] Reversible laytime: agregasi di kontrak level (`_compute_demurrage_despatch_totals`) — jika `laytime_reversible=True` dan >1 record approved, gabung balance load+discharge dulu sebelum hitung $; jika tidak, sum langsung per-record
+- [x] `laytime_ids` di kontrak, smart button count real, tab Laytime di form kontrak (list + tombol Buat Laytime Baru + total agregasi)
+- [x] Security access untuk `vessel.laytime.calculation` & `vessel.sof.line`
+- [x] Views: form dengan SOF inline editable list + panel ringkasan, list view, menu Operasional → Laytime Calculations
+- [x] Dummy data: skenario **persis replikasi acceptance criteria §10.3/10.4** — allowed=96h, SOF 6 baris termasuk 2 interupsi hujan (satu sebelum, satu sesudah titik on-demurrage), hasil used=132h, balance=-36h, demurrage=USD 15.000 (rate 10.000/day)
+- [x] **4 unit test `TransactionCase`** (`tests/test_laytime_calculation.py`), semua pass 0 failed/0 error:
+  1. Tanpa interupsi — used=durasi total, balance & demurrage benar
+  2. Interupsi sebelum on-demurrage — dikecualikan dari used
+  3. Interupsi sesudah on-demurrage — **tetap dihitung** (once-on-demurrage), demurrage_amount persis USD 15.000
+  4. Agregasi kontrak non-reversible — `demurrage_amount_total` match
+
+### Blocker & Resolusi
+- **`decoration-secondary` kepakai lagi tanpa sadar** di list view laytime (lupa pelajaran Sprint 2) — ketemu & fix sebelum install (bukan dari error install, dari review manual). Dicatat lagi supaya benar-benar melekat.
+- **`docker compose exec odoo odoo --test-enable ...` gagal "Address already in use" (port 8069)** — container utama sudah bind port itu; command test terpisah juga mencoba bind port yang sama meski pakai `--stop-after-init`. **Resolusi**: tambahkan `--http-port=8070` khusus untuk run test/one-off command yang tidak perlu HTTP.
+- **`res.users.groups_id` AttributeError** — field ini di-rename jadi **`group_ids`** di Odoo 19 (breaking change dari versi lama). Test yang assign group ke `env.user` gagal sampai field name diperbaiki.
+- **`assertAlmostEqual` gagal karena Monetary rounding** — field Monetary Odoo otomatis dibulatkan ke presisi currency (2 desimal USD), sedangkan raw Python float division punya lebih banyak desimal. **Resolusi**: tambahkan `places=2` di assertion yang membandingkan nilai Monetary.
+
+### Verifikasi
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL
+- ✅ Idempotent — re-run `-u`, count laytime tetap 1, SOF line tetap 6
+- ✅ Dummy data database: `laytime_used=132, balance=-36, time_on_demurrage=36, demurrage_amount=15000.00` — **persis** acceptance criteria §10.4
+- ✅ 4/4 unit test pass (0 failed, 0 error) — acceptance criteria §10.3 (3 test case) dan §10.9 (semua test lulus) terpenuhi
+- ✅ `action_approve` hanya bisa oleh Chartering Manager — diverifikasi via test (perlu grant group eksplisit ke test user karena TransactionCase default user tidak otomatis anggota custom group)
+
+### Catatan
+- **Pelajaran baru dicatat untuk sprint berikutnya**: (1) Odoo 19 rename `res.users.groups_id` → `group_ids`; (2) test run one-off perlu `--http-port` custom untuk hindari port conflict dengan container utama; (3) `decoration-secondary` masih harus diwaspadai — pertimbangkan audit grep di Sprint 7 untuk pastikan tidak kepakai lagi di file manapun
+
+---

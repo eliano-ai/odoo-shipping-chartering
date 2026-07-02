@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_vessel_laytime_calculation_all" model="ir.actions.act_window">
+        <field name="name">Laytime Calculations</field>
+        <field name="res_model">vessel.laytime.calculation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_vessel_chartering_operational"
+              name="Operasional"
+              parent="menu_vessel_chartering_root"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_laytime_calculation_all"
+              name="Laytime Calculations"
+              parent="menu_vessel_chartering_operational"
+              action="action_vessel_laytime_calculation_all"
+              sequence="10"/>
+
+</odoo>

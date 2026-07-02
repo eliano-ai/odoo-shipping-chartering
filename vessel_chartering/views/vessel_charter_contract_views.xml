@@ -162,7 +162,26 @@
                         </page>
                         <page string="Laytime" name="laytime"
                               invisible="contract_type != 'voyage'">
-                            <p class="text-muted">Laytime &amp; SOF — akan diisi Sprint 4.</p>
+                            <div class="mb-2">
+                                <button name="action_create_laytime" type="object"
+                                        string="Buat Laytime Baru" class="btn-secondary"/>
+                            </div>
+                            <field name="laytime_ids" readonly="1">
+                                <list decoration-danger="balance_hours &lt; 0">
+                                    <field name="port_call_type"/>
+                                    <field name="port_id"/>
+                                    <field name="laytime_allowed_hours"/>
+                                    <field name="laytime_used_hours"/>
+                                    <field name="balance_hours"/>
+                                    <field name="demurrage_amount"/>
+                                    <field name="despatch_amount"/>
+                                    <field name="state" widget="badge"/>
+                                </list>
+                            </field>
+                            <group string="Total (Agregasi)">
+                                <field name="demurrage_amount_total" readonly="1"/>
+                                <field name="despatch_amount_total" readonly="1"/>
+                            </group>
                         </page>
                         <page string="Hire &amp; Off-hire" name="hire"
                               invisible="contract_type != 'time'">

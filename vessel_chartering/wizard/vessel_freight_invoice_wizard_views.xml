@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="vessel_freight_invoice_wizard_view_form" model="ir.ui.view">
+        <field name="name">vessel.freight.invoice.wizard.form</field>
+        <field name="model">vessel.freight.invoice.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Buat Invoice Freight">
+                <group>
+                    <field name="contract_id" readonly="1"/>
+                    <field name="bl_qty" readonly="1"/>
+                    <field name="freight_rate" readonly="1"/>
+                    <field name="freight_amount_final" readonly="1"/>
+                </group>
+                <group string="Kurs">
+                    <field name="exchange_rate_policy" readonly="1"/>
+                    <field name="fixed_exchange_rate" readonly="1" invisible="exchange_rate_policy != 'fixed'"/>
+                    <field name="invoice_currency_id" readonly="1"/>
+                </group>
+                <group>
+                    <field name="invoice_pct"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="amount_preview" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object"
+                            string="Buat Invoice" class="btn-primary"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

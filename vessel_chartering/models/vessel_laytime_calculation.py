@@ -181,3 +181,25 @@ class VesselLaytimeCalculation(models.Model):
             if rec.state == 'invoiced':
                 raise UserError(_('Laytime yang sudah Invoiced tidak bisa direset.'))
             rec.state = 'draft'
+
+    def action_create_invoice(self):
+        self.ensure_one()
+        if self.state != 'approved':
+            raise UserError(_('Hanya laytime Approved yang bisa dibuat invoice.'))
+        if self.demurrage_amount > 0:
+            move = self.contract_id._create_demurrage_invoice(self)
+        elif self.despatch_amount > 0:
+            move = self.contract_id._create_despatch_document(self)
+        else:
+            raise UserError(_(
+                'Tidak ada demurrage/despatch untuk laytime ini (balance = 0).'
+            ))
+        self.state = 'invoiced'
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoice — %s') % self.contract_id.name,
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': move.id,
+            'target': 'current',
+        }

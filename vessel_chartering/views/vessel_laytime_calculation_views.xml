@@ -16,6 +16,9 @@
                     <button name="action_reset_draft" type="object"
                             string="Reset ke Draft"
                             invisible="state not in ('submitted', 'approved')"/>
+                    <button name="action_create_invoice" type="object"
+                            string="Buat Invoice" class="btn-primary"
+                            invisible="state != 'approved'"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>

@@ -252,3 +252,51 @@ Tidak ada blocker baru — pelajaran dari Sprint 2/4 (RNG schema, `group_ids`, `
 - Tidak ada form view terpisah untuk `vessel.hire.statement.line`/`vessel.offhire.event` (cuma inline di tab kontrak) — sesuai scope sprint file, Odoo auto-generate form generik jika user klik row
 
 ---
+
+## Sprint 6 — Invoicing Integration (Freight, Demurrage, Hire, Charter-In) — 2026-07-02
+
+**Status**: ✅ Done — semua acceptance criteria §10.4/10.5/10.7 terpenuhi.
+
+### Keputusan atas Pertanyaan Terbuka (§11 tech spec) — dieksekusi sesuai draft di sprint_06.md
+1. Pro-rata demurrage per jam — sudah diimplementasi Sprint 4, tidak berubah
+2. **PPN tidak di-hardcode** — terbukti benar saat testing: PPN 11% otomatis kepasang dari fiscal position/default tax Indonesia tanpa modul melakukan apapun (lihat Blocker di bawah)
+3. Approval matrix di-skip — role-based `group_chartering_manager` saja (Community, tidak ada modul `approvals`)
+4. Format PDF hire statement BIMCO di-skip — pakai invoice standar Odoo
+
+### Task Selesai
+- [x] Seed 3 `product.product` (Freight Revenue, Demurrage, Charter Hire) — tanpa hardcode account, ikut default kategori produk
+- [x] Field `freight_split_pct` di kontrak (default 100%)
+- [x] Extend `account.move`: `charter_contract_id` (link balik untuk `invoice_ids` di kontrak)
+- [x] `res.company`/`res.config.settings`: `despatch_as_credit_note` (default False)
+- [x] Helper `_get_analytic_distribution()` (format multi-plan Odoo 19: `{"<account_id>": 100, ...}`) dan `_convert_amount_for_invoice()` (handle kurs system vs fixed, narration otomatis)
+- [x] Wizard `vessel.freight.invoice.wizard` + `_create_freight_invoice()` — preview amount, pilih persentase invoice
+- [x] `_create_demurrage_invoice()` + `_create_despatch_document()` (despatch: credit note ATAU invoice line negatif sesuai setting) + `action_create_invoice()` di laytime (update state → invoiced)
+- [x] `_create_hire_invoice()` + `action_create_invoice()` di hire statement line
+- [x] `invoice_ids`, `invoiced_amount`/`residual_amount` (compute real, sebelumnya placeholder 0.0), `invoice_count` real
+- [x] Security access untuk model & wizard baru
+- [x] Views: tab Invoicing di kontrak (list invoice + tombol Buat Invoice Freight), tombol Buat Invoice di form laytime & hire statement, settings UI untuk `despatch_as_credit_note`
+- [x] **11 unit test `TransactionCase`** (`tests/test_invoicing.py`, 4 baru + 7 existing), semua pass:
+  1. Demurrage invoice USD 15.000 dengan analytic_distribution 2 dimensi (§10.4)
+  2. Invoice IDR fixed rate 16.250, kurs tercatat di narration (§10.5)
+  3. Charter-in → vendor bill draft, account expense, analytic benar (§10.7)
+  4. Despatch default sebagai invoice line negatif (bukan credit note)
+- [x] **Verifikasi manual end-to-end** via Odoo shell memakai dummy data asli (bukan test fixture): generate invoice dari laytime demo Sprint 4 yang approved → `amount_untaxed=15000, currency=USD, analytic 2 key, contract.demurrage_amount_total=15000, invoiced_amount=16650` (termasuk PPN 11%)
+
+### Blocker & Resolusi
+- **`invoice_policy` field tidak ada di `product.product`** — field itu punya modul `sale`, sedangkan `vessel_chartering` sengaja tidak depends ke `sale`/`purchase` (matching tech spec: modul berdiri sendiri). **Resolusi**: hapus field itu dari seed data, cukup `sale_ok`/`purchase_ok` (field core `product`).
+- **Xpath salah tebak untuk `res.config.settings`** — saya asumsikan block id `invoicing_policy`, ternyata yang benar `invoicing_settings`. **Resolusi**: cek dulu struktur asli via grep di container sebelum nulis xpath, ketemu & fix sebelum install (bukan dari error).
+- **3 test gagal karena bug di test sendiri (bukan kode produksi)**: (1) salah hitung durasi SOF (126 jam bukan 132), (2) assertion `amount_total` tidak sadar PPN 11% otomatis kepasang (harusnya `amount_untaxed` — ini justru **memvalidasi keputusan "jangan hardcode tax"** bekerja sesuai desain), (3) assertion account expense terlalu spesifik, ketemu `account_type='expense_direct_cost'` bukan `'expense'` di CoA Indonesia.
+- **4 test error karena helper `_create_contract()` belum panggil `action_confirm()`** — analytic_account_id (plan Voyage) baru terbentuk saat confirm, dan `action_confirm()` butuh `date_start` terisi. **Resolusi**: tambahkan `action_confirm()` + `date_start` ke helper test.
+
+### Verifikasi
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL (setelah fix `invoice_policy` & xpath settings)
+- ✅ Idempotent — re-run `-u`, 3 produk seed tetap 3, tidak duplikat
+- ✅ 11/11 unit test pass (0 failed, 0 error) — gabungan Sprint 4+5+6, tidak ada regresi
+- ✅ Verifikasi manual end-to-end dengan dummy data asli (bukan test fixture) — hasil match persis acceptance criteria §10.4
+
+### Catatan
+- `invoiced_amount` di kontrak pakai `amount_total` (tax-inclusive), sementara compute internal modul (freight/demurrage amount) semuanya pre-tax — ini disengaja karena `invoiced_amount` merepresentasikan nilai riil yang di-invoice ke customer, sedangkan tax bukan tanggung jawab modul ini untuk dikontrol (sesuai keputusan §11.2)
+- Tidak ada invoice yang auto-post — semua tetap draft untuk direview Finance, berlaku sama untuk charter-out maupun charter-in (bukan cuma charter-in yang diminta tech spec, tapi konsisten lebih aman untuk MVP)
+- MVP invoicing ini **melengkapi seluruh 7 sprint breakdown** kecuali Sprint 7 (cron, notifikasi, integrasi soft, acceptance criteria final) — modul sudah punya alur bisnis lengkap dari fixture sampai invoice
+
+---

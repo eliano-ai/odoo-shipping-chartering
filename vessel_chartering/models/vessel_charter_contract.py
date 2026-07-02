@@ -147,6 +147,12 @@ class VesselCharterContract(models.Model):
     despatch_rate = fields.Monetary(string='Despatch Rate (USD/day)', currency_field='currency_id')
     bl_date = fields.Date(string='Tanggal Bill of Lading')
     bl_qty = fields.Float(string='Qty B/L (MT)')
+    freight_split_pct = fields.Float(
+        string='Freight Split saat B/L (%)', default=100.0,
+        help='Persentase freight yang diinvoice saat B/L ditandatangani. '
+             'Sisa (100 - nilai ini) diinvoice belakangan sebagai balance. '
+             'Praktik umum: 95% saat signing B/L + 5% balance.',
+    )
 
     # ── Field Time Charter ────────────────────────────────────────────────
     hire_rate = fields.Monetary(string='Hire Rate (USD/day)', currency_field='currency_id')
@@ -216,15 +222,20 @@ class VesselCharterContract(models.Model):
         string='Total Despatch', compute='_compute_demurrage_despatch_totals',
         store=True, currency_field='currency_id',
     )
+    invoice_ids = fields.One2many(
+        'account.move', 'charter_contract_id', string='Invoices',
+    )
     invoiced_amount = fields.Monetary(
-        string='Sudah Diinvoice', currency_field='currency_id',
-        default=0.0, copy=False,
-        help='Diisi Sprint 6.',
+        string='Sudah Diinvoice', compute='_compute_invoiced_residual',
+        store=True, currency_field='invoice_currency_id',
+        help='Total invoice yang sudah dibuat (draft+posted, exclude cancelled), '
+             'dalam invoice_currency_id.',
     )
     residual_amount = fields.Monetary(
-        string='Sisa Belum Diinvoice', currency_field='currency_id',
-        default=0.0, copy=False,
-        help='Diisi Sprint 6.',
+        string='Sisa Belum Diinvoice', compute='_compute_invoiced_residual',
+        store=True, currency_field='invoice_currency_id',
+        help='Estimasi freight_final + demurrage_total dikurangi yang sudah diinvoice. '
+             'Perkiraan kasar untuk monitoring, bukan rekonsiliasi akuntansi presisi.',
     )
     estimate_ids = fields.One2many(
         'vessel.voyage.estimate', 'contract_id', string='Voyage Estimates',
@@ -289,13 +300,22 @@ class VesselCharterContract(models.Model):
                 rec.demurrage_amount_total = sum(approved.mapped('demurrage_amount'))
                 rec.despatch_amount_total = sum(approved.mapped('despatch_amount'))
 
-    @api.depends('estimate_ids', 'laytime_ids')
+    @api.depends('estimate_ids', 'laytime_ids', 'invoice_ids')
     def _compute_smart_button_counts(self):
-        # invoice_ids belum ada — TODO Sprint 6
         for rec in self:
             rec.estimate_count = len(rec.estimate_ids)
             rec.laytime_count = len(rec.laytime_ids)
-            rec.invoice_count = 0
+            rec.invoice_count = len(rec.invoice_ids)
+
+    @api.depends('invoice_ids.amount_total', 'invoice_ids.state', 'freight_amount_final',
+                 'freight_amount_estimate', 'demurrage_amount_total')
+    def _compute_invoiced_residual(self):
+        for rec in self:
+            valid_invoices = rec.invoice_ids.filtered(lambda m: m.state != 'cancel')
+            rec.invoiced_amount = sum(valid_invoices.mapped('amount_total'))
+            expected_total = (rec.freight_amount_final or rec.freight_amount_estimate) \
+                + rec.demurrage_amount_total
+            rec.residual_amount = max(0.0, expected_total - rec.invoiced_amount)
 
     # ─────────────────────────────────────────────────────────────────────
     # Constraints
@@ -563,5 +583,127 @@ class VesselCharterContract(models.Model):
             'name': _('Invoices — %s') % self.name,
             'res_model': 'account.move',
             'view_mode': 'list,form',
-            'domain': [('id', 'in', [])],
+            'domain': [('charter_contract_id', '=', self.id)],
         }
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Invoicing — Sprint 6
+    # ─────────────────────────────────────────────────────────────────────
+
+    def _get_analytic_distribution(self):
+        """Format Odoo 19 multi-plan: {"<analytic_account_id>": percentage, ...}
+        Vessel plan & Voyage plan masing-masing 100% (dua dimensi independen)."""
+        self.ensure_one()
+        distribution = {}
+        if self.vessel_id and self.vessel_id.analytic_account_id:
+            distribution[str(self.vessel_id.analytic_account_id.id)] = 100
+        if self.analytic_account_id:
+            distribution[str(self.analytic_account_id.id)] = 100
+        return distribution
+
+    def _convert_amount_for_invoice(self, amount_source_currency):
+        """Konversi amount dari currency_id (biasanya USD) ke invoice_currency_id
+        sesuai exchange_rate_policy. Return (amount, narration_kurs)."""
+        self.ensure_one()
+        if self.invoice_currency_id == self.currency_id:
+            return amount_source_currency, ''
+        if self.exchange_rate_policy == 'fixed':
+            amount = amount_source_currency * self.fixed_exchange_rate
+            narration = _('Kurs tetap: 1 %(from)s = %(rate)s %(to)s') % {
+                'from': self.currency_id.name,
+                'rate': self.fixed_exchange_rate,
+                'to': self.invoice_currency_id.name,
+            }
+            return amount, narration
+        amount = self.currency_id._convert(
+            amount_source_currency, self.invoice_currency_id,
+            self.company_id, fields.Date.today(),
+        )
+        return amount, _('Kurs sistem tanggal invoice.')
+
+    def _get_invoice_move_type(self, refund=False):
+        self.ensure_one()
+        if self.direction == 'out':
+            return 'out_refund' if refund else 'out_invoice'
+        return 'in_refund' if refund else 'in_invoice'
+
+    def _create_invoice_move(self, product, description, amount, refund=False):
+        """Helper generik: buat account.move draft satu baris untuk kontrak ini."""
+        self.ensure_one()
+        converted_amount, narration = self._convert_amount_for_invoice(amount)
+        move = self.env['account.move'].create({
+            'move_type': self._get_invoice_move_type(refund=refund),
+            'partner_id': self.partner_id.id,
+            'currency_id': self.invoice_currency_id.id,
+            'invoice_date': fields.Date.today(),
+            'charter_contract_id': self.id,
+            'narration': narration,
+            'invoice_line_ids': [(0, 0, {
+                'product_id': product.id,
+                'name': description,
+                'quantity': 1,
+                'price_unit': converted_amount,
+                'analytic_distribution': self._get_analytic_distribution(),
+            })],
+        })
+        return move
+
+    def action_create_freight_invoice(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Buat Invoice Freight — %s') % self.name,
+            'res_model': 'vessel.freight.invoice.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'default_contract_id': self.id,
+                'default_invoice_pct': self.freight_split_pct,
+            },
+        }
+
+    def _create_freight_invoice(self, pct):
+        """Dipanggil dari vessel.freight.invoice.wizard. pct = persentase dari
+        freight_amount_final yang mau diinvoice sekarang (freight split)."""
+        self.ensure_one()
+        if not self.bl_qty:
+            raise UserError(_('Qty B/L wajib diisi sebelum invoice freight dibuat.'))
+        product = self.env.ref('vessel_chartering.product_freight_revenue')
+        amount = self.freight_amount_final * (pct / 100.0)
+        description = _('Freight — %(contract)s (%(pct)s%%)') % {
+            'contract': self.name, 'pct': pct,
+        }
+        return self._create_invoice_move(product, description, amount)
+
+    def _create_demurrage_invoice(self, laytime):
+        self.ensure_one()
+        product = self.env.ref('vessel_chartering.product_demurrage')
+        description = _('Demurrage — %(contract)s (%(port_call)s)') % {
+            'contract': self.name, 'port_call': laytime.port_call_type,
+        }
+        return self._create_invoice_move(product, description, laytime.demurrage_amount)
+
+    def _create_despatch_document(self, laytime):
+        self.ensure_one()
+        product = self.env.ref('vessel_chartering.product_demurrage')
+        description = _('Despatch — %(contract)s (%(port_call)s)') % {
+            'contract': self.name, 'port_call': laytime.port_call_type,
+        }
+        as_credit_note = self.company_id.despatch_as_credit_note
+        if as_credit_note:
+            return self._create_invoice_move(
+                product, description, laytime.despatch_amount, refund=True,
+            )
+        return self._create_invoice_move(
+            product, description, -laytime.despatch_amount,
+        )
+
+    def _create_hire_invoice(self, hire_line):
+        self.ensure_one()
+        product = self.env.ref('vessel_chartering.product_charter_hire')
+        description = _('Hire — %(contract)s (%(start)s s.d. %(end)s)') % {
+            'contract': self.name,
+            'start': hire_line.period_start,
+            'end': hire_line.period_end,
+        }
+        return self._create_invoice_move(product, description, hire_line.total_amount)

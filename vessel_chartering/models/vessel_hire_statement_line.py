@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class VesselHireStatementLine(models.Model):
@@ -112,3 +112,18 @@ class VesselHireStatementLine(models.Model):
                 raise ValidationError(_(
                     'Kontrak %(contract)s sudah punya hire statement untuk periode mulai %(date)s.'
                 ) % {'contract': rec.contract_id.name, 'date': rec.period_start})
+
+    def action_create_invoice(self):
+        self.ensure_one()
+        if self.state != 'draft':
+            raise UserError(_('Hire statement ini sudah diinvoice.'))
+        move = self.contract_id._create_hire_invoice(self)
+        self.write({'invoice_id': move.id, 'state': 'invoiced'})
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Invoice — %s') % self.contract_id.name,
+            'res_model': 'account.move',
+            'view_mode': 'form',
+            'res_id': move.id,
+            'target': 'current',
+        }

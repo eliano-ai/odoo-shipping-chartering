@@ -221,8 +221,24 @@
                             <group>
                                 <field name="invoiced_amount" readonly="1"/>
                                 <field name="residual_amount" readonly="1"/>
+                                <field name="freight_split_pct" invisible="contract_type != 'voyage'"/>
                             </group>
-                            <p class="text-muted">Generate invoice — akan diisi Sprint 6.</p>
+                            <div class="mb-2">
+                                <button name="action_create_freight_invoice" type="object"
+                                        string="Buat Invoice Freight" class="btn-primary"
+                                        invisible="contract_type != 'voyage' or not bl_qty"/>
+                            </div>
+                            <field name="invoice_ids" readonly="1">
+                                <list decoration-muted="state == 'cancel'">
+                                    <field name="name"/>
+                                    <field name="move_type"/>
+                                    <field name="invoice_date"/>
+                                    <field name="amount_total"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="payment_state" widget="badge" optional="show"/>
+                                </list>
+                            </field>
                         </page>
 
                         <page string="Lainnya" name="other">

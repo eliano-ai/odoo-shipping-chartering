@@ -8,4 +8,6 @@ from . import vessel_sof_line
 from . import vessel_laytime_calculation
 from . import vessel_offhire_event
 from . import vessel_hire_statement_line
+from . import account_move
+from . import res_company
 from . import fleet_vehicle

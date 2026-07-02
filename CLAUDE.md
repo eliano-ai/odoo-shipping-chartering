@@ -36,6 +36,13 @@ Status sprint saat ini tersimpan di: `sprints/.current_sprint`
 - Jika file tidak ada, mulai dari Sprint 1
 - Breakdown sprint: `sprints/sprint_NN.md`
 
+## Command Sunartha (.claude/commands/)
+
+Semua command dari `D:\Sunartha Claude Skills\commands\` (`sunartha-claude-skills-dev`) sudah di-install ke `.claude/commands/` project ini. **Mulai sekarang pakai versi lokal ini, jangan lagi rujuk path eksternal.**
+
+- `sprint.md`, `retro.md` — **sudah diadaptasi** untuk konteks Odoo/Windows (lihat isi file, beda dari sumber asli)
+- `devops.md`, `docs.md`, `improve.md`, `pm.md`, `qa.md`, `release.md`, `review.md`, `security.md`, `ux.md` — **masih raw/belum diadaptasi**, di-copy apa adanya dari sumber. Sebelum benar-benar dipakai, cek dulu apakah pre-flight check/asumsi tech stack-nya cocok (kemungkinan besar tidak — sama seperti `sprint.md`/`retro.md` sebelum diadaptasi: asumsi `backend/`+`uv`+pytest, `frontend/`+pnpm, email via AppleScript+Mail.app macOS). `ux.md` kemungkinan besar **tidak relevan sama sekali** untuk project ini (Odoo backend module dev, bukan custom frontend web app).
+
 ## Mode Eksekusi Sprint: CHECKPOINT (bukan autonomous)
 
 Berbeda dari default `/sprint` skill (yang jalan tanpa henti sampai semua sprint selesai), project ini pakai mode **checkpoint per sprint**:

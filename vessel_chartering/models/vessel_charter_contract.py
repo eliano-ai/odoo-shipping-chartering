@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
 
@@ -156,8 +160,14 @@ class VesselCharterContract(models.Model):
         'res.partner', string='Redelivery Place', domain=[('is_port', '=', True)],
     )
     cve_rate = fields.Monetary(string='C/V/E Rate (USD/bulan)', currency_field='currency_id')
+    offhire_ids = fields.One2many(
+        'vessel.offhire.event', 'contract_id', string='Off-hire Events',
+    )
     total_offhire_hours = fields.Float(
         string='Total Off-hire (jam)', compute='_compute_total_offhire_hours', store=True,
+    )
+    hire_statement_ids = fields.One2many(
+        'vessel.hire.statement.line', 'contract_id', string='Hire Statements',
     )
 
     # ── Field COA ─────────────────────────────────────────────────────────
@@ -248,10 +258,10 @@ class VesselCharterContract(models.Model):
             rec.qty_shipped = sum(shipped.mapped('bl_qty'))
             rec.qty_remaining = rec.total_qty_commitment - rec.qty_shipped
 
+    @api.depends('offhire_ids.duration_hours')
     def _compute_total_offhire_hours(self):
-        # offhire_ids belum ada (Sprint 5) — return 0 sementara, TODO Sprint 5
         for rec in self:
-            rec.total_offhire_hours = 0.0
+            rec.total_offhire_hours = sum(rec.offhire_ids.mapped('duration_hours'))
 
     @api.depends(
         'laytime_ids.state', 'laytime_ids.balance_hours', 'laytime_ids.laytime_used_hours',
@@ -495,6 +505,44 @@ class VesselCharterContract(models.Model):
             'view_mode': 'form',
             'target': 'current',
             'context': {'default_contract_id': self.id},
+        }
+
+    def action_generate_hire_statement(self):
+        """Buat vessel.hire.statement.line periode berikutnya berdasarkan hire_payment_term.
+        Periode lanjut dari akhir statement terakhir, atau dari delivery_date/date_start
+        jika belum ada statement sama sekali. Cegah duplikat via constraint model."""
+        self.ensure_one()
+        if self.contract_type != 'time':
+            raise UserError(_('Generate Hire Statement hanya untuk Time Charter.'))
+        last_line = self.hire_statement_ids.sorted('period_end', reverse=True)[:1]
+        if last_line:
+            period_start = last_line.period_end
+        else:
+            period_start = (
+                self.delivery_date and self.delivery_date.date()
+            ) or self.date_start
+        if not period_start:
+            raise UserError(_(
+                'Tanggal Delivery atau Laycan/Periode Mulai wajib diisi sebelum '
+                'generate hire statement.'
+            ))
+        if self.hire_payment_term == '15_days_advance':
+            period_end = period_start + timedelta(days=15)
+        else:
+            period_end = period_start + relativedelta(months=1)
+
+        line = self.env['vessel.hire.statement.line'].create({
+            'contract_id': self.id,
+            'period_start': period_start,
+            'period_end': period_end,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Hire Statement Baru — %s') % self.name,
+            'res_model': 'vessel.hire.statement.line',
+            'view_mode': 'form',
+            'res_id': line.id,
+            'target': 'current',
         }
 
     def action_view_laytime(self):

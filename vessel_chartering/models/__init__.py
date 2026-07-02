@@ -6,4 +6,6 @@ from . import vessel_charter_contract
 from . import vessel_voyage_estimate
 from . import vessel_sof_line
 from . import vessel_laytime_calculation
+from . import vessel_offhire_event
+from . import vessel_hire_statement_line
 from . import fleet_vehicle

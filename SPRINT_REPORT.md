@@ -220,3 +220,35 @@ Atas instruksi user: company default currency diubah ke IDR, dan modul terkait a
 - **Pelajaran baru dicatat untuk sprint berikutnya**: (1) Odoo 19 rename `res.users.groups_id` → `group_ids`; (2) test run one-off perlu `--http-port` custom untuk hindari port conflict dengan container utama; (3) `decoration-secondary` masih harus diwaspadai — pertimbangkan audit grep di Sprint 7 untuk pastikan tidak kepakai lagi di file manapun
 
 ---
+
+## Sprint 5 — Time Charter: Hire Statement & Off-hire — 2026-07-02
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.offhire.event` — duration_hours (compute), reason (breakdown/drydock/crew/deficiency/other), fuel_deduction
+- [x] Model `vessel.hire.statement.line` — days_in_period, offhire_hours (compute dengan **partial overlap proportional**, bukan all-or-nothing), net_hire_days, hire_amount, cve_amount (pro-rata basis 30 hari), bunker_adjustment (manual), total_amount
+- [x] Update kontrak: `offhire_ids`, `hire_statement_ids`, `total_offhire_hours` (compute real, sebelumnya placeholder 0.0 dari Sprint 2)
+- [x] `action_generate_hire_statement` — periode lanjut otomatis dari statement terakhir (atau delivery_date/date_start jika belum ada), constraint `_check_no_duplicate_period` cegah duplikat
+- [x] Security access untuk 2 model baru
+- [x] Views: tab "Hire & Off-hire" di form kontrak (offhire inline editable + hire statement list read-only + tombol generate)
+- [x] Dummy data: **persis replikasi acceptance criteria §10.6** — hire statement 15 hari (27 Jun - 12 Jul), off-hire 12 jam penuh di dalam periode → net_hire_days = 14.5
+- [x] **3 unit test `TransactionCase`** (`tests/test_hire_statement.py`), semua pass:
+  1. net_hire_days = 14.5 persis (acceptance criteria §10.6)
+  2. Off-hire partial overlap (event mulai sebelum periode, berakhir di dalam periode) → hanya porsi overlap (6 dari 12 jam) yang dihitung, bukan all-or-nothing
+  3. `action_generate_hire_statement` — periode berurutan otomatis benar, constraint tolak duplikat periode
+
+### Blocker & Resolusi
+Tidak ada blocker baru — pelajaran dari Sprint 2/4 (RNG schema, `group_ids`, `--http-port` test) diterapkan sejak awal, proses lancar tanpa iterasi ulang.
+
+### Verifikasi
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL
+- ✅ Idempotent — re-run `-u`, count hire statement & offhire tetap 1
+- ✅ Dummy data database: `days_in_period=15, offhire_hours=12, net_hire_days=14.5, hire_amount=116000.00` (14.5 × 8000) — **persis** acceptance criteria §10.6
+- ✅ 7/7 unit test pass (0 failed, 0 error) — gabungan Sprint 4 (4 test) + Sprint 5 (3 test), tidak ada regresi
+
+### Catatan
+- `cve_amount` pro-rata pakai basis 30 hari (bukan 30.44 hari/bulan rata-rata kalender) — simplifikasi MVP, cukup akurat untuk keperluan estimasi
+- Tidak ada form view terpisah untuk `vessel.hire.statement.line`/`vessel.offhire.event` (cuma inline di tab kontrak) — sesuai scope sprint file, Odoo auto-generate form generik jika user klik row
+
+---

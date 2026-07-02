@@ -15,3 +15,7 @@ access_vessel_laytime_calculation_manager,vessel.laytime.calculation.manager,mod
 access_vessel_laytime_calculation_user,vessel.laytime.calculation.user,model_vessel_laytime_calculation,vessel_chartering.group_chartering_user,1,1,1,0
 access_vessel_sof_line_manager,vessel.sof.line.manager,model_vessel_sof_line,vessel_chartering.group_chartering_manager,1,1,1,1
 access_vessel_sof_line_user,vessel.sof.line.user,model_vessel_sof_line,vessel_chartering.group_chartering_user,1,1,1,1
+access_vessel_offhire_event_manager,vessel.offhire.event.manager,model_vessel_offhire_event,vessel_chartering.group_chartering_manager,1,1,1,1
+access_vessel_offhire_event_user,vessel.offhire.event.user,model_vessel_offhire_event,vessel_chartering.group_chartering_user,1,1,1,0
+access_vessel_hire_statement_line_manager,vessel.hire.statement.line.manager,model_vessel_hire_statement_line,vessel_chartering.group_chartering_manager,1,1,1,1
+access_vessel_hire_statement_line_user,vessel.hire.statement.line.user,model_vessel_hire_statement_line,vessel_chartering.group_chartering_user,1,1,1,0

@@ -356,4 +356,20 @@
         <field name="activity">Completed loading</field>
     </record>
 
+    <!-- ─── Demo Off-hire & Hire Statement — replikasi acceptance criteria §10.6
+         (hire statement 15 hari, off-hire 12 jam → net_hire_days = 14.5) ───── -->
+    <record id="demo_offhire_1" model="vessel.offhire.event">
+        <field name="contract_id" ref="demo_contract_time_out_1"/>
+        <field name="datetime_start" eval="(datetime.today() - timedelta(days=3)).replace(hour=6, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="(datetime.today() - timedelta(days=3)).replace(hour=18, minute=0, second=0, microsecond=0).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="reason">breakdown</field>
+        <field name="description">Engine breakdown 12 jam</field>
+    </record>
+
+    <record id="demo_hire_statement_1" model="vessel.hire.statement.line">
+        <field name="contract_id" ref="demo_contract_time_out_1"/>
+        <field name="period_start" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d')"/>
+        <field name="period_end" eval="(datetime.today() + timedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
 </odoo>

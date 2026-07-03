@@ -61,7 +61,7 @@ Mode **autonomous** (berlaku mulai Sprint 15, modul `vessel_voyage_pnl`):
 1. Jalankan seluruh task di satu file `sprints/sprint_NN.md`
 2. Jalankan verifikasi & Definition of Done
 3. Update `SPRINT_REPORT.md`
-4. Commit ke git, push ke `github` remote (bukan `origin`)
+4. **Commit ke git lokal tiap sprint** (`git commit`), **TAPI JANGAN `git push`** — push ke `github` remote cuma sekali di akhir, setelah SEMUA sprint modul yang sedang berjalan selesai (klarifikasi user 2026-07-03: "commit ke githubnya setelah seluruh sprintnya beres aja"). Commit lokal tetap jalan tiap sprint supaya history granular per sprint tetap ada begitu akhirnya di-push.
 5. **Kirim email notifikasi otomatis** (lihat Reporting di bawah — beda dari sebelumnya yang WAJIB tanya dulu)
 6. **Lanjut otomatis ke sprint berikutnya** tanpa menunggu approval — kecuali kalau task sprint menyentuh "Pertanyaan Terbuka" tech spec yang genuinely perlu keputusan bisnis/desain dari user (itu tetap wajib stop & tanya, tidak berubah oleh instruksi automation ini — automation cuma soal ritme antar-sprint & email, bukan soal keputusan bisnis)
 

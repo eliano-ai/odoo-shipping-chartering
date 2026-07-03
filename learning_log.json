@@ -1,5 +1,5 @@
 {
-  "project": "Odoo Shipping Vertical Solution — vessel_chartering + vessel_voyage_operations",
+  "project": "Odoo Shipping Vertical Solution - vessel_chartering + vessel_voyage_operations + vessel_voyage_pnl + vessel_bunker_management",
   "last_updated": "2026-07-03",
   "sprints": [
     {
@@ -171,6 +171,174 @@
       "tasks_done": 10,
       "completion_pct": 100,
       "note": "MVP vessel_voyage_operations selesai. Fitur tambahan di luar rencana (3 calendar view) atas permintaan user di tengah sprint — menyentuh vessel_chartering juga."
+    },
+    {
+      "number": 15,
+      "name": "vessel_voyage_pnl: Foundation & Master Data",
+      "commit": "099c9b2",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 7,
+      "tasks_done": 7,
+      "completion_pct": 100
+    },
+    {
+      "number": 16,
+      "name": "vessel_voyage_pnl: Core P&L Model (Revenue & Direct Cost)",
+      "commit": "cbbb16c",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 7,
+      "tasks_done": 7,
+      "completion_pct": 100
+    },
+    {
+      "number": 17,
+      "name": "vessel_voyage_pnl: Allocated Cost & Alokasi Logic",
+      "commit": "43dfc11",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 11,
+      "tasks_done": 11,
+      "completion_pct": 100
+    },
+    {
+      "number": 18,
+      "name": "vessel_voyage_pnl: Estimate vs Actual + Vessel P&L Bulanan",
+      "commit": "1813cf6",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 8,
+      "tasks_done": 8,
+      "completion_pct": 100
+    },
+    {
+      "number": 19,
+      "name": "vessel_voyage_pnl: Budget",
+      "commit": "9b33fb7",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 7,
+      "tasks_done": 7,
+      "completion_pct": 100
+    },
+    {
+      "number": 20,
+      "name": "vessel_voyage_pnl: Historical Backfill, Cron Lengkap & Email",
+      "commit": "4978800",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 5,
+      "tasks_done": 5,
+      "completion_pct": 100
+    },
+    {
+      "number": 21,
+      "name": "vessel_voyage_pnl: Views Polish, Dashboard Direksi & Acceptance Final",
+      "commit": "8ea6c7c",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 8,
+      "tasks_done": 8,
+      "completion_pct": 100
+    },
+    {
+      "number": 22,
+      "name": "vessel_bunker_management: Foundation & Master Data",
+      "commit": "abecc58",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 6,
+      "tasks_done": 6,
+      "completion_pct": 100
+    },
+    {
+      "number": 23,
+      "name": "vessel_bunker_management: Procurement (Inquiry, Quote, PO Integration)",
+      "commit": "c7c91f4",
+      "status": "done",
+      "blockers_count": 4,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 24,
+      "name": "vessel_bunker_management: BDN, Survey, Dispute & Stock Integration",
+      "commit": "3e43cf7",
+      "status": "done",
+      "blockers_count": 5,
+      "high_severity_blockers": 2,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 25,
+      "name": "vessel_bunker_management: ROB Reconciliation (Inti Anti-Fraud)",
+      "commit": "d1a0f57",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 11,
+      "tasks_done": 11,
+      "completion_pct": 100
+    },
+    {
+      "number": 26,
+      "name": "vessel_bunker_management: BOD/BOR Settlement (Time Charter)",
+      "commit": "993492b",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 11,
+      "tasks_done": 11,
+      "completion_pct": 100
+    },
+    {
+      "number": 27,
+      "name": "vessel_bunker_management: Cron Lengkap & Email",
+      "commit": "f466766",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 6,
+      "tasks_done": 6,
+      "completion_pct": 100
+    },
+    {
+      "number": 28,
+      "name": "vessel_bunker_management: Views Polish, Laporan & Acceptance Final",
+      "commit": "9ab3bf5",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 8,
+      "tasks_done": 8,
+      "completion_pct": 100
     }
   ],
   "recurring_blockers": [
@@ -233,6 +401,69 @@
       "last_seen": "Sprint 12",
       "resolved": true,
       "detail": "Sudah diperbaiki di Sprint 13. Mirip pola gap acceptance criteria §10 dari retro Sprint 1-7 (yang sudah diperbaiki), tapi untuk tabel security §6 belum ada pre-flight cross-check serupa."
+    },
+    {
+      "item": "has_group() gagal saat demo-data/install context karena env.user = __system__ (uid=1), bukan base.user_admin - dipakai untuk guard action method (action_resolve_dispute, action_settle, dst)",
+      "occurrences": 3,
+      "severity": "HIGH",
+      "first_seen": "vessel_voyage_pnl Sprint 17",
+      "last_seen": "vessel_bunker_management Sprint 26",
+      "resolved": true,
+      "detail": "Pola fix konsisten tiap kejadian: demo code tulis field target langsung (state/field write()), method action asli tetap pakai guard has_group() (diuji via with_user() di unit test). Sudah jadi pola established, bukan lagi kejutan - tapi TETAP kena tiap model baru yang action method-nya guard grup dipakai di demo setup. Kandidat: tambahkan catatan eksplisit di checklist CLAUDE.md/sprint.md supaya dicek proaktif SEBELUM nulis demo (bukan reaktif kena UserError dulu)."
+    },
+    {
+      "item": "<function> tag di dalam <odoo noupdate=1> tidak pernah re-run tiap -u (noupdate menekan <function> juga, bukan cuma <record>)",
+      "occurrences": 1,
+      "severity": "HIGH",
+      "first_seen": "vessel_bunker_management Sprint 23",
+      "last_seen": "vessel_bunker_management Sprint 23",
+      "resolved": true,
+      "detail": "Sudah masuk CLAUDE.md Checklist Odoo 19 Gotcha. Fix: pisah <data noupdate=1> (record) dan <data> polos (function) dalam file yang sama."
+    },
+    {
+      "item": "<record> XML re-declare field milik module lain yang xmlid-nya noupdate-protected oleh module ASAL - di-skip diam-diam (noupdate yang berlaku adalah punya module asal, bukan file sendiri)",
+      "occurrences": 1,
+      "severity": "HIGH",
+      "first_seen": "vessel_bunker_management Sprint 24",
+      "last_seen": "vessel_bunker_management Sprint 24",
+      "resolved": true,
+      "detail": "Sudah masuk CLAUDE.md Checklist Odoo 19 Gotcha. Fix: method Python idempoten (write() eksplisit) dipanggil via <function> di luar noupdate scope."
+    },
+    {
+      "item": "stock.move.name dihapus di Odoo 19 (pakai description_picking) - sekaligus menyingkap bug laten IDENTIK di fleet_fuel_log._create_stock_move() (pre-existing, belum diketahui sebelumnya karena guard product_id kosong selalu kena duluan)",
+      "occurrences": 1,
+      "severity": "MED",
+      "first_seen": "vessel_bunker_management Sprint 24",
+      "last_seen": "vessel_bunker_management Sprint 24",
+      "resolved": true,
+      "detail": "Sudah masuk CLAUDE.md Checklist Odoo 19 Gotcha, termasuk catatan bug laten fleet_fuel_log di luar scope perbaikan sprint ini."
+    },
+    {
+      "item": "Stored compute field yang depend pada hasil search() lintas model tidak auto-recompute saat data sumber berubah belakangan (fix data lalu record lama masih bawa nilai basi)",
+      "occurrences": 2,
+      "severity": "MED",
+      "first_seen": "vessel_bunker_management Sprint 25",
+      "last_seen": "vessel_bunker_management Sprint 26",
+      "resolved": true,
+      "detail": "Fix konsisten: unlink() record lama, re-run -u supaya create() path jalan ulang dengan data benar. Bukan bug Odoo, murni konsekuensi @api.depends tidak bisa react ke search() dinamis - sudah diketahui dari vessel_voyage_pnl juga. Kandidat: tulis pola ini eksplisit sebagai 'known limitation' di CLAUDE.md supaya tidak dianggap kejutan tiap kali ditemukan lagi."
+    },
+    {
+      "item": "Demo data lintas modul (vessel_voyage_pnl vs vessel_bunker_management) berbagi 1 database dev (shipping_dev) yang sama menyebabkan collision - guard 'skip kalau X sudah ada' yang terlalu longgar salah menghalangi data yang justru dibutuhkan modul lain",
+      "occurrences": 1,
+      "severity": "MED",
+      "first_seen": "vessel_bunker_management Sprint 25",
+      "last_seen": "vessel_bunker_management Sprint 25",
+      "resolved": true,
+      "detail": "Fix: perketat guard jadi cek kondisi SPESIFIK (fuel_type_id tertentu), bukan kondisi umum ('ada apapun'). TIDAK akan terjadi di fresh install modul sendirian tanpa modul lain - murni artefak lingkungan dev yang dipakai bergantian sepanjang sesi panjang."
+    },
+    {
+      "item": "Test regresi berulang akibat demo data lifecycle terus berkembang antar sprint (state lanjut/period baru dibuat) - test lama yang hardcode assert exact-state/exact-period jadi stale",
+      "occurrences": 3,
+      "severity": "MED",
+      "first_seen": "vessel_bunker_management Sprint 24",
+      "last_seen": "vessel_bunker_management Sprint 26",
+      "resolved": true,
+      "detail": "3 kejadian: assertRaises tuple-form tidak didukung, hardcode state=='nominated' break setelah demo lanjut ke delivered, test baru pakai period_start yang collide dengan punya demo. Kandidat: sprint.md checklist tambah 'jalankan ulang SEMUA unit test (bukan cuma yang baru ditulis) setiap kali demo data di-extend di sprint yang sama'."
     }
   ],
   "skill_improvement_candidates": [

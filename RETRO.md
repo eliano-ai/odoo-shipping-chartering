@@ -3,6 +3,110 @@
 
 ---
 
+## 2026-07-03 — Retrospektif Sprint 15–28 (MVP `vessel_voyage_pnl` + `vessel_bunker_management` complete)
+
+**Project**: Odoo Shipping Vertical Solution — modul `vessel_voyage_pnl` (Sprint 15-21) DAN `vessel_bunker_management` (Sprint 22-28)
+**Scope**: Sprint 15 sampai Sprint 28 (14 sprint, roadmap Layer 3 Finansial #3 dan #4)
+**Reviewed**: 2026-07-03
+**Reviewed by**: Claude Code Retro Agent
+
+**Catatan penting soal scope**: retro ini seharusnya dijalankan 2x terpisah (setelah Sprint 21 dan setelah Sprint 28), tapi retro untuk Sprint 15-21 **ternyata terlewat** — `learning_log.json` berhenti di Sprint 14 dan `RETRO.md` tidak punya entry Sprint 15-21 sebelum retro ini dijalankan (`sprint_27.md` bahkan sempat mereferensikan "pelajaran retro vessel_voyage_pnl Sprint 15-21" yang sebenarnya tidak pernah ada sebagai retro tertulis — kemungkinan tercampur dengan narasi `SPRINT_REPORT.md`, bukan retro artifact sungguhan). Retro ini menggabungkan kedua cakupan sekaligus untuk menutup gap tersebut. **Lihat Gap #0 di bawah untuk analisis kenapa ini bisa terlewat dan cara mencegahnya.**
+
+### 📊 Ringkasan Kuantitatif
+
+| Metric | Nilai |
+|--------|-------|
+| Sprint dianalisis | 14 (Sprint 15-21 `vessel_voyage_pnl`, Sprint 22-28 `vessel_bunker_management`) |
+| Total tasks (approx, dari checklist "Task Selesai" tiap entry SPRINT_REPORT.md) | ~112 |
+| Fix/revert commits | 0 (grep word-boundary bersih di seluruh git log) |
+| Unique blocker entries | 24 mention di SPRINT_REPORT.md, 4 kategori adalah pola berulang (≥2 kejadian) |
+| Recurring blockers baru ditambahkan ke learning_log.json | 7 kategori baru |
+| Skill gap terdeteksi | 1 gap proses besar (retro yang terlewat) + 3 gap command coverage |
+
+### 🔁 Pola Blocker Sistemik
+
+#### 0. Retro siklus modul (`vessel_voyage_pnl` Sprint 15-21) tidak pernah benar-benar dijalankan
+- **Severity**: HIGH (meta-level, bukan bug kode — tapi merusak keandalan proses pembelajaran)
+- **Kejadian konkret**: Sprint 21's closing note (`sprint_21.md`) mengarahkan untuk "jalankan `/retro` setelah selesai", dan `SPRINT_REPORT.md` mencatat MVP selesai — tapi baik `RETRO.md` maupun `learning_log.json` tidak pernah mendapat entry untuk Sprint 15-21. `sprint_27.md` (ditulis untuk `vessel_bunker_management`) bahkan mereferensikan "pelajaran retro vessel_voyage_pnl Sprint 15-21" seolah-olah retro itu ada — kemungkinan besar penulis sprint breakdown (diri sendiri, sesi sebelumnya) mengasumsikan retro akan/sudah dijalankan karena polanya konsisten di modul 1 & 2, tapi tidak benar-benar memverifikasi file `RETRO.md` sebelum menulis referensi itu.
+- **Root cause**: instruksi "jalankan /retro setelah MVP selesai" ada di catatan sprint (`sprint_21.md`), tapi tidak ada ENFORCEMENT — kalau sesi berikutnya langsung lanjut ke tech spec modul baru tanpa retro (yang persis terjadi: user minta lanjut ke `vessel_bunker_management` segera setelah `vessel_voyage_pnl` selesai), retro bisa terlewat tanpa ada yang notice, karena tidak ada gate/checklist yang secara eksplisit MEWAJIBKAN cek "apakah RETRO.md sudah punya entry untuk siklus yang baru selesai" sebelum mulai sprint breakdown modul berikutnya.
+- **Skill yang perlu diupdate**: `sprint.md` (bagian penutup MVP) dan/atau proses breakdown sprint modul baru
+- **Saran perbaikan**: tambah pre-flight check di awal proses "buat sprint breakdown modul baru" — cek apakah `RETRO.md` sudah punya entry untuk modul yang BARU SAJA selesai (grep nama modul sebelumnya di `RETRO.md`); kalau belum, jalankan retro dulu SEBELUM lanjut menulis sprint breakdown modul baru. Ini mencegah retro "keburu terlewat" karena momentum autonomous mode yang langsung lanjut ke modul berikutnya tanpa jeda alami untuk retro.
+
+#### 1. `has_group()` gagal di context demo-data/install (`env.user` = `__system__`, bukan `base.user_admin`) — 3 kejadian lintas 2 modul
+- **Severity**: HIGH
+- **Kejadian konkret**:
+  1. `vessel_voyage_pnl` Sprint 17: action method guard `has_group()` gagal dipanggil dari demo setup.
+  2. `vessel_bunker_management` Sprint 24: `action_resolve_dispute()` sama persis.
+  3. `vessel_bunker_management` Sprint 26: `action_settle()` sama persis lagi.
+- **Root cause**: user yang menjalankan `-i`/`-u` (termasuk saat load demo data) adalah superuser/`__system__` (uid=1), yang TIDAK otomatis member semua grup kecuali eksplisit ditambahkan (`base.user_admin` di-assign eksplisit ke `group_bunker_manager` dkk, tapi `__system__` sendiri tidak). Pola fix-nya sudah konsisten dan cepat ditemukan tiap kali (demo tulis field target langsung, bukan panggil action method yang guarded), TAPI selalu ditemukan REAKTIF (kena `UserError` dulu), bukan proaktif dicegah dari awal penulisan demo code.
+- **Skill yang perlu diupdate**: `sprint.md` (Pre-flight Check) dan/atau `CLAUDE.md` Konvensi Kode
+- **Saran perbaikan**: tambah catatan eksplisit di `CLAUDE.md` (dan pre-flight `sprint.md`): "kalau demo/dummy data perlu memanggil action method yang guard `has_group()`, JANGAN panggil method itu langsung — tulis field/state target secara langsung via `write()`/assignment, method asli tetap simpan guard-nya (diuji lewat `with_user()` di unit test)". Ini sudah jadi tacit knowledge (3x diterapkan benar), tinggal dituliskan eksplisit supaya modul ke-5 tidak menemukan ulang dari nol.
+
+#### 2. Odoo 19 API/behavior baru ditemukan reaktif — 2 pola baru (beda dari retro sebelumnya)
+- **Severity**: HIGH
+- **Kejadian konkret**:
+  1. `vessel_bunker_management` Sprint 23: `<function>` tag di dalam `<odoo noupdate="1">` tidak pernah re-run tiap `-u` — noupdate menekan `<function>` juga, bukan cuma `<record>` (asumsi awal salah).
+  2. `vessel_bunker_management` Sprint 24: `<record>` XML re-declare field milik module LAIN yang xmlid-nya noupdate-protected oleh module ASAL — di-skip diam-diam (noupdate yang berlaku adalah punya module asal, bukan file sendiri).
+  3. `vessel_bunker_management` Sprint 24: `stock.move.name` dihapus di Odoo 19 (`description_picking` sebagai gantinya) — sekaligus menyingkap bug laten IDENTIK di `fleet_fuel_log._create_stock_move()` (pre-existing, luput karena guard `product_id` kosong selalu kena duluan).
+- **Root cause**: sama seperti pola di retro sebelumnya — pengetahuan Odoo API dari versi lama/asumsi umum XML `noupdate` semantics ternyata tidak selengkap perilaku aktual Odoo 19.
+- **Skill yang perlu diupdate**: sudah masuk ke `CLAUDE.md` Checklist Odoo 19 Gotcha (3 baris baru) — **tapi belum disinkronkan ke pre-flight grep list `sprint.md`** (gap yang SAMA seperti yang diidentifikasi retro Sprint 8-14, poin ini ternyata TERULANG: dokumentasi bertambah tapi grep executable tidak ikut diperbarui secara rutin).
+- **Saran perbaikan**: sinkronkan 3 gotcha baru ini ke grep list `sprint.md` Pre-flight — dan pertimbangkan proses yang lebih tegas: setiap kali baris baru masuk CLAUDE.md Gotcha table, item itu dianggap "belum selesai" sampai baris grep yang sesuai juga ditambahkan ke `sprint.md` di commit yang sama (bukan cuma rekomendasi, tapi bagian dari Definition of Done sprint yang menambah gotcha itu).
+
+#### 3. Stored compute field yang depend pada `search()` lintas model tidak auto-recompute saat data sumber berubah belakangan — 2 kejadian
+- **Severity**: MED
+- **Kejadian konkret**: `vessel_bunker_management` Sprint 25 dan Sprint 26, keduanya: fix bug data source lalu record yang SUDAH dibuat sebelumnya masih membawa nilai lama (basi) karena `@api.depends` tidak bisa bereaksi ke hasil `search()` dinamis.
+- **Root cause**: keterbatasan arsitektural ORM Odoo (bukan bug), sudah diketahui sejak `vessel_voyage_pnl` juga tapi belum pernah ditulis sebagai "known limitation" yang eksplisit di `CLAUDE.md`.
+- **Skill yang perlu diupdate**: `CLAUDE.md` Konvensi Kode
+- **Saran perbaikan**: tulis eksplisit sebagai catatan permanen — "compute field yang depend ke hasil `search()` cross-model TIDAK auto-recompute kalau data sumbernya berubah setelah record dibuat; kalau demo data perlu di-fix ulang, `unlink()` record lama lalu `-u` ulang, jangan mengandalkan auto-recompute".
+
+#### 4. Test regresi berulang akibat demo data lifecycle terus berkembang antar sprint — 3 kejadian
+- **Severity**: MED
+- **Kejadian konkret**: `vessel_bunker_management` Sprint 24 (2x: `assertRaises` tuple-form tidak didukung Odoo test framework, dan hardcode `state == 'nominated'` break setelah demo lanjut ke `delivered`), Sprint 26 (test baru pakai `period_start` yang collide dengan punya demo, sempat disangka error `ir_cron` lock transient duluan).
+- **Root cause**: demo data yang terus di-extend antar sprint dalam modul yang sama membuat asumsi test lama (state persis, tanggal persis) menjadi stale, tapi test itu tidak selalu di-rerun ulang setelah demo data berubah pada sprint yang SAMA.
+- **Skill yang perlu diupdate**: `sprint.md` Langkah 8 (Jalankan Verifikasi Sprint)
+- **Saran perbaikan**: tambah catatan eksplisit — kalau sprint yang sama mengubah/memperpanjang demo data (`data/*_demo.xml`), WAJIB jalankan ulang SELURUH unit test suite (bukan cuma test yang baru ditulis sprint ini) sebelum menganggap sprint selesai, karena demo data shared lintas test class.
+
+### 🐛 Pola Git (Masalah Kode)
+
+- **Zero commit fix/revert/hotfix** di 14 sprint (`vessel_voyage_pnl` + `vessel_bunker_management`) — grep word-boundary bersih, konsisten dengan 2 retro sebelumnya.
+- **1 commit breakdown non-sprint per modul** (`9f844b2` untuk `vessel_voyage_pnl`, `389ef90` untuk `vessel_bunker_management`) — wajar, pola konsisten sejak modul pertama.
+- File sering diubah ulang: `SPRINT_REPORT.md`, `sprints/.current_sprint`, `vessel_bunker_management/data/vessel_bunker_management_demo.xml` (5×), `vessel_bunker_management/__manifest__.py` (7×), `vessel_bunker_management/views/vessel_bunker_management_menus.xml` (7×) — semua wajar (bertumbuh tiap sprint by design, sama pola modul sebelumnya).
+
+### 🕳️ Gap Skill Coverage
+
+1. **Retro tidak dijalankan untuk siklus Sprint 15-21 sebelum lanjut ke modul baru** (Pola #0) — gap proses paling signifikan sesi ini.
+2. **`sprint.md` Pre-flight grep list belum sinkron dengan 3 gotcha Odoo 19 baru** yang ditambahkan ke `CLAUDE.md` selama Sprint 23-24 (Pola #2) — pola gap yang SAMA persis dengan temuan retro Sprint 8-14 poin 1, menandakan saran perbaikan retro sebelumnya belum ditindaklanjuti secara permanen/proses.
+3. **Tidak ada pre-flight/guidance untuk pola `has_group()` di demo-context** (Pola #1) meski sudah terjadi 3x lintas 2 modul berbeda.
+4. **Tidak ada instruksi eksplisit "rerun semua test setelah demo data berubah"** di `sprint.md` Langkah 8 (Pola #4).
+
+### ✅ Yang Berjalan Baik
+
+- **Zero commit fix/revert sungguhan di 14 sprint** — pola bersih berlanjut dari 2 retro sebelumnya.
+- **33/33 unit test pass** (14 `vessel_voyage_pnl` + 19 `vessel_bunker_management`), tidak ada regresi permanen (semua regresi transient ditemukan & diperbaiki dalam sprint yang sama).
+- **11/11 acceptance criteria §10 tech spec lulus untuk KEDUA modul**, seluruhnya dengan nilai eksak sesuai spec (bukan aproksimasi) — `vessel_voyage_pnl` (10 penuh + 1 keterbatasan tooling didokumentasikan transparan) dan `vessel_bunker_management` (11/11 penuh).
+- **Fresh-install test dari database kosong dijalankan di kedua modul** sebagai bukti struktural, dengan trade-off yang didokumentasikan transparan (tanpa `--test-enable` untuk `vessel_bunker_management` demi waktu, sesuai lesson learned dari `vessel_voyage_pnl` Sprint 21 yang ditulis proaktif ke `sprint_28.md` SEBELUM sprint itu dimulai — bukti bahwa lesson learned lintas-modul benar-benar dipakai, bukan cuma didokumentasikan).
+- **Arah dependency satu-arah dijaga ketat** — `vessel_bunker_management` extend `vessel.charter.contract`/`vessel.hire.statement.line` tanpa pernah mengubah `vessel_chartering` sendiri, dicek ulang eksplisit di Sprint 28 sebagai bagian audit final.
+- **Keputusan desain ambigu tetap ditanyakan ke user** — 4 pertanyaan terstruktur di awal `vessel_bunker_management` (portal surveyor, threshold scope, BOD/BOR scope, approval matrix), semua dijawab sebelum sprint pertama dimulai.
+- **Bug laten pre-existing (`fleet_fuel_log._create_stock_move()`) ditemukan sebagai efek samping**, didokumentasikan transparan sebagai known issue di luar scope alih-alih diam-diam diabaikan.
+
+### 🔧 Kandidat Perbaikan Skill
+
+| Prioritas | Skill File | Masalah | Saran Perbaikan | Status |
+|-----------|-----------|---------|-----------------|--------|
+| HIGH | Proses (belum ada skill file spesifik) | Retro siklus modul bisa terlewat kalau sesi langsung lanjut ke modul baru tanpa jeda (Pola #0) | Tambah gate check: sebelum menulis sprint breakdown modul baru, cek `RETRO.md` sudah punya entry modul sebelumnya | ⬜ pending |
+| HIGH | `sprint.md` (Pre-flight) | Grep list Pola Odoo 19 Terlarang belum sinkron dengan 3 gotcha baru (function-in-noupdate, cross-module noupdate skip, stock.move.name) | Tambah 3 pola ke grep list `sprint.md` | ⬜ pending |
+| HIGH | `CLAUDE.md` Konvensi Kode | Tidak ada guidance tertulis soal `has_group()` gagal di demo-context (3x kejadian) | Tambah catatan eksplisit: demo code tulis field/state langsung, jangan panggil action method guarded | ⬜ pending |
+| MED | `CLAUDE.md` Konvensi Kode | Tidak ada catatan "known limitation" compute field depend search() lintas model tidak auto-recompute | Tambah catatan permanen + solusi (unlink + reinstall) | ⬜ pending |
+| MED | `sprint.md` (Langkah 8) | Tidak ada instruksi eksplisit rerun semua test setelah demo data berubah dalam sprint yang sama | Tambah catatan di Langkah 8 | ⬜ pending |
+
+### 💡 Rekomendasi untuk Siklus Berikutnya
+
+1. **Jalankan `/improve` sekarang** (sebelum modul roadmap berikutnya, kalau ada, dimulai) — 5 kandidat di atas semuanya TIER 1/2 (aman, tidak mengubah alur utama), cocok untuk auto-apply.
+2. **Prioritaskan HIGH #1 (gate retro)** dulu — ini meta-level, tapi kalau tidak diperbaiki, retro modul ke-5 berpotensi terlewat lagi dengan pola yang sama persis (autonomous mode yang langsung lompat ke modul berikutnya).
+3. Modul roadmap berikutnya (kalau ada) akan mewarisi 24 baris `recurring_blockers` di `learning_log.json` — cukup kaya untuk jadi referensi cepat, tapi pastikan pre-flight `sprint.md` benar-benar meng-grep semuanya, bukan cuma menyimpan sebagai dokumentasi pasif (poin ini adalah inti dari Pola #2 dan Gap #2 di atas, sudah 2x muncul di 2 retro berturut-turut).
+
+---
+
 ## 2026-07-03 — Retrospektif Sprint 8–14 (MVP `vessel_voyage_operations` complete)
 
 **Project**: Odoo Shipping Vertical Solution — modul `vessel_voyage_operations` (+ restrukturisasi app `maritime`, + 3 calendar view tambahan di `vessel_chartering`)

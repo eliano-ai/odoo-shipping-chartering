@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ir_actions_server_generate_vessel_pnl" model="ir.actions.server">
+        <field name="name">Voyage P&amp;L: Generate Vessel P&amp;L Bulanan</field>
+        <field name="model_id" ref="model_vessel_vessel_pnl"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_generate_vessel_pnl()</field>
+    </record>
+    <record id="cron_vessel_voyage_pnl_generate_vessel_pnl" model="ir.cron">
+        <field name="name">Voyage P&amp;L: Generate Vessel P&amp;L Bulanan (tgl 5)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_generate_vessel_pnl"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(day=5, hour=5, minute=0, second=0)"/>
+    </record>
+
+</odoo>

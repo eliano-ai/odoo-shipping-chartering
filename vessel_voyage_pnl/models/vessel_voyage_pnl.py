@@ -91,6 +91,23 @@ class VesselVoyagePnl(models.Model):
              '(crew/maintenance/depresiasi/overhead), konsisten definisi TCE standar industri.',
     )
 
+    # ── Variance vs Estimate (§2.4) ─────────────────────────────────────
+    revenue_variance = fields.Monetary(
+        string='Variance Revenue', compute='_compute_estimate_variance',
+    )
+    revenue_variance_pct = fields.Float(
+        string='Variance Revenue (%)', compute='_compute_estimate_variance',
+    )
+    cost_variance = fields.Monetary(
+        string='Variance Cost', compute='_compute_estimate_variance',
+    )
+    cost_variance_pct = fields.Float(
+        string='Variance Cost (%)', compute='_compute_estimate_variance',
+    )
+    tce_variance = fields.Monetary(
+        string='Variance TCE', compute='_compute_estimate_variance',
+    )
+
     line_ids = fields.One2many('vessel.voyage.pnl.line', 'pnl_id', string='Rincian')
     state = fields.Selection(STATE, default='draft', required=True, tracking=True, copy=False)
     computed_date = fields.Datetime(string='Terakhir Dihitung', readonly=True, copy=False)
@@ -166,6 +183,33 @@ class VesselVoyagePnl(models.Model):
                 rec.tce_actual_per_day = (rec.total_revenue - rec.total_direct_cost) / rec.voyage_days
             else:
                 rec.tce_actual_per_day = 0.0
+
+    @api.depends('estimate_id', 'total_revenue', 'total_direct_cost',
+                 'total_allocated_cost', 'tce_actual_per_day')
+    def _compute_estimate_variance(self):
+        """§2.4 — variance per komponen (bukan cuma total) supaya jadi feedback loop
+        akurasi estimasi ke Chartering Manager. Compute murni, tidak store (ringan)."""
+        for rec in self:
+            estimate = rec.estimate_id
+            if not estimate:
+                rec.revenue_variance = 0.0
+                rec.revenue_variance_pct = 0.0
+                rec.cost_variance = 0.0
+                rec.cost_variance_pct = 0.0
+                rec.tce_variance = 0.0
+                continue
+            rec.revenue_variance = rec.total_revenue - estimate.revenue_estimate
+            rec.revenue_variance_pct = (
+                (rec.revenue_variance / estimate.revenue_estimate) * 100.0
+                if estimate.revenue_estimate else 0.0
+            )
+            actual_total_cost = rec.total_direct_cost + rec.total_allocated_cost
+            rec.cost_variance = actual_total_cost - estimate.total_cost_estimate
+            rec.cost_variance_pct = (
+                (rec.cost_variance / estimate.total_cost_estimate) * 100.0
+                if estimate.total_cost_estimate else 0.0
+            )
+            rec.tce_variance = rec.tce_actual_per_day - estimate.tce_per_day
 
     # ── Generate / Recompute ────────────────────────────────────────────
     def action_generate_pnl(self):
@@ -646,10 +690,10 @@ class VesselVoyagePnl(models.Model):
                 })
 
         # Pool Maintenance — replikasi angka acceptance criteria §10.4 (pool 30,000).
-        # Ratio real yang keluar bukan persis 10/30 (voyage_days demo_voyage_3 = 5 hari,
-        # satu-satunya voyage kapal ini bulan itu -> ratio 100%) — pembuktian formula
-        # 10/30 -> 10,000 persis dilakukan via unit test (angka murni, tidak tergantung
-        # fixture demo), lihat tests/test_allocation.py.
+        # Ratio real yang keluar bukan persis 10/30 (tergantung total hari voyage kapal
+        # ini bulan itu, termasuk voyage kedua dari _demo_setup_second_voyage_same_month
+        # Sprint 18) — pembuktian formula 10/30 -> 10,000 persis dilakukan via unit test
+        # (angka murni, tidak tergantung fixture demo), lihat tests/test_allocation.py.
         existing_maintenance = self.env['fleet.maintenance.schedule'].search([
             ('vehicle_id', '=', voyage.vessel_id.id),
             ('maintenance_type', '=', 'preventive'),
@@ -694,3 +738,68 @@ class VesselVoyagePnl(models.Model):
             pnl.action_generate_pnl()
         else:
             existing_pnl.action_recompute()
+
+    @api.model
+    def _demo_setup_second_voyage_same_month(self):
+        """§10.7 acceptance criteria — 2 voyage kapal yang sama overlap bulan yang sama,
+        supaya agregasi vessel.vessel.pnl (utilization_pct, avg_tce) bisa diverifikasi
+        dengan data nyata. Idempoten — guard cek existing sebelum create."""
+        voyage3 = self.env.ref('vessel_voyage_operations.demo_voyage_3', raise_if_not_found=False)
+        contract3 = self.env.ref(
+            'vessel_chartering.demo_contract_coa_shipment_3', raise_if_not_found=False,
+        )
+        if not voyage3 or not contract3 or not voyage3.date_arrival_final:
+            return
+
+        voyage2 = self.env['vessel.voyage'].search([
+            ('charter_contract_id', '=', contract3.id),
+        ], limit=1)
+        if not voyage2:
+            contract3._ensure_voyage_analytic_account()
+            departure = voyage3.date_arrival_final + timedelta(days=3)
+            arrival = departure + timedelta(days=4)
+            voyage2 = self.env['vessel.voyage'].create({
+                'charter_contract_id': contract3.id,
+                'origin_port_id': voyage3.origin_port_id.id,
+                'final_port_id': voyage3.final_port_id.id,
+                'date_departure': departure,
+                'date_arrival_final': arrival,
+                'state': 'completed',
+            })
+
+        freight_product = self.env.ref('vessel_chartering.product_freight_revenue')
+        existing_freight = self.env['account.move'].search([
+            ('charter_contract_id', '=', contract3.id),
+            ('invoice_line_ids.product_id', '=', freight_product.id),
+        ], limit=1)
+        if not existing_freight:
+            move = contract3._create_freight_invoice(100)
+            move.action_post()
+
+        existing_pnl2 = self.env['vessel.voyage.pnl'].search([('voyage_id', '=', voyage2.id)], limit=1)
+        if not existing_pnl2:
+            pnl2 = self.create({'voyage_id': voyage2.id})
+            pnl2.action_generate_pnl()
+        else:
+            existing_pnl2.action_recompute()
+
+        # Voyage pertama (demo_voyage_3) perlu di-recompute ulang supaya alokasi
+        # per_voyage_day-nya ikut memperhitungkan total hari operasi kapal yang sudah
+        # bertambah (kedua voyage bulan yang sama), bukan cuma dirinya sendiri.
+        pnl1 = self.env['vessel.voyage.pnl'].search([('voyage_id', '=', voyage3.id)])
+        if pnl1 and pnl1.state != 'locked':
+            pnl1.action_recompute()
+
+        vessel = voyage3.vessel_id
+        year, month = voyage3.date_departure.year, voyage3.date_departure.month
+        vessel_pnl = self.env['vessel.vessel.pnl'].search([
+            ('vessel_id', '=', vessel.id),
+            ('period_month', '=', str(month)),
+            ('period_year', '=', year),
+        ], limit=1)
+        if not vessel_pnl:
+            self.env['vessel.vessel.pnl'].create({
+                'vessel_id': vessel.id,
+                'period_month': str(month),
+                'period_year': year,
+            })

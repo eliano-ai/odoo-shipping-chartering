@@ -830,3 +830,31 @@ Sesuai saran §12.2 poin 3 tech spec, allocated cost (`crew_cost_allocated` dst.
 Field header P&L (`other_direct_cost` dst.) tetap bisa ditulis langsung via ORM meski `state=locked` — ini **disengaja**, konsisten pola project (readonly cuma di level VIEW, bukan `write()` override, supaya idempotency demo data & script internal tidak rusak). Proteksi sesungguhnya ada di UI (view readonly) + proses bisnis (adjustment wizard sebagai jalur resmi pasca-lock, tercatat chatter).
 
 ---
+
+## Sprint 18 — vessel_voyage_pnl: Estimate vs Actual + Vessel P&L Bulanan — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Variance vs Estimate (§2.4) — `revenue_variance`/`revenue_variance_pct` (vs `estimate_id.revenue_estimate`), `cost_variance`/`cost_variance_pct` (vs `estimate_id.total_cost_estimate`, dibandingkan `total_direct_cost + total_allocated_cost`), `tce_variance` (vs `estimate_id.tce_per_day`) — compute murni tanpa store sesuai instruksi (ringan)
+- [x] Model `vessel.vessel.pnl` (§3.4) lengkap — `voyage_pnl_ids` (M2M compute, voyage yang overlap periode), `total_revenue`/`total_cost` (pro-rata berdasar hari overlap voyage vs periode), `idle_cost_allocated`, `net_result`, `calendar_days`, `voyage_days_total`, `utilization_pct`, `avg_tce` (tertimbang hari voyage), `state` draft/closed. Constraint unique `(vessel_id, period_month, period_year)`
+- [x] Logic `idle_cost_allocated` — **MVP hanya hitung dari kategori Maintenance** (satu-satunya kategori allocated_cost yang punya sumber pool otomatis di MVP; Crew Cost/Depreciation selalu `manual` jadi tidak ada pool terukur untuk dihitung idle-nya) — pool bulanan dikurangi total yang sudah terserap (pro-rata) voyage-voyage bulan itu
+- [x] `_cron_generate_vessel_pnl` (§4.3/§4.5, tgl 5 tiap bulan, generate/update bulan sebelumnya per kapal aktif) — tidak pakai `message_post`/`activity_schedule` sama sekali (cuma create/recompute record), jadi tidak butuh cek mail.thread/mixin
+- [x] Extend `fleet.vehicle`: `vessel_pnl_ids` (One2many, diisi penuh), `current_month_utilization_pct` (compute quick-info form kapal)
+- [x] Security access `vessel.vessel.pnl` (4 group standar)
+- [x] Views: form/list/pivot (kapal × bulan)/graph (utilisasi & TCE trend), menu "Vessel P&L" → P&L Bulanan per Kapal + Utilisasi & TCE Trend
+- [x] Dummy data §10.7 — voyage kedua (`demo_contract_coa_shipment_3`, kapal sama `demo_vessel_barge_01`) dibuat dari nol, overlap bulan yang sama (Juni 2026) dengan `demo_voyage_3`: 5 hari + 4 hari = 9 hari total, `vessel.vessel.pnl` Juni 2026 → **utilization_pct = 30% (9/30 hari), avg_tce = 14,669.44, net_result = 94,523.75, idle_cost_allocated = 0** (pool Maintenance 30,000 terserap penuh oleh kedua voyage: 16,666.67 + 13,333.33)
+
+### Blocker & Resolusi
+Tidak ada blocker baru. Menambahkan voyage kedua secara alami mengubah rasio alokasi `per_voyage_day` voyage pertama (dari Sprint 17: 30,000 penuh saat cuma 1 voyage/bulan → 16,666.67 setelah ada voyage kedua di bulan sama) — ini **bukan bug**, murni konsekuensi formula yang benar (total hari operasi kapal bulan itu bertambah), sudah didokumentasikan di komentar kode. Voyage pertama di-recompute ulang di demo setup supaya angkanya konsisten dengan realita 2-voyage.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL (jumlah `vessel.voyage.pnl`/`vessel.vessel.pnl` stabil di 2/1 setelah berkali-kali `-u`)
+- §10.7 acceptance criteria **persis**: 2 voyage overlap bulan sama → agregasi benar (revenue sum 150,025 = 75,275+74,750), `utilization_pct` sesuai hari voyage (9) vs hari kalender (30) = 30%
+- Cron `_cron_generate_vessel_pnl` diuji manual via `odoo shell` — idempoten (update record Juni 2026 yang sudah ada, tidak duplikat)
+- **Fresh install 9 modul** (`shipping_dev_test18`, temp DB, `--test-enable`): 0 ERROR/CRITICAL, 6/6 test pass, angka P&L & vessel P&L identik dengan database dev — dibersihkan setelah verifikasi
+
+### Catatan
+Warning docutils "(ERROR/3) Unexpected indentation" muncul saat instalasi (parsing RST dari field `description` beberapa modul untuk tampilan Apps list) — noise pre-existing tidak terkait modul ini, tidak mempengaruhi hasil test (tetap 0 failed/0 error).
+
+---

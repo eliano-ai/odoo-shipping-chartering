@@ -17,3 +17,7 @@ access_vessel_voyage_pnl_line_user,vessel.voyage.pnl.line.user,model_vessel_voya
 access_vessel_voyage_pnl_line_director,vessel.voyage.pnl.line.director,model_vessel_voyage_pnl_line,vessel_voyage_pnl.group_voyage_pnl_director,1,0,0,0
 access_vessel_pnl_adjustment_wizard_manager,vessel.pnl.adjustment.wizard.manager,model_vessel_pnl_adjustment_wizard,vessel_voyage_pnl.group_voyage_pnl_manager,1,1,1,1
 access_vessel_pnl_adjustment_wizard_finance,vessel.pnl.adjustment.wizard.finance,model_vessel_pnl_adjustment_wizard,vessel_voyage_pnl.group_voyage_pnl_finance,1,1,1,1
+access_vessel_vessel_pnl_manager,vessel.vessel.pnl.manager,model_vessel_vessel_pnl,vessel_voyage_pnl.group_voyage_pnl_manager,1,1,1,1
+access_vessel_vessel_pnl_finance,vessel.vessel.pnl.finance,model_vessel_vessel_pnl,vessel_voyage_pnl.group_voyage_pnl_finance,1,1,1,0
+access_vessel_vessel_pnl_user,vessel.vessel.pnl.user,model_vessel_vessel_pnl,vessel_voyage_pnl.group_voyage_pnl_user,1,0,0,0
+access_vessel_vessel_pnl_director,vessel.vessel.pnl.director,model_vessel_vessel_pnl,vessel_voyage_pnl.group_voyage_pnl_director,1,0,0,0

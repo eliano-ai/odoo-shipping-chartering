@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_vessel_pnl_list" model="ir.ui.view">
+        <field name="name">vessel.vessel.pnl.list</field>
+        <field name="model">vessel.vessel.pnl</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="net_result &lt; 0">
+                <field name="vessel_id"/>
+                <field name="period_month"/>
+                <field name="period_year"/>
+                <field name="total_revenue" sum="Total Revenue"/>
+                <field name="total_cost" sum="Total Cost"/>
+                <field name="idle_cost_allocated" sum="Idle Cost"/>
+                <field name="net_result" sum="Net Result"/>
+                <field name="utilization_pct" widget="percentage"/>
+                <field name="avg_tce"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_vessel_pnl_form" model="ir.ui.view">
+        <field name="name">vessel.vessel.pnl.form</field>
+        <field name="model">vessel.vessel.pnl</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_close" type="object" string="Close"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_reopen" type="object" string="Reopen"
+                            invisible="state != 'closed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="vessel_id"/>
+                            <field name="period_month"/>
+                            <field name="period_year"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="total_revenue"/>
+                            <field name="total_cost"/>
+                            <field name="idle_cost_allocated"/>
+                            <field name="net_result"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="calendar_days"/>
+                            <field name="voyage_days_total"/>
+                            <field name="utilization_pct" widget="percentage"/>
+                        </group>
+                        <group>
+                            <field name="avg_tce"/>
+                        </group>
+                    </group>
+                    <field name="voyage_pnl_ids" readonly="1">
+                        <list>
+                            <field name="voyage_id"/>
+                            <field name="voyage_days"/>
+                            <field name="total_revenue"/>
+                            <field name="voyage_result"/>
+                            <field name="tce_actual_per_day"/>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vessel_vessel_pnl_pivot" model="ir.ui.view">
+        <field name="name">vessel.vessel.pnl.pivot</field>
+        <field name="model">vessel.vessel.pnl</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="vessel_id" type="row"/>
+                <field name="period_year" type="col"/>
+                <field name="period_month" type="col"/>
+                <field name="net_result" type="measure"/>
+                <field name="total_revenue" type="measure"/>
+                <field name="total_cost" type="measure"/>
+                <field name="utilization_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_vessel_vessel_pnl_graph" model="ir.ui.view">
+        <field name="name">vessel.vessel.pnl.graph</field>
+        <field name="model">vessel.vessel.pnl</field>
+        <field name="arch" type="xml">
+            <graph type="line">
+                <field name="period_month" type="row"/>
+                <field name="utilization_pct" type="measure"/>
+                <field name="avg_tce" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_vessel_vessel_pnl" model="ir.actions.act_window">
+        <field name="name">P&amp;L Bulanan per Kapal</field>
+        <field name="res_model">vessel.vessel.pnl</field>
+        <field name="view_mode">list,form,pivot</field>
+    </record>
+
+    <record id="action_vessel_vessel_pnl_trend" model="ir.actions.act_window">
+        <field name="name">Utilisasi &amp; TCE Trend</field>
+        <field name="res_model">vessel.vessel.pnl</field>
+        <field name="view_mode">graph,pivot</field>
+    </record>
+
+</odoo>

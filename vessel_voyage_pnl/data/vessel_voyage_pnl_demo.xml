@@ -12,4 +12,8 @@
          langkah) — lihat vessel_voyage_pnl.py::_demo_setup_voyage3_sources. -->
     <function model="vessel.voyage.pnl" name="_demo_setup_voyage3_sources"/>
 
+    <!-- §10.7 acceptance criteria — 2 voyage kapal sama, overlap bulan sama, supaya
+         vessel.vessel.pnl (agregasi bulanan) bisa diverifikasi dengan data nyata. -->
+    <function model="vessel.voyage.pnl" name="_demo_setup_second_voyage_same_month"/>
+
 </odoo>

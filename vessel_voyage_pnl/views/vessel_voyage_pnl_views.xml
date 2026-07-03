@@ -120,6 +120,21 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Estimate vs Actual" name="estimate_vs_actual">
+                            <group>
+                                <group>
+                                    <field name="revenue_variance"/>
+                                    <field name="revenue_variance_pct" widget="percentage"/>
+                                </group>
+                                <group>
+                                    <field name="cost_variance"/>
+                                    <field name="cost_variance_pct" widget="percentage"/>
+                                </group>
+                            </group>
+                            <group>
+                                <field name="tce_variance"/>
+                            </group>
+                        </page>
                         <page string="Adjustment Manual" name="adjustment_manual">
                             <field name="line_ids" context="{'default_pnl_id': id}"
                                    domain="[('is_manual_adjustment', '=', True)]">

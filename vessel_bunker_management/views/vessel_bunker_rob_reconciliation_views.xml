@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_bunker_rob_reconciliation_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.rob.reconciliation.list</field>
+        <field name="model">vessel.bunker.rob.reconciliation</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="is_anomaly">
+                <field name="voyage_id"/>
+                <field name="vessel_id"/>
+                <field name="fuel_type"/>
+                <field name="expected_rob"/>
+                <field name="actual_rob"/>
+                <field name="variance"/>
+                <field name="variance_pct" widget="percentage"/>
+                <field name="is_anomaly"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_rob_reconciliation_form" model="ir.ui.view">
+        <field name="name">vessel.bunker.rob.reconciliation.form</field>
+        <field name="model">vessel.bunker.rob.reconciliation</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_review" type="object" string="Review"
+                            invisible="state != 'draft'"/>
+                    <button name="action_flag" type="object" string="Flag untuk Investigasi"
+                            class="oe_highlight" invisible="state == 'flagged' or not is_anomaly"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="not is_anomaly">
+                        ANOMALY — variance melebihi threshold, kemungkinan indikasi BDN qty
+                        tidak sesuai, konsumsi tidak tercatat lengkap, atau kebocoran/pencurian.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="voyage_id"/>
+                            <field name="vessel_id" readonly="1"/>
+                            <field name="fuel_type"/>
+                            <field name="noon_report_start_id"/>
+                            <field name="noon_report_end_id"/>
+                        </group>
+                        <group>
+                            <field name="previous_rob" readonly="1"/>
+                            <field name="total_supply" readonly="1"/>
+                            <field name="total_consumption" readonly="1"/>
+                            <field name="expected_rob" readonly="1"/>
+                            <field name="actual_rob" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="variance" readonly="1"/>
+                        <field name="variance_pct" readonly="1" widget="percentage"/>
+                        <field name="threshold_pct"/>
+                        <field name="is_anomaly" readonly="1"/>
+                    </group>
+                    <field name="review_notes"/>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_rob_reconciliation_anomaly_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.rob.reconciliation.anomaly.list</field>
+        <field name="model">vessel.bunker.rob.reconciliation</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="voyage_id"/>
+                <field name="vessel_id"/>
+                <field name="variance_pct" widget="percentage"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_rob_reconciliation" model="ir.actions.act_window">
+        <field name="name">ROB Reconciliation</field>
+        <field name="res_model">vessel.bunker.rob.reconciliation</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_vessel_bunker_rob_anomaly" model="ir.actions.act_window">
+        <field name="name">Anomaly Alert</field>
+        <field name="res_model">vessel.bunker.rob.reconciliation</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('is_anomaly', '=', True)]</field>
+    </record>
+
+</odoo>

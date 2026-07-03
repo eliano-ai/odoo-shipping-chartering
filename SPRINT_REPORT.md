@@ -1099,3 +1099,34 @@ Desain "Kirim Inquiry" (`action_send_inquiry`) di-dokumentasikan ulang: transisi
 2 gotcha Odoo 19 baru ditemukan sprint ini (noupdate cross-module record update, `stock.move.name` dihapus) — keduanya ditambahkan ke checklist CLAUDE.md meski masing-masing baru sekali kejadian, karena risiko tinggi terulang di Sprint 25-28 yang juga akan banyak berinteraksi dengan `stock`/`fleet_fuel_log`.
 
 ---
+
+## Sprint 25 — vessel_bunker_management: ROB Reconciliation (Inti Anti-Fraud) — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.bunker.rob.reconciliation` (§3.6) — compute dipecah jadi 3 method terpisah (`_compute_total_supply`/`_compute_total_consumption`/`_compute_expected_rob`) sesuai saran §12.2 poin 7, masing-masing punya unit test sendiri
+- [x] `_compute_total_supply` — sum `qty_confirmed_mt` dari `vessel.bunker.delivery` (state=confirmed) dalam rentang T1-T2, filter `fuel_type_id.code` sesuai mapping FO=MFO/DO=HSD+MGO (konsisten mapping Sprint 23)
+- [x] `_compute_total_consumption` — sum `fleet.fuel.log.qty_liters` / 1000 (**pendekatan konversi L→MT dengan asumsi densitas ~1**, didokumentasikan sebagai simplifikasi — presisi per fuel_type density adalah Fase 2), reuse bridge `voyage.fleet_trip_id` pola sama `vessel_voyage_pnl` Sprint 16
+- [x] `_compute_expected_rob` = previous + supply − consumption
+- [x] Threshold-with-override: `fleet.vehicle.bunker_variance_threshold_pct` fallback `res.company.default_bunker_variance_threshold_pct`
+- [x] `_cron_generate_rob_reconciliation` (§4.3/§4.5, harian) — auto-create untuk pasangan noon report approved berurutan, kirim activity ke `vessel_voyage_operations.group_voyage_ops_user` kalau `is_anomaly=True` (melengkapi, bukan menggantikan, anomaly detection `fleet_fuel_log`)
+- [x] Extend `vessel.voyage`: `bunker_inquiry_ids`/`bunker_delivery_ids` (compute reaktif via `@api.depends`, bukan search polos tanpa depends — pelajaran eksplisit supaya tidak melanggar aturan CLAUDE.md soal `@api.depends` kosong), `rob_reconciliation_ids`, `rob_anomaly_count`
+- [x] Extend `fleet.vehicle`: `bunker_inquiry_ids`, `rob_reconciliation_ids` (compute via relasi `voyage_ids.rob_reconciliation_ids`)
+- [x] Security access (manager RWC, bunker user RW, Operations read+review via `vessel_voyage_operations.group_voyage_ops_user`)
+- [x] Views: panel ringkas previous→supply→consumption→expected vs actual dengan alert banner saat anomaly, list "Anomaly Alert"
+- [x] Dummy data: replikasi **persis** §10.5 — previous ROB 200, supply 495 (delivery Sprint 24), consumption 150 → expected 545, actual 500 → **variance −45 (−8.26%), is_anomaly=True** (threshold default 8%)
+
+### Blocker & Resolusi
+1. **`vessel_voyage_pnl` sengaja BUKAN dependency modul ini** (§12.3 tech spec) — tapi database dev (`shipping_dev`) yang sama sudah punya demo data `vessel_voyage_pnl` dari sprint-sprint sebelumnya (trip + fuel log HSD 5000L untuk `demo_voyage_3`). Guard awal `_demo_setup_rob_scenario` ("kalau trip sudah ada dan SUDAH ADA fuel log apapun, skip") salah — malah skip create fuel log MFO yang saya butuhkan karena trip itu sudah punya fuel log HSD dari modul lain. **Fix**: guard diperketat jadi cek `fuel_type_id` spesifik (bukan "ada fuel log apapun"), supaya 1 trip bisa punya beberapa entri fuel log fuel_type berbeda dari sumber demo berbeda tanpa saling menimpa. Ini murni artefak database dev yang dipakai bergantian lintas modul sepanjang sesi ini — TIDAK akan terjadi di fresh install modul ini sendirian (tanpa `vessel_voyage_pnl`).
+2. Stored compute field (`total_consumption` dst.) yang bergantung pada hasil SEARCH lintas model (bukan field langsung) tidak otomatis re-trigger saat data sumber (fuel log) berubah belakangan — sama kelas masalah dengan yang sudah didokumentasikan di `vessel_voyage_pnl`. Untuk demo data, solusinya hapus & re-create record yang bermasalah (bukan andalkan auto-recompute), sudah konsisten dengan pola project.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL, 1 reconciliation record stabil setelah berkali-kali `-u`
+- **14/14 unit test pass** (9 dari Sprint 23-24 + 5 baru: total_supply dari delivery confirmed, total_consumption dari fuel log, formula expected_rob persis §10.5, variance & anomaly persis §10.5, formula murni terisolasi tanpa fixture DB)
+- §10.5 acceptance criteria **persis**: previous 200 + supply 495 − consumption 150 = expected 545; actual 500 → variance −45 (−8.26%) → `is_anomaly=True` di threshold default 8%
+
+### Catatan
+Konversi liter→MT (`/1000`, asumsi densitas ~1) adalah simplifikasi MVP yang perlu diketahui pengguna — untuk BBM laut riil (MFO/HSD/MGO), densitas aktual bervariasi ~0.85-0.99 kg/L tergantung jenis & suhu, jadi hasil `total_consumption` MT-nya presisi ±10-15% dari nilai riil. Cukup untuk sinyal anomaly (order-of-magnitude), tidak cukup presisi untuk akunting resmi — didokumentasikan di `help` field dan di sini sebagai catatan Fase 2.
+
+---

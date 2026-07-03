@@ -79,5 +79,9 @@
     <!-- §10.3/§10.4 acceptance criteria — BDN 500 MT, survey 495 MT, dispute,
          resolve, confirm -> stock.picking qty 495 MT. -->
     <function model="vessel.bunker.delivery" name="_demo_setup_dispute_scenario"/>
+
+    <!-- §10.5 acceptance criteria — previous ROB 200, supply 495, consumption 150
+         -> expected 545, actual 500 -> variance -45, is_anomaly=True (threshold 8%). -->
+    <function model="vessel.bunker.rob.reconciliation" name="_demo_setup_rob_scenario"/>
   </data>
 </odoo>

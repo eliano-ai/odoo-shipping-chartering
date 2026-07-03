@@ -33,6 +33,17 @@
               parent="menu_bunker_delivery_root" action="action_vessel_bunker_delivery_dispute"
               sequence="30"/>
 
+    <menuitem id="menu_bunker_reconciliation_root" name="Rekonsiliasi"
+              parent="menu_bunker_management_root" sequence="30"/>
+
+    <menuitem id="menu_vessel_bunker_rob_reconciliation" name="ROB Reconciliation"
+              parent="menu_bunker_reconciliation_root" action="action_vessel_bunker_rob_reconciliation"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_bunker_rob_anomaly" name="Anomaly Alert"
+              parent="menu_bunker_reconciliation_root" action="action_vessel_bunker_rob_anomaly"
+              sequence="20"/>
+
     <menuitem id="menu_bunker_config" name="Konfigurasi"
               parent="menu_bunker_management_root" sequence="90"
               groups="vessel_bunker_management.group_bunker_manager"/>

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class FleetVehicleBunkerManagement(models.Model):
@@ -10,6 +10,19 @@ class FleetVehicleBunkerManagement(models.Model):
         help='Ambang batas variance ROB reconciliation khusus kapal ini. '
              'Kosongkan/0 untuk pakai default global perusahaan.',
     )
+    bunker_inquiry_ids = fields.One2many(
+        'vessel.bunker.inquiry', 'vessel_id', string='Bunker Inquiries',
+    )
+    rob_reconciliation_ids = fields.One2many(
+        'vessel.bunker.rob.reconciliation', compute='_compute_rob_reconciliation_ids',
+        string='ROB Reconciliations',
+    )
+
+    @api.depends('voyage_ids.rob_reconciliation_ids')
+    def _compute_rob_reconciliation_ids(self):
+        for vehicle in self:
+            vehicle.rob_reconciliation_ids = vehicle.voyage_ids.rob_reconciliation_ids
+
     bunker_stock_location_id = fields.Many2one(
         'stock.location', string='Lokasi Stok Bunker', readonly=True, copy=False,
         help='Auto-create saat penerimaan bunker pertama kali dikonfirmasi (child dari '

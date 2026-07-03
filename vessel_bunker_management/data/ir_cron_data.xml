@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ir_actions_server_generate_rob_reconciliation" model="ir.actions.server">
+        <field name="name">Bunker Management: Generate ROB Reconciliation</field>
+        <field name="model_id" ref="model_vessel_bunker_rob_reconciliation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_generate_rob_reconciliation()</field>
+    </record>
+    <record id="cron_vessel_bunker_generate_rob_reconciliation" model="ir.cron">
+        <field name="name">Bunker Management: Generate ROB Reconciliation (Harian)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_generate_rob_reconciliation"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=0, second=0)"/>
+    </record>
+
+</odoo>

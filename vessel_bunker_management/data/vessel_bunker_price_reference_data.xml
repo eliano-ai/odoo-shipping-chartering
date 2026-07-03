@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="price_ref_mfo_1" model="vessel.bunker.price.reference">
+        <field name="date" eval="(datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="index_name">mops</field>
+        <field name="fuel_type_id" ref="fleet_fuel_log.fuel_type_mfo"/>
+        <field name="price_usd_mt">550.0</field>
+        <field name="region">Singapore</field>
+    </record>
+
+    <record id="price_ref_mgo_1" model="vessel.bunker.price.reference">
+        <field name="date" eval="(datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="index_name">mops</field>
+        <field name="fuel_type_id" ref="fleet_fuel_log.fuel_type_mgo"/>
+        <field name="price_usd_mt">750.0</field>
+        <field name="region">Singapore</field>
+    </record>
+
+    <record id="price_ref_hsd_1" model="vessel.bunker.price.reference">
+        <field name="date" eval="(datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')"/>
+        <field name="index_name">platts</field>
+        <field name="fuel_type_id" ref="fleet_fuel_log.fuel_type_hsd"/>
+        <field name="price_usd_mt">700.0</field>
+        <field name="region">Jakarta</field>
+    </record>
+
+</odoo>

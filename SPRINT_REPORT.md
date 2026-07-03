@@ -1009,3 +1009,28 @@ Detail lengkap tiap sprint di `sprints/sprint_22.md` s.d. `sprint_28.md`.
 - Pelajaran dari fresh-install verification `vessel_voyage_pnl` Sprint 21 (fresh-install-dari-nol dengan `--test-enable` bisa memakan waktu sangat lama) sudah didokumentasikan di `sprint_28.md` sebagai catatan proaktif, supaya tidak terulang kagetnya
 
 ---
+
+## Sprint 22 — vessel_bunker_management: Foundation & Master Data — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Skeleton modul `vessel_bunker_management` — `depends: ['fleet', 'mail', 'purchase', 'stock', 'account', 'fleet_fuel_log', 'vessel_chartering', 'vessel_voyage_operations', 'maritime']` — **semua hard dependency**, tidak ada soft-check Python (beda pola dari `vessel_voyage_pnl`)
+- [x] Security: `group_bunker_user` (implied `fleet.fleet_group_user`), `group_bunker_manager` (implied user + `fleet.fleet_group_manager`), `group_bunker_surveyor_portal` (placeholder, belum dipakai — Fase 2)
+- [x] Master data `vessel.bunker.price.reference` — reuse `fleet.fuel.type` existing (**tidak** bikin master fuel type baru, sesuai §8 keputusan desain), 3 seed harga referensi (MFO/MGO/HSD)
+- [x] Extend `fleet.vehicle.bunker_variance_threshold_pct` (override per kapal untuk ROB reconciliation)
+- [x] Extend `res.company`/`res.config.settings`: `default_bunker_variance_threshold_pct` (8.0, sesuai §10.5 acceptance criteria), `default_bdn_survey_tolerance_pct` (0.5, sesuai §2.3)
+- [x] Menu root "Bunker Management" masuk app **Maritime**, sejajar Voyage P&L (konsisten pola IA `vessel_voyage_pnl`)
+
+### Blocker & Resolusi
+Tidak ada blocker baru. Fakta environment (tidak ada `stock.location` per kapal di modul existing) sudah dikonfirmasi via grep sebelum sprint dimulai — keputusan dibuat langsung (1 lokasi per kapal, diimplementasi Sprint 24) tanpa perlu tanya user (keputusan teknis, bukan bisnis).
+
+### Verifikasi
+- Install bersih (`-i vessel_bunker_management`): 0 ERROR/CRITICAL, "Module vessel_bunker_management loaded in 0.60s"
+- Update idempotent (`-u`): 0 ERROR/CRITICAL
+- psql: 3 price reference, menu "Bunker Management" (Maritime) → Konfigurasi → Price Reference (MOPS/Platts) terverifikasi struktur benar
+
+### Catatan
+Pre-flight grep (checklist Odoo 19 gotcha CLAUDE.md) bersih di percobaan pertama — termasuk gotcha `<group expand="0">` yang sempat kena di Sprint 21 `vessel_voyage_pnl`, kali ini di-grep dulu sebelum menulis view baru manapun.
+
+---

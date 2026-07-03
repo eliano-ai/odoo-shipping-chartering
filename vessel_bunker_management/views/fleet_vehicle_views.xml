@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="fleet_vehicle_form_inherit_bunker_management" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.inherit.bunker.management</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Bunker Management" name="bunker_management" invisible="not is_vessel">
+                    <group>
+                        <field name="bunker_variance_threshold_pct"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

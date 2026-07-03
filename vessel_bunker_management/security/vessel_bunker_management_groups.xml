@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="group_bunker_user" model="res.groups">
+        <field name="name">Bunker/Procurement Staff</field>
+        <field name="implied_ids" eval="[(4, ref('fleet.fleet_group_user'))]"/>
+    </record>
+
+    <record id="group_bunker_manager" model="res.groups">
+        <field name="name">Bunker Manager</field>
+        <field name="implied_ids" eval="[(4, ref('vessel_bunker_management.group_bunker_user')), (4, ref('fleet.fleet_group_manager'))]"/>
+        <field name="user_ids" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <!-- Fase 2 — portal surveyor eksternal, belum dipakai di record rule manapun
+         MVP ini (keputusan user 2026-07-03: staff internal input, bukan portal). -->
+    <record id="group_bunker_surveyor_portal" model="res.groups">
+        <field name="name">Bunker Surveyor Portal (Fase 2)</field>
+    </record>
+
+</odoo>

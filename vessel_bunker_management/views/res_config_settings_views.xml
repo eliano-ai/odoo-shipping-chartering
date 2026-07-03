@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_bunker_management" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.vessel.bunker.management</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='invoicing_settings']" position="after">
+                <block title="Bunker Management" id="vessel_bunker_management_setting">
+                    <setting id="default_bunker_variance_threshold_pct_setting"
+                             string="Default Threshold Variance ROB"
+                             help="Ambang batas variance ROB reconciliation global (persen), dipakai untuk kapal yang tidak punya override sendiri.">
+                        <field name="default_bunker_variance_threshold_pct"/>
+                    </setting>
+                    <setting id="default_bdn_survey_tolerance_pct_setting"
+                             string="Default Toleransi Survey BDN"
+                             help="Ambang batas selisih qty BDN vs independent survey sebelum dianggap dispute.">
+                        <field name="default_bdn_survey_tolerance_pct"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

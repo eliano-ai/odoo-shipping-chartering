@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_vessel_bunker_price_reference_manager,vessel.bunker.price.reference.manager,model_vessel_bunker_price_reference,vessel_bunker_management.group_bunker_manager,1,1,1,1
+access_vessel_bunker_price_reference_user,vessel.bunker.price.reference.user,model_vessel_bunker_price_reference,vessel_bunker_management.group_bunker_user,1,0,0,0

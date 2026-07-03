@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Keputusan Sprint 22: Bunker Management masuk app Maritime, sejajar Voyage P&L
+         — konsisten pola vessel_voyage_pnl (lapisan finansial/operasional komersial,
+         bukan asset fisik seperti Fleet). -->
+    <menuitem id="menu_bunker_management_root" name="Bunker Management"
+              parent="maritime.menu_maritime_root" sequence="40"/>
+
+    <menuitem id="menu_bunker_config" name="Konfigurasi"
+              parent="menu_bunker_management_root" sequence="90"
+              groups="vessel_bunker_management.group_bunker_manager"/>
+
+    <menuitem id="menu_vessel_bunker_price_reference" name="Price Reference (MOPS/Platts)"
+              parent="menu_bunker_config" action="action_vessel_bunker_price_reference"
+              sequence="10"/>
+
+</odoo>

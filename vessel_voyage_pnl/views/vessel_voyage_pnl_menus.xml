@@ -26,6 +26,21 @@
               parent="menu_vessel_pnl_root" action="action_vessel_vessel_pnl_trend"
               sequence="20"/>
 
+    <!-- §10.9 acceptance criteria: group_voyage_pnl_user TIDAK boleh lihat menu Budget
+         sama sekali — eksplisit groups (bukan cuma andalkan access CSV) supaya menu
+         benar-benar tersembunyi, bukan error saat diklik. -->
+    <menuitem id="menu_vessel_budget_root" name="Budget"
+              parent="menu_voyage_pnl_root" sequence="25"
+              groups="vessel_voyage_pnl.group_voyage_pnl_finance,vessel_voyage_pnl.group_voyage_pnl_manager,vessel_voyage_pnl.group_voyage_pnl_director"/>
+
+    <menuitem id="menu_vessel_vessel_budget_all" name="Budget per Kapal"
+              parent="menu_vessel_budget_root" action="action_vessel_vessel_budget"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_vessel_budget_line_pivot" name="Realisasi vs Budget"
+              parent="menu_vessel_budget_root" action="action_vessel_vessel_budget_line_pivot"
+              sequence="20"/>
+
     <menuitem id="menu_voyage_pnl_config" name="Konfigurasi"
               parent="menu_voyage_pnl_root" sequence="90"
               groups="vessel_voyage_pnl.group_voyage_pnl_manager"/>

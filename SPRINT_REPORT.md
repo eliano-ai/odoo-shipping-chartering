@@ -858,3 +858,28 @@ Tidak ada blocker baru. Menambahkan voyage kedua secara alami mengubah rasio alo
 Warning docutils "(ERROR/3) Unexpected indentation" muncul saat instalasi (parsing RST dari field `description` beberapa modul untuk tampilan Apps list) — noise pre-existing tidak terkait modul ini, tidak mempengaruhi hasil test (tetap 0 failed/0 error).
 
 ---
+
+## Sprint 19 — vessel_voyage_pnl: Budget — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.vessel.budget` (§3.5) — `vessel_id`, `year`, `budget_line_ids`, `total_budget_cost` (compute store), `total_actual_cost` (compute store, dari `vessel.vessel.pnl` tahun berjalan: `total_cost + idle_cost_allocated`), `state` draft/approved. **`_inherit = ['mail.thread', 'mail.activity.mixin']`** — tech spec §3.5 cuma sebut `mail.thread`, tapi cron butuh `activity_schedule` jadi `mail.activity.mixin` ditambah eksplisit (pre-flight check, bukan terulang jadi bug seperti Sprint 8-14). Constraint unique `(vessel_id, year)`
+- [x] Model `vessel.vessel.budget.line` (§3.6) — `budget_id`, `month`, `cost_category_id`, `planned_amount`, `actual_amount` (compute **tanpa store**, on-the-fly dari `vessel.voyage.pnl.line` kategori+bulan terkait sesuai §4.4), `variance_amount`/`variance_pct` (compute, dipecah jadi pure function `_calc_variance()` supaya gampang di-unit-test)
+- [x] `_check_variance_threshold()` — pola identik PDA/FDA (`vessel_voyage_operations` Sprint 12): `fleet.vehicle.budget_variance_threshold_pct` override, fallback `res.company.default_budget_variance_threshold_pct`, guard idempotency (skip user yang sudah punya activity)
+- [x] `_cron_budget_variance_alert` (§4.5, bulanan) — hanya cek budget `state=approved`, tidak pakai `message_post`/`activity_schedule` tanpa mixin (sudah dicek eksplisit di komentar kode)
+- [x] Security: `group_voyage_pnl_user` **tidak dapat access CSV row sama sekali** untuk `vessel.vessel.budget`/`.line` (bukan cuma read-only) — juga menu Budget diberi `groups` eksplisit supaya benar-benar tersembunyi, bukan cuma error saat diklik
+- [x] Views: form budget (`budget_line_ids` inline editable per bulan × kategori), list, pivot (realisasi vs budget), menu Budget → Budget per Kapal + Realisasi vs Budget
+- [x] Dummy data: budget `demo_vessel_barge_01` tahun 2026, 1 baris (Juni, Maintenance, planned 20,000) — `actual_amount` real-computed dari data Sprint 18 = 30,000 → **variance_pct = 50%**, jauh di atas threshold default 20% → activity terkirim ke Fleet Manager (diverifikasi via psql `mail_activity`)
+
+### Blocker & Resolusi
+Tidak ada blocker baru. Satu catatan desain: **`actual_amount` murni compute dari data riil (tidak bisa diinput manual)**, jadi demo tidak bisa replikasi literal angka ilustratif tech spec (planned 50,000/actual 65,000) — pola sama seperti Sprint 17 (per_voyage_day 10/30 hari). Angka **§10.8 persis** tetap dibuktikan via unit test murni (`_calc_variance(50000, 65000)` → 30%), demo pakai angka riil lain (20,000/30,000 → 50%) yang tetap valid membuktikan mekanisme alert bekerja.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL (1 budget, 1 activity — tidak dobel setelah berkali-kali `-u`)
+- **9/9 unit test pass** (6 dari Sprint 17 + 3 baru: `_calc_variance` persis §10.8, edge case planned=0, akses `group_voyage_pnl_user` → `AccessError` eksplisit via `with_user()`)
+- §10.8 acceptance criteria **persis** via unit test murni + demo data real (planned 20,000, actual 30,000 → 50% > threshold 20% → activity terverifikasi di `mail_activity`)
+- §10.9 acceptance criteria **persis** — `group_voyage_pnl_user` diverifikasi eksplisit `AccessError` (bukan cuma asumsi dari access CSV), sesuai instruksi sprint file ("test eksplisit dengan `with_user`, bukan cuma asumsi")
+- **Fresh install 9 modul** (`shipping_dev_test19`, temp DB, `--test-enable`): 0 ERROR/CRITICAL, 9/9 test pass — dibersihkan setelah verifikasi
+
+---

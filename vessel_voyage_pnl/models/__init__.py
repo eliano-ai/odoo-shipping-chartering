@@ -7,3 +7,5 @@ from . import vessel_voyage_pnl_line
 from . import vessel_voyage_pnl
 from . import vessel_voyage
 from . import vessel_vessel_pnl
+from . import vessel_vessel_budget_line
+from . import vessel_vessel_budget

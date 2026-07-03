@@ -16,4 +16,19 @@
         <field name="nextcall" eval="(datetime.now()).replace(day=5, hour=5, minute=0, second=0)"/>
     </record>
 
+    <record id="ir_actions_server_budget_variance_alert" model="ir.actions.server">
+        <field name="name">Voyage P&amp;L: Budget Variance Alert</field>
+        <field name="model_id" ref="model_vessel_vessel_budget"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_budget_variance_alert()</field>
+    </record>
+    <record id="cron_vessel_voyage_pnl_budget_variance_alert" model="ir.cron">
+        <field name="name">Voyage P&amp;L: Budget Variance Alert (Bulanan)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_budget_variance_alert"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">months</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(day=6, hour=5, minute=0, second=0)"/>
+    </record>
+
 </odoo>

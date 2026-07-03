@@ -16,4 +16,8 @@
          vessel.vessel.pnl (agregasi bulanan) bisa diverifikasi dengan data nyata. -->
     <function model="vessel.voyage.pnl" name="_demo_setup_second_voyage_same_month"/>
 
+    <!-- §10.8 acceptance criteria — budget dengan variance > threshold default (20%),
+         memicu activity ke Fleet Manager. -->
+    <function model="vessel.vessel.budget" name="_demo_setup_budget"/>
+
 </odoo>

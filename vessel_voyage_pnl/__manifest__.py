@@ -43,6 +43,7 @@ Referensi: TECH_SPEC_vessel_voyage_pnl.md
         'views/vessel_voyage_pnl_views.xml',
         'wizards/vessel_pnl_adjustment_wizard_views.xml',
         'views/vessel_vessel_pnl_views.xml',
+        'views/vessel_vessel_budget_views.xml',
         'views/res_config_settings_views.xml',
         'views/fleet_vehicle_views.xml',
         'views/vessel_voyage_views.xml',

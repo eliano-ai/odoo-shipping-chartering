@@ -21,9 +21,12 @@ Odoo Shipping adalah kumpulan modul custom Odoo 19 untuk perusahaan pelayaran/fl
 | `acc_id_multicurrency_report` | Laporan keuangan dual-currency IDR/USD (tidak spesifik shipping) |
 | `shopify_connector_v19` | Integrasi Shopify (tidak spesifik shipping) |
 
-Layer 2 (Komersial):
+Layer 2 (Komersial) — app terpisah **`maritime`** (bukan submenu Fleet, sejak restrukturisasi 2026-07-03):
+- `maritime` — app root container, **tidak ada model sendiri**, cuma menyatukan menu root `vessel_chartering` + `vessel_voyage_operations` di bawah 1 app "Maritime" (depends ke keduanya, reparent menu via xmlid tanpa mengubah modul asal)
 - `vessel_chartering` — **selesai** (MVP 7 sprint, lihat `TECH_SPEC_vessel_chartering.md`)
 - `vessel_voyage_operations` — **sedang dikembangkan** (roadmap #2, setelah `vessel_chartering`), lihat `TECH_SPEC_vessel_voyage_operations.md`. Hard dependency ke `vessel_chartering`.
+
+Kalau install lengkap: install `maritime` (auto-tarik `vessel_chartering` + `vessel_voyage_operations` sebagai dependency) supaya menu ter-reparent dengan benar — jangan cuma install `vessel_chartering`/`vessel_voyage_operations` sendiri kalau mau app Maritime muncul.
 
 Ringkasan fitur & tujuan bisnis tiap modul fleet: lihat `FLEET_MODULES_OVERVIEW.md`.
 

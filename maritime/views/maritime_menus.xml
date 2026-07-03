@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_maritime_root" name="Maritime" sequence="18"/>
+
+    <!-- Reparent menu root existing dari vessel_chartering & vessel_voyage_operations
+         (sebelumnya child dari fleet.menu_root) ke app Maritime yang baru. Modul asal
+         tidak diubah — hanya field parent yang di-update lewat xmlid.
+         PENTING: name harus tetap disertakan — <menuitem> tanpa atribut name akan
+         me-reset field name ke string xmlid literal, bukan mempertahankan nilai lama. -->
+    <menuitem id="vessel_chartering.menu_vessel_chartering_root"
+              name="Chartering"
+              parent="maritime.menu_maritime_root" sequence="10"/>
+
+    <menuitem id="vessel_voyage_operations.menu_vessel_voyage_operations_root"
+              name="Voyage Operations"
+              parent="maritime.menu_maritime_root" sequence="20"/>
+
+</odoo>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Demo Port Agents (res.partner) ─────────────────────────────── -->
+    <record id="demo_port_agent_priok" model="res.partner">
+        <field name="name">PT Samudra Agency Tanjung Priok</field>
+        <field name="is_company" eval="True"/>
+        <field name="is_port_agent" eval="True"/>
+        <field name="disbursement_variance_threshold_pct">10.0</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Jakarta</field>
+    </record>
+
+    <record id="demo_port_agent_balikpapan" model="res.partner">
+        <field name="name">PT Borneo Maritime Agency</field>
+        <field name="is_company" eval="True"/>
+        <field name="is_port_agent" eval="True"/>
+        <field name="disbursement_variance_threshold_pct">0.0</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Balikpapan</field>
+    </record>
+
+    <record id="demo_port_agent_tarahan" model="res.partner">
+        <field name="name">PT Lampung Shipping Agency</field>
+        <field name="is_company" eval="True"/>
+        <field name="is_port_agent" eval="True"/>
+        <field name="disbursement_variance_threshold_pct">20.0</field>
+        <field name="country_id" ref="base.id"/>
+        <field name="city">Lampung</field>
+    </record>
+
+    <record id="demo_port_agent_singapore" model="res.partner">
+        <field name="name">Straits Shipping Agency Pte Ltd</field>
+        <field name="is_company" eval="True"/>
+        <field name="is_port_agent" eval="True"/>
+        <field name="disbursement_variance_threshold_pct">0.0</field>
+        <field name="country_id" ref="base.sg"/>
+        <field name="city">Singapore</field>
+    </record>
+
+</odoo>

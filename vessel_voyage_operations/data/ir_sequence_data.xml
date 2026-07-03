@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="seq_vessel_voyage" model="ir.sequence">
+        <field name="name">Voyage</field>
+        <field name="code">vessel.voyage</field>
+        <field name="prefix">VOY/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="number_next">1</field>
+        <field name="number_increment">1</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

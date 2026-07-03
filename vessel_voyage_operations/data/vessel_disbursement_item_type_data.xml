@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="disbursement_item_pilotage" model="vessel.disbursement.item.type">
+        <field name="name">Pilotage</field>
+    </record>
+
+    <record id="disbursement_item_towage" model="vessel.disbursement.item.type">
+        <field name="name">Towage</field>
+    </record>
+
+    <record id="disbursement_item_mooring" model="vessel.disbursement.item.type">
+        <field name="name">Mooring/Unmooring</field>
+    </record>
+
+    <record id="disbursement_item_port_dues" model="vessel.disbursement.item.type">
+        <field name="name">Port Dues</field>
+    </record>
+
+    <record id="disbursement_item_light_dues" model="vessel.disbursement.item.type">
+        <field name="name">Light Dues</field>
+    </record>
+
+    <record id="disbursement_item_agency_fee" model="vessel.disbursement.item.type">
+        <field name="name">Agency Fee</field>
+    </record>
+
+    <record id="disbursement_item_garbage" model="vessel.disbursement.item.type">
+        <field name="name">Garbage Disposal</field>
+    </record>
+
+    <record id="disbursement_item_lainnya" model="vessel.disbursement.item.type">
+        <field name="name">Lainnya</field>
+    </record>
+
+</odoo>

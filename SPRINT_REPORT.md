@@ -392,3 +392,50 @@ Detail lengkap tiap sprint di `sprints/sprint_08.md` s.d. `sprint_14.md`.
 - Pelajaran dari retro Sprint 1-7 (`RETRO.md`) sudah dimasukkan sebagai reminder eksplisit di tiap sprint file baru ini (grep `decoration-secondary` dkk sebelum install)
 
 ---
+
+## Perbaikan Skill — /improve (Retro Sprint 1-7) — 2026-07-03
+
+Dijalankan atas permintaan user sebelum lanjut Sprint 8, menerapkan 6 kandidat perbaikan dari `RETRO.md`.
+
+### Diterapkan
+- `sprint.md`: 2 pre-flight check baru (grep pola Odoo 19 terlarang; verifikasi field/xpath modul lain sebelum dipakai), guidance test-per-test, cross-check acceptance criteria per sprint (bukan ditunda ke sprint terakhir)
+- `retro.md`: grep fix/revert/patch di Langkah 3 diganti word-boundary regex (hindari false positive "pre-fixture"/"despatch")
+- `CLAUDE.md`: section baru "Checklist Odoo 19 Gotcha" — tabel grep-able (bukan cuma prosa)
+- `learning_log.json` + `RETRO.md`: 6/6 kandidat ditandai applied
+
+Commit `1ace92b`, pushed ke `github chartering-dev:main`. Tidak ada email dikirim (di luar siklus sprint, dianggap tidak perlu ceremony yang sama).
+
+---
+
+## Sprint 8 — vessel_voyage_operations: Foundation & Master Data — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Skeleton modul `vessel_voyage_operations/` — manifest `depends: ['fleet', 'mail', 'portal', 'vessel_chartering']`, `fleet_fuel_log` **tidak** di depends (soft-check di Python, sesuai keputusan)
+- [x] Security groups: `group_voyage_ops_portal` (Nakhoda), `group_voyage_ops_user` (Operations, implied `fleet.fleet_group_user`), `group_voyage_ops_manager` (implied `group_voyage_ops_user` + `fleet.fleet_group_manager`)
+- [x] Model `vessel.delay.type` + views + menu + seed 7 tipe (Weather, Port Congestion, Breakdown, Waiting Cargo, Waiting Berth, Waiting Instruction, Other)
+- [x] Model `vessel.clearance.document.type` (`default_required` Boolean) + views + menu + seed 5 tipe (SPB/Port Clearance, Imigrasi, Karantina, Bea Cukai = wajib; Lainnya = tidak wajib)
+- [x] Model `vessel.disbursement.item.type` + views + menu + seed 8 tipe (Pilotage, Towage, Mooring/Unmooring, Port Dues, Light Dues, Agency Fee, Garbage Disposal, Lainnya)
+- [x] Extend `res.partner`: `is_port_agent` (Boolean, beda jelas dari `is_port` chartering), `disbursement_variance_threshold_pct` (Float, 0=fallback global) — form view inline + list "Agen Pelabuhan" terfilter
+- [x] Extend `res.company`/`res.config.settings`: `default_disbursement_variance_threshold_pct` (default 15.0), pola sama seperti `despatch_as_credit_note` Sprint 6
+- [x] `ir.sequence` `VOY/%(year)s/` (dipakai Sprint 9)
+- [x] Menu root "Voyage Operations" (sequence 19, sejajar Chartering) + submenu Konfigurasi (4 item: 3 master data + Agen Pelabuhan)
+- [x] Dummy data: 4 agen pelabuhan (`res.partner`, `is_port_agent=True`) — 2 dengan threshold override (Priok 10%, Tarahan 20%), 2 pakai default global (Balikpapan, Singapore)
+
+### Blocker & Resolusi
+Tidak ada blocker — pre-flight check baru dari `/improve` (grep pola Odoo 19 terlarang + verifikasi xpath modul lain) dijalankan sebelum install, reuse xpath `res.config.settings` block `invoicing_settings` dan `base.view_partner_form` field `category_id` yang sudah terbukti valid di `vessel_chartering`, jadi tidak ada trial-error RNG schema seperti Sprint 2/4.
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `<group string=/expand=>`, `.groups_id` — 0 hasil, bersih
+- ✅ `fleet_fuel_log` tidak ada di manifest `depends` — dikonfirmasi grep
+- ✅ Install bersih tanpa ERROR/CRITICAL (`Module vessel_voyage_operations loaded in 1.64s`)
+- ✅ Idempotent — re-run `-u`, 0 ERROR/CRITICAL
+- ✅ Master data dummy: 7 delay type, 5 clearance doc type, 8 disbursement item type, 4 port agent — semua match jumlah seed
+- ✅ `is_port_agent` kolom terpisah dari `is_port` (dicek skema `res_partner`)
+
+### Catatan
+- Warning `vessel.seafarer inconsistent 'store' for computed fields` muncul lagi di log (pre-existing dari `vessel_crew_management`, sudah dicatat Sprint 0 sebagai item minor non-blocking, bukan regresi baru)
+- Sprint 9 (Core Voyage Model & State Machine) akan mulai pakai `ir.sequence` VOY yang sudah di-seed sprint ini
+
+---

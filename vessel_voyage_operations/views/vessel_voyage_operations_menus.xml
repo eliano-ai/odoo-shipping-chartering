@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <menuitem id="menu_vessel_voyage_operations_root"
+              name="Voyage Operations"
+              parent="fleet.menu_root"
+              sequence="19"/>
+
+    <menuitem id="menu_vessel_voyage_operations_config"
+              name="Konfigurasi"
+              parent="menu_vessel_voyage_operations_root"
+              sequence="90"
+              groups="vessel_voyage_operations.group_voyage_ops_manager"/>
+
+    <menuitem id="menu_vessel_delay_type"
+              name="Tipe Delay"
+              parent="menu_vessel_voyage_operations_config"
+              action="action_vessel_delay_type"
+              sequence="10"
+              groups="vessel_voyage_operations.group_voyage_ops_manager"/>
+
+    <menuitem id="menu_vessel_clearance_document_type"
+              name="Tipe Dokumen Clearance"
+              parent="menu_vessel_voyage_operations_config"
+              action="action_vessel_clearance_document_type"
+              sequence="20"
+              groups="vessel_voyage_operations.group_voyage_ops_manager"/>
+
+    <menuitem id="menu_vessel_disbursement_item_type"
+              name="Tipe Item Disbursement"
+              parent="menu_vessel_voyage_operations_config"
+              action="action_vessel_disbursement_item_type"
+              sequence="30"
+              groups="vessel_voyage_operations.group_voyage_ops_manager"/>
+
+    <menuitem id="menu_res_partner_port_agent"
+              name="Agen Pelabuhan"
+              parent="menu_vessel_voyage_operations_config"
+              action="action_res_partner_port_agent"
+              sequence="40"
+              groups="vessel_voyage_operations.group_voyage_ops_manager"/>
+
+</odoo>

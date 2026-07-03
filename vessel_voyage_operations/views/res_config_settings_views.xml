@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_voyage_operations" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.vessel.voyage.operations</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='invoicing_settings']" position="after">
+                <block title="Voyage Operations" id="vessel_voyage_operations_setting">
+                    <setting id="default_disbursement_variance_threshold_pct_setting"
+                             string="Default Threshold Variance PDA/FDA"
+                             help="Ambang batas variance PDA vs FDA global (persen), dipakai untuk agen pelabuhan yang tidak punya override sendiri.">
+                        <field name="default_disbursement_variance_threshold_pct"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

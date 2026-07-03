@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="vessel_disbursement_item_type_view_list" model="ir.ui.view">
+        <field name="name">vessel.disbursement.item.type.list</field>
+        <field name="model">vessel.disbursement.item.type</field>
+        <field name="arch" type="xml">
+            <list string="Tipe Item Disbursement" editable="bottom">
+                <field name="name"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vessel_disbursement_item_type_view_form" model="ir.ui.view">
+        <field name="name">vessel.disbursement.item.type.form</field>
+        <field name="model">vessel.disbursement.item.type</field>
+        <field name="arch" type="xml">
+            <form string="Tipe Item Disbursement">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_disbursement_item_type" model="ir.actions.act_window">
+        <field name="name">Tipe Item Disbursement</field>
+        <field name="res_model">vessel.disbursement.item.type</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada tipe item disbursement</p>
+            <p>Buat master item PDA/FDA — pilotage, towage, port dues, agency fee, dll.</p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="delay_type_weather" model="vessel.delay.type">
+        <field name="name">Weather</field>
+    </record>
+
+    <record id="delay_type_port_congestion" model="vessel.delay.type">
+        <field name="name">Port Congestion</field>
+    </record>
+
+    <record id="delay_type_breakdown" model="vessel.delay.type">
+        <field name="name">Breakdown</field>
+    </record>
+
+    <record id="delay_type_waiting_cargo" model="vessel.delay.type">
+        <field name="name">Waiting Cargo</field>
+    </record>
+
+    <record id="delay_type_waiting_berth" model="vessel.delay.type">
+        <field name="name">Waiting Berth</field>
+    </record>
+
+    <record id="delay_type_waiting_instruction" model="vessel.delay.type">
+        <field name="name">Waiting Instruction</field>
+    </record>
+
+    <record id="delay_type_other" model="vessel.delay.type">
+        <field name="name">Other</field>
+    </record>
+
+</odoo>

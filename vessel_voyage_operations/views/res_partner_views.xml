@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_partner_view_form_port_agent_inherit" model="ir.ui.view">
+        <field name="name">res.partner.form.port.agent.inherit</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='category_id']" position="after">
+                <field name="is_port_agent"/>
+                <field name="disbursement_variance_threshold_pct" invisible="not is_port_agent"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_partner_view_list_port_agent" model="ir.ui.view">
+        <field name="name">res.partner.list.port.agent</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Agen Pelabuhan">
+                <field name="name"/>
+                <field name="disbursement_variance_threshold_pct"/>
+                <field name="country_id"/>
+                <field name="phone" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_res_partner_port_agent" model="ir.actions.act_window">
+        <field name="name">Agen Pelabuhan</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="res_partner_view_list_port_agent"/>
+        <field name="domain">[('is_port_agent', '=', True)]</field>
+        <field name="context">{'default_is_port_agent': True}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada agen pelabuhan</p>
+            <p>Tandai partner sebagai "Adalah Agen Pelabuhan" untuk dipakai di PDA/FDA port call.</p>
+        </field>
+    </record>
+
+</odoo>

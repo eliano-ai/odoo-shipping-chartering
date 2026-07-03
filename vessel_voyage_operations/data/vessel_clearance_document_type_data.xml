@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="clearance_doc_spb" model="vessel.clearance.document.type">
+        <field name="name">SPB / Port Clearance</field>
+        <field name="default_required" eval="True"/>
+    </record>
+
+    <record id="clearance_doc_imigrasi" model="vessel.clearance.document.type">
+        <field name="name">Imigrasi</field>
+        <field name="default_required" eval="True"/>
+    </record>
+
+    <record id="clearance_doc_karantina" model="vessel.clearance.document.type">
+        <field name="name">Karantina</field>
+        <field name="default_required" eval="True"/>
+    </record>
+
+    <record id="clearance_doc_bea_cukai" model="vessel.clearance.document.type">
+        <field name="name">Bea Cukai</field>
+        <field name="default_required" eval="True"/>
+    </record>
+
+    <record id="clearance_doc_lainnya" model="vessel.clearance.document.type">
+        <field name="name">Lainnya</field>
+        <field name="default_required" eval="False"/>
+    </record>
+
+</odoo>

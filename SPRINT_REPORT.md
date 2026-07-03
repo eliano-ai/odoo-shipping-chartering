@@ -358,3 +358,37 @@ Tidak ada blocker baru — pelajaran dari Sprint 2/4 (RNG schema, `group_ids`, `
 **12/12 unit test pass. 10/10 acceptance criteria terpenuhi. Zero regresi sepanjang 7 sprint.**
 
 ---
+
+## Setup — vessel_voyage_operations (Modul Kedua Layer 2) — 2026-07-03
+
+Sesuai `TECH_SPEC_vessel_voyage_operations.md`, roadmap #2 setelah `vessel_chartering`. Environment/repo/branch **lanjutan** dari sebelumnya (tidak setup baru).
+
+### Keputusan Sebelum Sprint Dimulai
+- Odoo edition: **Community** (konsisten)
+- Noon report frequency: **fixed 24 jam**, tidak configurable
+- Portal Nakhoda: **form web simple**, bukan PWA offline-first
+- Variance threshold PDA/FDA: **configurable per port/klien** (field di `res.partner`) dengan fallback default global di `res.company`
+- Dashboard posisi armada: **full OWL/Leaflet map widget** sesuai spec asli — user eksplisit minta ikut spec penuh, bukan fallback sederhana yang sempat diusulkan
+- Open question §11.2 (resolved via code inspection, bukan tanya user): `vessel.seafarer` tidak punya `user_id` langsung, tapi ada path `employee_id.user_id` (field standar `hr.employee`) — dipakai untuk record rule portal, tidak perlu tambah field baru di `vessel_crew_management`
+- Open question §11.4 (CII data export): MVP tidak bikin report khusus, noon report list view standar + export XLSX bawaan Odoo dianggap cukup
+
+### Breakdown Sprint
+7 sprint (nomor lanjut global: **8–14**, tracker `sprints/.current_sprint` tetap satu counter untuk seluruh repo, bukan reset per modul):
+
+| Sprint | Fokus |
+|---|---|
+| 8 | Foundation & Master Data |
+| 9 | Core Voyage Model & State Machine |
+| 10 | Port Call & Clearance Checklist |
+| 11 | Noon Report & Approval Workflow |
+| 12 | Port Disbursement (PDA/FDA) & Variance |
+| 13 | Cargo Document, Delay Log, Portal Security, Cron & Email |
+| 14 | Views Polish, OWL/Leaflet Dashboard & Acceptance Final |
+
+Detail lengkap tiap sprint di `sprints/sprint_08.md` s.d. `sprint_14.md`.
+
+### Catatan
+- Sprint 14 (dashboard OWL/Leaflet) butuh vendor library Leaflet sebagai static asset lokal (bukan CDN eksternal) — dicatat sebagai keputusan implementasi teknis di sprint file-nya sendiri
+- Pelajaran dari retro Sprint 1-7 (`RETRO.md`) sudah dimasukkan sebagai reminder eksplisit di tiap sprint file baru ini (grep `decoration-secondary` dkk sebelum install)
+
+---

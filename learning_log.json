@@ -204,8 +204,8 @@
       "severity": "HIGH",
       "first_seen": "Sprint 11",
       "last_seen": "Sprint 12",
-      "resolved": false,
-      "detail": "Sudah didokumentasikan di CLAUDE.md Checklist Odoo 19 Gotcha (dokumentasi), TAPI belum masuk pre-flight grep list otomatis di sprint.md Langkah 4 (yang cuma cover decoration-secondary/group string-expand/.groups_id dari retro Sprint 1-7) — gap yang sama polanya: catatan pasif tidak cukup, harus grep aktif."
+      "resolved": true,
+      "detail": "Sudah didokumentasikan di CLAUDE.md Checklist Odoo 19 Gotcha, dan sekarang (2026-07-03, via /improve) sudah disinkronkan ke pre-flight grep list otomatis di sprint.md Langkah 4 juga, plus aturan proses wajib sinkron ke depannya."
     },
     {
       "item": "Model baru pakai message_post()/activity_schedule() tapi lupa _inherit mail.thread/mail.activity.mixin — satu kejadian jadi bug laten 3 sprint (vessel.port.call dibuat Sprint 10, baru ketahuan Sprint 13 saat cron pertama kali memicu jalur kode itu)",
@@ -213,8 +213,8 @@
       "severity": "HIGH",
       "first_seen": "Sprint 10 (origin) / Sprint 12 (pertama ketahuan)",
       "last_seen": "Sprint 13",
-      "resolved": false,
-      "detail": "Bukan Odoo 19 breaking change — murni disiplin coding sendiri (human error), tapi cukup berbahaya karena bisa lolos berminggu-minggu tanpa error kalau jalur kode (constraint/cron) jarang ter-trigger dummy data. Belum ada pre-flight check untuk ini."
+      "resolved": true,
+      "detail": "Bukan Odoo 19 breaking change — murni disiplin coding sendiri (human error), tapi cukup berbahaya karena bisa lolos berminggu-minggu tanpa error kalau jalur kode (constraint/cron) jarang ter-trigger dummy data. Pre-flight check baru ditambahkan sprint.md Langkah 4 (2026-07-03, via /improve)."
     },
     {
       "item": "Demo data idempotency break dari pola write()-override atau action-method-via-XML (state-transition-guarded method dipanggil ulang saat -u kedua kali, raise UserError karena state sudah bukan draft)",
@@ -295,28 +295,36 @@
       "issue": "Pre-flight grep list Pola Odoo 19 Terlarang (Langkah 4) tidak pernah di-update sinkron dengan CLAUDE.md Checklist Odoo 19 Gotcha — 2 pola baru (_sql_constraints=, res.groups.users) ditemukan Sprint 11-12, sudah masuk CLAUDE.md tapi belum masuk grep list sprint.md",
       "suggested_fix": "Tambah 2 pola baru ke grep list Pre-flight: `_sql_constraints\\s*=` (harus models.Constraint) dan `\\.users\\b` pada res.groups (harus .user_ids) — sekaligus tambahkan catatan proses: setiap kali baris baru ditambah ke CLAUDE.md Gotcha table, WAJIB sinkron juga ke grep list sprint.md Langkah 4 di commit yang sama",
       "priority": "HIGH",
-      "applied": false
+      "applied": true,
+      "applied_date": "2026-07-03",
+      "applied_summary": "Tambah 2 grep pattern ke Pre-flight Pola Odoo 19 Terlarang (Langkah 4) sprint.md + catatan proses wajib sinkron CLAUDE.md<->grep list"
     },
     {
       "skill": "sprint.md",
       "issue": "Tidak ada pre-flight check untuk model baru yang pakai message_post()/activity_schedule() tapi lupa _inherit mail.thread/mail.activity.mixin — kejadian 2x, salah satu jadi bug laten 3 sprint (vessel.port.call, Sprint 10 -> ketahuan Sprint 13)",
       "suggested_fix": "Tambah sub-section Pre-flight baru: untuk tiap model baru di modul yang disentuh sprint ini, grep apakah file model memanggil message_post/activity_schedule; kalau ya, pastikan _inherit model tsb mengandung mail.thread atau mail.activity.mixin — kalau tidak, block sebelum install",
       "priority": "HIGH",
-      "applied": false
+      "applied": true,
+      "applied_date": "2026-07-03",
+      "applied_summary": "Tambah sub-section baru 'Pre-flight: mail.thread/mail.activity.mixin untuk Model Baru' di Langkah 4 sprint.md"
     },
     {
       "skill": "sprint.md",
       "issue": "Tidak ada guidance eksplisit soal pola 'read-only setelah state tertentu' harus diimplementasi di level view (readonly attr), bukan override write() model — override write() memblokir ORM data loader saat re-run -u (demo data re-write field yang sama), ketahuan reaktif Sprint 11",
       "suggested_fix": "Tambah catatan guidance di Langkah 5 (Aturan Implementasi) sprint.md: kalau butuh field/record read-only setelah state tertentu, implementasi via view readonly attribute, BUKAN override write() Python — supaya tidak memecah idempotency -u ulang terhadap demo data",
       "priority": "MED",
-      "applied": false
+      "applied": true,
+      "applied_date": "2026-07-03",
+      "applied_summary": "Tambah poin baru di Aturan Implementasi (Langkah 5) sprint.md: read-only-after-state via view, bukan write() override"
     },
     {
       "skill": "sprint.md",
       "issue": "Referensi security group (xmlid) dari tabel §6 tech spec tidak di-cross-check sebelum dipakai di kode — Finance group salah pakai account.group_account_manager, seharusnya account.group_account_invoice",
       "suggested_fix": "Tambah catatan di pre-flight/Langkah 8: kalau sprint task menyentuh security group dari modul lain (mis. account.group_account_invoice), cross-check dulu xmlid persis ke tabel §6 tech spec atau grep container, jangan asumsi nama group yang 'kedengaran benar'",
       "priority": "MED",
-      "applied": false
+      "applied": true,
+      "applied_date": "2026-07-03",
+      "applied_summary": "Tambah paragraf baru di Langkah 8 sprint.md: cross-check security group xmlid ke tabel §6 tech spec sebelum dipakai"
     }
   ],
   "improvement_history": [
@@ -337,6 +345,12 @@
       "skill": "CLAUDE.md",
       "change": "Tambah checklist Odoo 19 Gotcha grep-able di Konvensi Kode",
       "trigger": "RETRO finding 2026-07-02: pelajaran prosa di SPRINT_REPORT.md terbukti gampang lupa"
+    },
+    {
+      "date": "2026-07-03",
+      "skill": "sprint.md",
+      "change": "Sinkron 2 pola Odoo 19 baru (_sql_constraints=, res.groups.users) ke grep list Pre-flight + catatan proses wajib sinkron CLAUDE.md<->grep list; sub-section baru Pre-flight mail.thread/mail.activity.mixin untuk model baru; guidance read-only-after-state via view bukan write() override; cross-check security group §6 di Langkah 8",
+      "trigger": "RETRO finding 2026-07-03 (Sprint 8-14 vessel_voyage_operations): 4 pola blocker — 2 gotcha Odoo 19 baru belum sinkron ke grep aktif, model lupa mail mixin 2x (1 jadi bug laten 3 sprint), write() override memecah idempotency demo data, security group salah tanpa cross-check §6"
     }
   ]
 }

@@ -85,10 +85,10 @@
 
 | Prioritas | Skill File | Masalah | Saran Perbaikan | Status |
 |-----------|-----------|---------|-----------------|--------|
-| HIGH | `sprint.md` (Pre-flight) | Grep list Pola Odoo 19 Terlarang tidak sinkron dengan CLAUDE.md Gotcha table (2 pola baru: `_sql_constraints=`, `res.groups.users`) | Tambah 2 pola ke grep list + aturan proses "setiap baris baru CLAUDE.md Gotcha WAJIB sinkron ke grep list sprint.md di commit yang sama" | ⬜ pending |
-| HIGH | `sprint.md` (Pre-flight) | Tidak ada check kelengkapan mail.thread/mail.activity.mixin untuk model baru yang pakai message_post/activity_schedule | Tambah pre-flight: grep model baru yang pakai message_post/activity_schedule, verifikasi _inherit mixin ada | ⬜ pending |
-| MED | `sprint.md` (Aturan Implementasi) | Tidak ada guidance tertulis anti-pattern write()-override untuk "read-only after state" (break demo data idempotency) | Tambah catatan eksplisit: read-only-after-state via view attribute, bukan override write() Python | ⬜ pending |
-| MED | `sprint.md` | Cross-check security group (§6) tidak seketat cross-check acceptance criteria (§10) yang sudah ada | Perluas guidance cross-check existing supaya cover §6 juga | ⬜ pending |
+| HIGH | `sprint.md` (Pre-flight) | Grep list Pola Odoo 19 Terlarang tidak sinkron dengan CLAUDE.md Gotcha table (2 pola baru: `_sql_constraints=`, `res.groups.users`) | Tambah 2 pola ke grep list + aturan proses "setiap baris baru CLAUDE.md Gotcha WAJIB sinkron ke grep list sprint.md di commit yang sama" | ✅ applied (2026-07-03) |
+| HIGH | `sprint.md` (Pre-flight) | Tidak ada check kelengkapan mail.thread/mail.activity.mixin untuk model baru yang pakai message_post/activity_schedule | Tambah pre-flight: grep model baru yang pakai message_post/activity_schedule, verifikasi _inherit mixin ada | ✅ applied (2026-07-03) |
+| MED | `sprint.md` (Aturan Implementasi) | Tidak ada guidance tertulis anti-pattern write()-override untuk "read-only after state" (break demo data idempotency) | Tambah catatan eksplisit: read-only-after-state via view attribute, bukan override write() Python | ✅ applied (2026-07-03) |
+| MED | `sprint.md` | Cross-check security group (§6) tidak seketat cross-check acceptance criteria (§10) yang sudah ada | Perluas guidance cross-check existing supaya cover §6 juga | ✅ applied (2026-07-03) |
 
 ### 💡 Rekomendasi untuk Siklus Berikutnya
 

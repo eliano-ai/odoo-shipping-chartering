@@ -56,6 +56,29 @@ for m in <daftar modul yang disentuh sprint ini>; do
   grep -rn "decoration-secondary" "$m"/views/*.xml "$m"/wizard/*.xml 2>/dev/null && echo "FIX: decoration-secondary tidak valid di Odoo 19 (pakai muted/info/warning/success/danger)"
   grep -rn "<group[^>]*\(string=\|expand=\)" "$m"/views/*.xml 2>/dev/null | grep -v "invisible\|groups=" && echo "FIX: <group string=/expand=> tidak valid di search view Odoo 19, hapus atributnya"
   grep -rn "\.groups_id\b" "$m"/models/*.py "$m"/tests/*.py 2>/dev/null && echo "FIX: res.users.groups_id di-rename jadi group_ids di Odoo 19"
+  grep -rn "_sql_constraints\s*=" "$m"/models/*.py 2>/dev/null && echo "FIX: _sql_constraints list attribute silent no-op di Odoo 19, ganti models.Constraint('sql...', 'message')"
+  grep -rn "\.users\b" "$m"/models/*.py "$m"/tests/*.py 2>/dev/null | grep -v "\.user_ids\|res\.users\|res_users" && echo "FIX: res.groups.users di-rename jadi user_ids di Odoo 19"
+done
+```
+<!-- improved: retro Sprint 8-14 vessel_voyage_operations — 2 pola baru (_sql_constraints=,
+     res.groups.users) ditemukan Sprint 11-12, sudah masuk CLAUDE.md Gotcha table tapi baru sekarang
+     disinkronkan ke grep list ini. ATURAN PROSES: setiap kali baris baru ditambah ke CLAUDE.md
+     Checklist Odoo 19 Gotcha, WAJIB tambahkan grep pattern yang sepadan ke sini juga, di commit yang
+     sama — dokumentasi tanpa grep aktif terbukti tidak cukup (2026-07-03) -->
+
+### Pre-flight: `mail.thread`/`mail.activity.mixin` untuk Model Baru
+<!-- improved: retro Sprint 8-14 — 2 kejadian model baru pakai message_post()/activity_schedule()
+     tanpa _inherit mixin yang benar; salah satu (vessel.port.call, Sprint 10) jadi bug laten 3 sprint
+     karena jalur kode itu jarang ter-trigger dummy data, baru ketahuan Sprint 13 saat fitur cron
+     pertama kali benar-benar memanggilnya (2026-07-03) -->
+
+Untuk tiap model BARU yang dibuat sprint ini: cek apakah file model memanggil `message_post`/`activity_schedule`, kalau ya wajib `_inherit` mengandung `mail.thread` atau `mail.activity.mixin`:
+
+```bash
+for f in <daftar file model .py baru sprint ini>; do
+  if grep -q "message_post\|activity_schedule" "$f"; then
+    grep -q "mail.thread\|mail.activity.mixin" "$f" && echo "OK: $f" || echo "FIX: $f pakai message_post/activity_schedule tapi tidak _inherit mail.thread/mail.activity.mixin"
+  fi
 done
 ```
 
@@ -85,6 +108,7 @@ Untuk tiap task: mark `in_progress` di TodoWrite → implementasi (Write/Edit/Ba
 - Jika task ambigu dan **bukan** genuinely-open-question dari tech spec: interpretasikan wajar, lanjutkan, catat asumsi di sprint report
 - Jika task menyentuh salah satu "Pertanyaan Terbuka" di tech spec yang belum dijawab user: **berhenti, tanya user** — jangan tebak keputusan bisnis/desain
 - **Unit test**: tulis SATU test, langsung jalankan (`--test-tags module:Class.test_nama`), baru lanjut ke test berikutnya — jangan tulis seluruh suite baru dulu lalu debug massal di akhir <!-- improved: retro Sprint 1-7 — Sprint 6 vessel_chartering nulis 4 test sekaligus, hasilnya 3 fail + 4 error harus di-debug bareng; iterasi kecil per-test lebih cepat ketemu akar masalah (2026-07-03) -->
+- **Read-only setelah state tertentu** (mis. approved/locked): implementasikan via VIEW (`readonly="state in (...)"`), **JANGAN** override `write()` di model Python untuk blokir edit berdasarkan state. Override `write()` akan ikut memblokir ORM data loader sendiri saat demo data XML di-reload (`-u` kedua kali menulis ulang field yang sama ke record yang statenya sudah bukan draft), bikin install gagal total. <!-- improved: retro Sprint 8-14 — vessel.noon.report Sprint 11 override write() untuk block approved/rejected, ternyata memecah idempotency -u karena demo data re-write field yang sama; diperbaiki pindah ke view-level readonly (2026-07-03) -->
 
 ### Menangani Error
 1. Baca pesan error teliti (terutama traceback Odoo — cari baris `odoo.exceptions` atau `File ".../<nama modul kita>/..."`)
@@ -111,6 +135,8 @@ Jika sprint ini menambah model baru yang butuh master data untuk testing (cargo 
 Jalankan semua command di section `## Verifikasi` sprint file. Catat ✅/❌ per item. Semua harus ✅ sebelum lanjut.
 
 **Kalau task sprint ini menyebut nomor acceptance criteria tech spec (§10.x dst)**: cross-check langsung ke tabel acceptance criteria lengkap di tech spec SAAT INI JUGA, jangan ditunda ke sprint terakhir. <!-- improved: retro Sprint 1-7 — gap §10.8 (COA butuh 3 shipment, dummy data cuma 2) baru ketahuan di sprint penutup (Sprint 7), padahal COA pertama kali diimplementasi di Sprint 2; kalau cross-check dilakukan sejak awal, gap ketahuan jauh lebih cepat (2026-07-03) -->
+
+**Kalau task sprint ini pakai security group dari MODUL LAIN** (mis. `account.group_account_invoice`, `account.group_account_manager`, dsb): cross-check xmlid persis ke tabel security (§6 dst) tech spec dulu, jangan asumsi nama group yang "kedengaran benar" — kalau tech spec tidak eksplisit, grep container untuk pastikan xmlid itu benar-benar ada. <!-- improved: retro Sprint 8-14 — Sprint 12 vessel_voyage_operations pakai account.group_account_manager untuk "Finance" tanpa cross-check, padahal §6 tech spec eksplisit minta account.group_account_invoice; baru ketahuan & diperbaiki Sprint 13 (2026-07-03) -->
 
 
 ## Langkah 9 — Git Commit

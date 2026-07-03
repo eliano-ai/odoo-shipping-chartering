@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Form ────────────────────────────────────────────────────────── -->
+    <record id="vessel_port_disbursement_view_form" model="ir.ui.view">
+        <field name="name">vessel.port.disbursement.form</field>
+        <field name="model">vessel.port.disbursement</field>
+        <field name="arch" type="xml">
+            <form string="Port Disbursement">
+                <header>
+                    <button name="action_confirm" type="object"
+                            string="Confirm" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="port_call_id" readonly="1"/>
+                            —
+                            <field name="disbursement_type" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="agent_id" readonly="1"/>
+                            <field name="currency_id" readonly="state != 'draft'"/>
+                        </group>
+                        <group>
+                            <field name="total_amount"/>
+                            <field name="variance_amount" invisible="disbursement_type != 'fda'"/>
+                            <field name="variance_pct" invisible="disbursement_type != 'fda'"/>
+                            <field name="reviewed" invisible="disbursement_type != 'fda'"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Line Items">
+                        <field name="line_ids" nolabel="1" readonly="state != 'draft'">
+                            <list editable="bottom">
+                                <field name="item_type_id"/>
+                                <field name="description"/>
+                                <field name="currency_id" column_invisible="1"/>
+                                <field name="amount" sum="Total"/>
+                            </list>
+                        </field>
+                    </group>
+                    <group string="Lampiran">
+                        <field name="document_ids" nolabel="1"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── List ────────────────────────────────────────────────────────── -->
+    <record id="vessel_port_disbursement_view_list" model="ir.ui.view">
+        <field name="name">vessel.port.disbursement.list</field>
+        <field name="model">vessel.port.disbursement</field>
+        <field name="arch" type="xml">
+            <list string="Port Disbursement"
+                  decoration-danger="disbursement_type == 'fda' and (variance_pct &gt; 15 or variance_pct &lt; -15)">
+                <field name="port_call_id"/>
+                <field name="disbursement_type" widget="badge"/>
+                <field name="agent_id"/>
+                <field name="total_amount" sum="Total"/>
+                <field name="variance_amount"/>
+                <field name="variance_pct"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state == 'draft'"
+                       decoration-success="state == 'confirmed'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Pivot (Variance Report) ─────────────────────────────────────── -->
+    <record id="vessel_port_disbursement_view_pivot" model="ir.ui.view">
+        <field name="name">vessel.port.disbursement.pivot</field>
+        <field name="model">vessel.port.disbursement</field>
+        <field name="arch" type="xml">
+            <pivot string="Variance Report PDA vs FDA">
+                <field name="port_call_id" type="row"/>
+                <field name="disbursement_type" type="col"/>
+                <field name="total_amount" type="measure"/>
+                <field name="variance_amount" type="measure"/>
+                <field name="variance_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ─── Search ──────────────────────────────────────────────────────── -->
+    <record id="vessel_port_disbursement_view_search" model="ir.ui.view">
+        <field name="name">vessel.port.disbursement.search</field>
+        <field name="model">vessel.port.disbursement</field>
+        <field name="arch" type="xml">
+            <search string="Cari Disbursement">
+                <field name="port_call_id"/>
+                <field name="agent_id"/>
+                <filter string="PDA" name="filter_pda" domain="[('disbursement_type', '=', 'pda')]"/>
+                <filter string="FDA" name="filter_fda" domain="[('disbursement_type', '=', 'fda')]"/>
+                <separator/>
+                <filter string="FDA Belum Direview" name="filter_not_reviewed"
+                        domain="[('disbursement_type', '=', 'fda'), ('state', '=', 'confirmed'), ('reviewed', '=', False)]"/>
+                <group>
+                    <filter string="Tipe" name="group_type" context="{'group_by':'disbursement_type'}"/>
+                    <filter string="Port Call" name="group_port_call" context="{'group_by':'port_call_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Actions ─────────────────────────────────────────────────────── -->
+    <record id="action_vessel_port_disbursement" model="ir.actions.act_window">
+        <field name="name">Disbursement (PDA/FDA)</field>
+        <field name="res_model">vessel.port.disbursement</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada disbursement</p>
+            <p>PDA/FDA dibuat dari tab Disbursement di form Port Call.</p>
+        </field>
+    </record>
+
+    <record id="action_vessel_port_disbursement_variance_report" model="ir.actions.act_window">
+        <field name="name">Variance Report</field>
+        <field name="res_model">vessel.port.disbursement</field>
+        <field name="view_mode">pivot</field>
+        <field name="view_id" ref="vessel_port_disbursement_view_pivot"/>
+    </record>
+
+</odoo>

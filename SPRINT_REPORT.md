@@ -543,3 +543,37 @@ Tidak ada blocker baru — desain constraint warning-only (bukan `ValidationErro
 - Record rule portal (Nakhoda cuma lihat voyage kapalnya sendiri) masih ditunda ke Sprint 13 sesuai rencana — Sprint ini portal group baru dapat access CSV dasar (read+write+create, tanpa unlink), belum ada domain filter
 
 ---
+
+## Sprint 12 — vessel_voyage_operations: Port Disbursement (PDA/FDA) & Variance — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.port.disbursement` — §3.5: `port_call_id`, `disbursement_type` (pda/fda), `agent_id` (related dari port_call, store), `currency_id` (default company currency), `line_ids`, `total_amount` (compute sum), `variance_amount`/`variance_pct` (compute, hanya terisi record fda confirmed dengan pda confirmed di port_call sama), `state` (draft/confirmed), `reviewed` (Boolean, dipakai cron Sprint 13), `document_ids` (Many2many ir.attachment)
+- [x] Model `vessel.port.disbursement.line` — §3.6: `item_type_id`, `description`, `amount` (Monetary, currency related dari disbursement)
+- [x] Compute variance — hanya jalan kalau kedua record ada & confirmed, kalau pda belum ada return 0 tanpa error
+- [x] Logic §4.4 — `action_confirm` FDA → `_check_variance_threshold()`: ambil threshold `port_id.disbursement_variance_threshold_pct` fallback `company.default_disbursement_variance_threshold_pct`, kalau variance > threshold → `activity_schedule` ke anggota `group_voyage_ops_manager` + `account.group_account_manager` (Finance) — **idempotent-guarded** (skip user yang sudah punya activity untuk record yang sama)
+- [x] Field `reviewed` untuk cron Sprint 13
+- [x] Security access 2 model baru (manager/user) — **portal TIDAK dapat access sama sekali** (tidak ada row di `ir.model.access.csv` untuk `group_voyage_ops_portal`, bukan record rule domain kosong)
+- [x] Views: form disbursement (line inline editable, lampiran), tab "Disbursement (PDA/FDA)" di form port call (tombol Buat PDA/Buat FDA + list overview), menu Finansial Pendukung → Disbursement (PDA/FDA) + Variance Report (pivot port call × tipe)
+- [x] **4 unit test `TransactionCase`** (`tests/test_port_disbursement.py`), semua pass: (a) PDA 5 line + FDA +20% → variance benar + activity terkirim (replikasi §10.7), (b) variance di bawah threshold → tidak ada activity, (c) FDA tanpa PDA → variance 0 bukan error, (d) threshold override per-port lebih ketat dari default → activity yang tadinya tidak terkirim di bawah default, terkirim karena override
+- [x] Dummy data: 2 pasang PDA/FDA — Tanjung Priok (5 line, variance 20% > threshold default 15%) replikasi persis skenario acceptance criteria §10.7, dan Singapore (2 line, variance 8%, threshold override 5% di level port — kalau pakai default 15% tidak akan trigger activity)
+
+### Blocker & Resolusi
+- **Override `write()` state approved/rejected via `<field>` XML aman, tapi `action_confirm()` via button method TIDAK aman untuk demo data berulang** — belajar dari Sprint 11, saya sengaja set `state=confirmed` via `<field>` langsung (idempotent) alih-alih memanggil `action_confirm()` di XML (yang akan raise `UserError` di run `-u` kedua karena state sudah bukan draft). Trigger `_check_variance_threshold()` dipisah lewat `<function>` tag XML, dengan guard idempotency baru ditambahkan di method itu sendiri (skip user yang sudah punya activity) — supaya `-u` berulang tidak menciptakan activity dobel.
+- **`res.groups.users` tidak ada lagi di Odoo 19** — `AttributeError: 'res.groups' object has no attribute 'users'` saat load demo data (via `<function>` tag, jadi ketahuan sebagai `ParseError` saat install, bukan error senyap seperti gotcha Sprint 11). **Resolusi**: ganti ke `res.groups.user_ids` (anggota eksplisit) — field ini sebenarnya sudah dipakai benar di `vessel_voyage_operations_groups.xml` Sprint 8 (`user_ids eval="[(4, ref('base.user_admin'))]"`), cuma waktu nulis kode baru saya lupa dan pakai nama lama. Ditambahkan sebagai baris baru di `CLAUDE.md` checklist (satu keluarga dengan `res.users.groups_id`→`group_ids` yang sudah tercatat, arah kebalikannya).
+- **`activity_schedule()` `AttributeError` karena model belum `_inherit mail.activity.mixin`** — lupa nambahkan inherit saat bikin model baru (beda dari model lain di modul ini yang semua sudah include `mail.thread`/`mail.activity.mixin` sejak awal). Ketahuan langsung saat install (bukan gotcha Odoo 19, murni oversight). **Resolusi**: tambah `_inherit = ['mail.thread', 'mail.activity.mixin']`, `<chatter/>` di form view sudah ada dari awal (untungnya tidak perlu view baru).
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `.groups_id`, `_sql_constraints` list — 0 hasil
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL, idempotent (re-run `-u` kedua kali — **termasuk verifikasi eksplisit jumlah activity tidak dobel**: `mail_activity` tetap 1 baris per FDA record setelah 2× `-u`)
+- ✅ 8/8 unit test pass (4 Sprint 11 + 4 Sprint 12), 0 failed/0 error, tidak ada regresi
+- ✅ PDA 5 line (1.000.000) + FDA +20% (1.200.000) → `variance_amount=200000, variance_pct=20%`, activity terkirim ke Finance — **diverifikasi psql**: demo Tanjung Priok persis match acceptance criteria §10.7
+- ✅ Threshold override per-port bekerja — **diverifikasi psql**: Singapore variance 8% (di bawah default 15%, TIDAK akan trigger di skenario default) tapi di atas override port 5% → activity tetap terkirim, membuktikan override benar-benar dipakai bukan default
+- ✅ Nakhoda (portal) tidak bisa akses disbursement sama sekali — **diverifikasi via shell**: portal test user `read()` raise `AccessError`
+
+### Catatan
+- 2 gotcha baru ditemukan sprint ini (`res.groups.users`→`user_ids`, lupa `mail.activity.mixin`) — yang pertama sudah masuk `CLAUDE.md`, yang kedua murni human error (bukan pola Odoo 19 breaking change), tidak perlu masuk checklist tapi jadi pengingat: **selalu cek model baru butuh `mail.thread`/`mail.activity.mixin` kalau akan pakai `message_post`/`activity_schedule`**
+- `<function>` XML tag (Odoo standar, belum pernah dipakai di project ini sebelumnya) dipakai untuk trigger side-effect method dari demo data tanpa lewat state-transition-guarded action method — pola baru untuk project ini, berguna kalau butuh replikasi skenario "sudah confirmed dengan efek samping" di dummy data pada sprint berikutnya
+
+---

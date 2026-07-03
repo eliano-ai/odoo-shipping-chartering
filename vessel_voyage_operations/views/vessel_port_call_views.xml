@@ -54,6 +54,21 @@
                             </list>
                         </field>
                     </group>
+                    <group string="Disbursement (PDA/FDA)">
+                        <button name="action_create_pda" type="object"
+                                string="Buat PDA" class="btn-secondary"/>
+                        <button name="action_create_fda" type="object"
+                                string="Buat FDA" class="btn-secondary"/>
+                        <field name="disbursement_ids" nolabel="1">
+                            <list>
+                                <field name="disbursement_type" widget="badge"/>
+                                <field name="total_amount"/>
+                                <field name="variance_amount"/>
+                                <field name="variance_pct"/>
+                                <field name="state" widget="badge"/>
+                            </list>
+                        </field>
+                    </group>
                     <group string="Catatan">
                         <field name="notes" nolabel="1"/>
                     </group>

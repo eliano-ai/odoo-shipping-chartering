@@ -46,6 +46,23 @@
               action="action_vessel_noon_report"
               sequence="20"/>
 
+    <menuitem id="menu_vessel_voyage_operations_finance"
+              name="Finansial Pendukung"
+              parent="menu_vessel_voyage_operations_root"
+              sequence="30"/>
+
+    <menuitem id="menu_vessel_port_disbursement"
+              name="Disbursement (PDA/FDA)"
+              parent="menu_vessel_voyage_operations_finance"
+              action="action_vessel_port_disbursement"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_port_disbursement_variance_report"
+              name="Variance Report"
+              parent="menu_vessel_voyage_operations_finance"
+              action="action_vessel_port_disbursement_variance_report"
+              sequence="20"/>
+
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"
               parent="menu_vessel_voyage_operations_root"

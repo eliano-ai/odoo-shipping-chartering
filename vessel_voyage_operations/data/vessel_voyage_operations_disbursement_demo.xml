@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Port Singapore dapat threshold override lebih ketat (5%) daripada default
+         global perusahaan (15%) — mendemonstrasikan §4.4 per-port override. -->
+    <record id="vessel_chartering.demo_port_singapore" model="res.partner">
+        <field name="disbursement_variance_threshold_pct">5.0</field>
+    </record>
+
+    <!-- ─── PDA/FDA #1 — demo_port_call_1 (Tanjung Priok, load, completed) ────────
+         Variance 20% (default threshold global 15%) — replikasi persis acceptance
+         criteria §10.7 tech spec (PDA 5 line, FDA +20%, activity ke Finance). -->
+    <record id="demo_disbursement_1_pda" model="vessel.port.disbursement">
+        <field name="port_call_id" ref="demo_port_call_1"/>
+        <field name="disbursement_type">pda</field>
+        <field name="state">confirmed</field>
+    </record>
+    <record id="demo_disbursement_1_pda_line_1" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_pda"/>
+        <field name="item_type_id" ref="disbursement_item_pilotage"/>
+        <field name="amount">40000</field>
+    </record>
+    <record id="demo_disbursement_1_pda_line_2" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_pda"/>
+        <field name="item_type_id" ref="disbursement_item_towage"/>
+        <field name="amount">40000</field>
+    </record>
+    <record id="demo_disbursement_1_pda_line_3" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_pda"/>
+        <field name="item_type_id" ref="disbursement_item_mooring"/>
+        <field name="amount">40000</field>
+    </record>
+    <record id="demo_disbursement_1_pda_line_4" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_pda"/>
+        <field name="item_type_id" ref="disbursement_item_port_dues"/>
+        <field name="amount">40000</field>
+    </record>
+    <record id="demo_disbursement_1_pda_line_5" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_pda"/>
+        <field name="item_type_id" ref="disbursement_item_agency_fee"/>
+        <field name="amount">40000</field>
+    </record>
+
+    <record id="demo_disbursement_1_fda" model="vessel.port.disbursement">
+        <field name="port_call_id" ref="demo_port_call_1"/>
+        <field name="disbursement_type">fda</field>
+        <field name="state">confirmed</field>
+    </record>
+    <record id="demo_disbursement_1_fda_line_1" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_fda"/>
+        <field name="item_type_id" ref="disbursement_item_pilotage"/>
+        <field name="amount">48000</field>
+    </record>
+    <record id="demo_disbursement_1_fda_line_2" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_fda"/>
+        <field name="item_type_id" ref="disbursement_item_towage"/>
+        <field name="amount">48000</field>
+    </record>
+    <record id="demo_disbursement_1_fda_line_3" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_fda"/>
+        <field name="item_type_id" ref="disbursement_item_mooring"/>
+        <field name="amount">48000</field>
+    </record>
+    <record id="demo_disbursement_1_fda_line_4" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_fda"/>
+        <field name="item_type_id" ref="disbursement_item_port_dues"/>
+        <field name="amount">48000</field>
+    </record>
+    <record id="demo_disbursement_1_fda_line_5" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_1_fda"/>
+        <field name="item_type_id" ref="disbursement_item_agency_fee"/>
+        <field name="amount">48000</field>
+    </record>
+
+    <!-- State di-set langsung via field (idempotent), bukan action_confirm() (button
+         method menolak re-run kalau state sudah bukan draft). Trigger threshold check
+         terpisah via function tag — _check_variance_threshold sendiri sudah idempotent
+         (guard: skip user yang sudah punya activity untuk record ini). -->
+    <function model="vessel.port.disbursement" name="_check_variance_threshold">
+        <value eval="[ref('demo_disbursement_1_fda')]"/>
+    </function>
+
+    <!-- ─── PDA/FDA #2 — demo_port_call_2 (Singapore, bunkering, threshold override) ──
+         Variance 8% — di bawah default global 15% tapi di atas override port Singapore
+         (5%), mendemonstrasikan efek per-port threshold override. -->
+    <record id="demo_disbursement_2_pda" model="vessel.port.disbursement">
+        <field name="port_call_id" ref="demo_port_call_2"/>
+        <field name="disbursement_type">pda</field>
+        <field name="state">confirmed</field>
+    </record>
+    <record id="demo_disbursement_2_pda_line_1" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_2_pda"/>
+        <field name="item_type_id" ref="disbursement_item_light_dues"/>
+        <field name="amount">25000</field>
+    </record>
+    <record id="demo_disbursement_2_pda_line_2" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_2_pda"/>
+        <field name="item_type_id" ref="disbursement_item_agency_fee"/>
+        <field name="amount">20000</field>
+    </record>
+
+    <record id="demo_disbursement_2_fda" model="vessel.port.disbursement">
+        <field name="port_call_id" ref="demo_port_call_2"/>
+        <field name="disbursement_type">fda</field>
+        <field name="state">confirmed</field>
+    </record>
+    <record id="demo_disbursement_2_fda_line_1" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_2_fda"/>
+        <field name="item_type_id" ref="disbursement_item_light_dues"/>
+        <field name="amount">27000</field>
+    </record>
+    <record id="demo_disbursement_2_fda_line_2" model="vessel.port.disbursement.line">
+        <field name="disbursement_id" ref="demo_disbursement_2_fda"/>
+        <field name="item_type_id" ref="disbursement_item_agency_fee"/>
+        <field name="amount">21600</field>
+    </record>
+
+    <function model="vessel.port.disbursement" name="_check_variance_threshold">
+        <value eval="[ref('demo_disbursement_2_fda')]"/>
+    </function>
+
+</odoo>

@@ -42,6 +42,9 @@ class VesselPortCall(models.Model):
     clearance_line_ids = fields.One2many(
         'vessel.port.clearance.line', 'port_call_id', string='Clearance Checklist',
     )
+    disbursement_ids = fields.One2many(
+        'vessel.port.disbursement', 'port_call_id', string='PDA/FDA',
+    )
     notes = fields.Html(string='Catatan')
     company_id = fields.Many2one(
         related='voyage_id.company_id', string='Perusahaan', store=True, readonly=True,
@@ -50,7 +53,7 @@ class VesselPortCall(models.Model):
     @api.depends('cargo_ops_commenced', 'cargo_ops_completed')
     def _compute_cargo_ops_rate_mt_day(self):
         # Placeholder — akan depend ke qty dari cargo_document_ids setelah
-        # vessel.cargo.document ada (Sprint 12).
+        # vessel.cargo.document ada (Sprint 13).
         for rec in self:
             rec.cargo_ops_rate_mt_day = 0.0
 
@@ -100,3 +103,25 @@ class VesselPortCall(models.Model):
                     })
         if lines_vals:
             self.env['vessel.port.clearance.line'].create(lines_vals)
+
+    def _action_create_disbursement(self, disbursement_type):
+        self.ensure_one()
+        disbursement = self.env['vessel.port.disbursement'].create({
+            'port_call_id': self.id,
+            'disbursement_type': disbursement_type,
+        })
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('PDA Baru — %s') % self.port_id.display_name
+            if disbursement_type == 'pda' else _('FDA Baru — %s') % self.port_id.display_name,
+            'res_model': 'vessel.port.disbursement',
+            'view_mode': 'form',
+            'res_id': disbursement.id,
+            'target': 'current',
+        }
+
+    def action_create_pda(self):
+        return self._action_create_disbursement('pda')
+
+    def action_create_fda(self):
+        return self._action_create_disbursement('fda')

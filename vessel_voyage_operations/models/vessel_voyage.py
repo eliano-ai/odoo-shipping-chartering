@@ -99,6 +99,9 @@ class VesselVoyage(models.Model):
         default=lambda self: self.env.user,
     )
     noon_report_count = fields.Integer(string='Jumlah Noon Report', compute='_compute_noon_report_count')
+    port_call_count = fields.Integer(string='Jumlah Port Call', compute='_compute_port_call_count')
+    cargo_document_count = fields.Integer(string='Jumlah Cargo Document', compute='_compute_cargo_document_count')
+    delay_count = fields.Integer(string='Jumlah Delay', compute='_compute_delay_count')
 
     # ─────────────────────────────────────────────────────────────────────
     # Compute — placeholder, diisi data riil setelah model terkait ada
@@ -114,6 +117,21 @@ class VesselVoyage(models.Model):
     def _compute_noon_report_count(self):
         for rec in self:
             rec.noon_report_count = len(rec.noon_report_ids)
+
+    @api.depends('port_call_ids')
+    def _compute_port_call_count(self):
+        for rec in self:
+            rec.port_call_count = len(rec.port_call_ids)
+
+    @api.depends('cargo_document_ids')
+    def _compute_cargo_document_count(self):
+        for rec in self:
+            rec.cargo_document_count = len(rec.cargo_document_ids)
+
+    @api.depends('delay_event_ids')
+    def _compute_delay_count(self):
+        for rec in self:
+            rec.delay_count = len(rec.delay_event_ids)
 
     @api.depends('delay_event_ids.duration_hours')
     def _compute_total_delay_hours(self):
@@ -327,6 +345,50 @@ class VesselVoyage(models.Model):
             'view_mode': 'list,form',
             'domain': [('voyage_id', '=', self.id)],
             'context': {'default_voyage_id': self.id},
+        }
+
+    def action_view_port_calls(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Port Calls — %s') % self.name,
+            'res_model': 'vessel.port.call',
+            'view_mode': 'list,calendar,form',
+            'domain': [('voyage_id', '=', self.id)],
+            'context': {'default_voyage_id': self.id},
+        }
+
+    def action_view_cargo_documents(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Cargo Documents — %s') % self.name,
+            'res_model': 'vessel.cargo.document',
+            'view_mode': 'list,form',
+            'domain': [('voyage_id', '=', self.id)],
+            'context': {'default_voyage_id': self.id},
+        }
+
+    def action_view_delays(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Delay Log — %s') % self.name,
+            'res_model': 'vessel.voyage.delay',
+            'view_mode': 'list,form',
+            'domain': [('voyage_id', '=', self.id)],
+            'context': {'default_voyage_id': self.id},
+        }
+
+    def action_view_charter_contract(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': self.charter_contract_id.name,
+            'res_model': 'vessel.charter.contract',
+            'view_mode': 'form',
+            'res_id': self.charter_contract_id.id,
+            'target': 'current',
         }
 
     # ─────────────────────────────────────────────────────────────────────

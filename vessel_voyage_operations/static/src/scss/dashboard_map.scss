@@ -1,0 +1,36 @@
+.o_fleet_map_dashboard {
+    height: 100%;
+    min-height: 500px;
+
+    .o_fleet_map_legend {
+        font-size: 13px;
+        flex-wrap: wrap;
+    }
+
+    .o_fleet_map_legend_dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 4px;
+        vertical-align: middle;
+    }
+
+    .o_fleet_map_container {
+        min-height: 450px;
+        width: 100%;
+    }
+}
+
+.o_vessel_marker {
+    background: transparent;
+    border: none;
+}
+
+.o_vessel_marker_dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}

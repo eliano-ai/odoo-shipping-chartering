@@ -639,3 +639,65 @@ Commit `6af4d05`, pushed. Sprint 13 lanjut setelah ini.
 - Pelajaran `mail.thread`/`mail.activity.mixin` dari sprint ini (constraint/cron yang jarang ter-trigger dummy data bisa menyembunyikan bug struktural) dicatat sebagai reminder proses, bukan ditambah ke `CLAUDE.md` Odoo 19 Gotcha table (ini bukan breaking change Odoo 19, murni disiplin coding sendiri) — akan jadi item eksplisit di checklist Sprint 14 acceptance final: grep semua model baru pastikan ada mixin kalau pakai `message_post`/`activity_schedule`
 
 ---
+
+## Sprint 14 — vessel_voyage_operations: Views Polish, OWL/Leaflet Dashboard & Acceptance Final — 2026-07-03
+
+**Status**: ✅ Done — **sprint terakhir, MVP `vessel_voyage_operations` selesai.**
+
+### Task Selesai
+- [x] **Vendor Leaflet 1.9.4** (BSD-2-Clause, compatible LGPL-3) — `leaflet.js`+`leaflet.css`+marker images ke `static/lib/leaflet/`, download langsung dari unpkg (bukan disalin dari CDN link di produksi — sekali unduh, jadi asset lokal permanen)
+- [x] **OWL Component** `FleetMapDashboard` (`static/src/js/dashboard_map.js`) — `useService('orm')` + `onWillStart` search `fleet.vehicle` (`is_vessel=True`), render marker per kapal di `onMounted`, `L.divIcon` custom warna per `charter_status` (4 warna: available/on_voyage_charter/on_time_charter/chartered_in) — **sengaja pakai divIcon CSS-based, bukan raster marker-icon.png bawaan Leaflet**, supaya tidak kena masalah relative path gambar yang rusak saat CSS di-concatenate oleh Odoo asset bundler
+- [x] QWeb template + legend 4 warna, SCSS styling container map + marker dot
+- [x] Register `ir.actions.client` tag `vessel_voyage_operations.fleet_map_dashboard`, menu Laporan → Dashboard Posisi Armada
+- [x] Assets dideclare di manifest `web.assets_backend` (pola sama seperti Bootstrap/Popper di `web/__manifest__.py` — bukan `loadJS`/`loadCSS` runtime, lebih standard & simple)
+- [x] Laporan Delay Analysis (Sprint 13) — dicek ulang, sudah lengkap sesuai §5 (pivot delay type × kapal × durasi)
+- [x] Polish smart button form voyage — sebelumnya cuma Noon Reports, sekarang lengkap: Port Calls, Noon Reports, Cargo Documents, Delays (semua count real), + tombol "Kontrak Charter" (buka form kontrak langsung)
+- [x] **Fitur tambahan di luar sprint file asli** (permintaan user di tengah sprint, arahan dari atasannya): 3 calendar view baru — `vessel.voyage` (by tanggal berangkat/tiba, di `action_vessel_voyage_all`/`_sailing`/`_completed`), `vessel.noon.report` (by tanggal laporan), `vessel.hire.statement.line` (jatuh tempo, **modul `vessel_chartering` yang sudah "selesai"** — form view-nya sudah ada dari Sprint 6, kali ini ditambah list+calendar+search+action+menu baru di bawah "Laporan"). User diberi 3 opsi (calendar per-model / calendar gabungan lintas-model / Gantt timeline armada) via pertanyaan eksplisit — pilih opsi pertama (per-model, lebih konsisten dengan pola existing). **Catatan: Gantt asli (`web_gantt`) tidak tersedia di Odoo Community**, sudah diinformasikan ke user sebagai batasan platform.
+- [x] **Jalankan seluruh 11 poin Kriteria Penerimaan §10** — lihat tabel di bawah
+- [x] **Audit checklist §12.2** — grep bersih semua (lihat Verifikasi)
+- [x] **Install ulang dari database bersih** (`shipping_dev_test14`, dibuat lalu di-drop setelah verifikasi) dengan 8 modul bareng (5 fleet + `vessel_chartering` + `vessel_voyage_operations` + `maritime`) + demo data — 213 detik (chart of accounts Indonesia + demo 8 modul), **zero ERROR/CRITICAL**
+
+### Blocker & Resolusi
+- **Tidak ada blocker teknis baru** — sprint ini murni views/frontend polish + housekeeping, semua backend logic sudah solid dari Sprint 8-13.
+- **Interupsi mid-sprint**: permintaan calendar view dari user (relay arahan atasan) — genuinely ambigu ("menarik dan berguna"), ditangani dengan mengajukan 3 opsi konkret (dengan preview ASCII) sebelum implementasi, bukan menebak. User pilih opsi paling konsisten dengan pola existing (calendar per-model), bukan yang paling "wah" (Gantt, yang lagipula tidak tersedia di Community).
+
+### Verifikasi — Checklist Acceptance Criteria §10 Tech Spec (FINAL)
+| # | Kriteria | Status |
+|---|---|---|
+| 10.1 | Install bersih Odoo 19 tanpa error, tanpa konflik `vessel_chartering` & 5 modul fleet existing | ✅ (fresh DB test, 8 modul bareng, 213s, zero error) |
+| 10.2 | Voyage dari kontrak confirmed → `vessel_id` & `analytic_account_id` ter-copy otomatis | ✅ (Sprint 9, diverifikasi shell) |
+| 10.3 | 3 port call berurutan, ETA/ATA beda → tidak error, urutan benar | ✅ (Sprint 10, dummy data + verifikasi) |
+| 10.4 | Nakhoda portal cuma lihat voyage kapal sendiri | ✅ (Sprint 13, `test_02_portal_record_rule_isolation`) |
+| 10.5 | Approve noon report → read-only, masuk `total_distance_nm` | ✅ (Sprint 11, `test_01_total_distance_nm_from_approved_reports`) |
+| 10.6 | Noon report rejected → histori tidak hilang, bisa resubmit | ✅ (Sprint 11, `test_02_rejected_report_keeps_history`) |
+| 10.7 | PDA 5 line + FDA +20% → variance benar, activity ke Finance | ✅ (Sprint 12, `test_01_variance_20_pct_above_default_threshold`) |
+| 10.8 | Selesaikan voyage tanpa ATD salah satu port call → block dengan pesan jelas | ✅ (Sprint 10, diverifikasi shell — port call bukan terakhir wajib ATD, terakhir cukup ATB) |
+| 10.9 | Dashboard posisi armada tampilkan kapal sesuai noon report approved terakhir | ✅ backend (Sprint 11, `current_position_lat/lng` compute terverifikasi shell) — **rendering visual perlu verifikasi manual browser oleh user** (OWL component tidak bisa dites otomatis dari shell/curl) |
+| 10.10 | Semua unit test `TransactionCase` lulus | ✅ **22/22** (12 `vessel_chartering` + 10 `vessel_voyage_operations`), 0 failed/0 error |
+| 10.11 | Audit: no `display_name` custom field, no `fields.Datetime.from_string`, no `@api.depends()` kosong | ✅ (grep bersih, 0 hasil semua) |
+
+**10 dari 11 poin terverifikasi otomatis. Poin §10.9 (rendering visual dashboard) menunggu konfirmasi manual browser dari user** — instruksi verifikasi: buka menu Voyage Operations → Laporan → Dashboard Posisi Armada, cek marker muncul di posisi noon report approved terakhir tiap kapal, warna beda per status charter (lihat legend di atas map).
+
+### Catatan
+- **MVP `vessel_voyage_operations` selesai** (Sprint 8-14, 7 sprint — pola sama seperti `vessel_chartering` 7 sprint) — modul kedua Layer 2 Komersial roadmap selesai
+- Tile map pakai OpenStreetMap public tile server (bukan CDN Leaflet library — itu sudah di-vendor lokal) — ini standard practice, self-hosting tile data dunia di luar scope MVP manapun
+- 3 calendar view baru (voyage/noon report/hire statement) adalah **fitur tambahan di luar rencana awal tech spec**, permintaan user di tengah Sprint 14 — didokumentasikan di sini karena menyentuh 2 modul (termasuk `vessel_chartering` yang sudah "selesai" sejak Sprint 7)
+- Modul lanjutan roadmap (`vessel_voyage_pnl`, `vessel_bunker_management`, dashboard AIS live, dll) tetap **di luar scope** — lihat §9 tech spec untuk Fase 2/3
+
+---
+
+## 🎉 MVP `vessel_voyage_operations` Selesai — Ringkasan 7 Sprint
+
+| Sprint | Fokus | Status |
+|---|---|---|
+| 8 | Foundation & Master Data | ✅ |
+| 9 | Core Voyage Model & State Machine | ✅ |
+| 10 | Port Call & Clearance Checklist | ✅ |
+| 11 | Noon Report & Approval Workflow | ✅ |
+| 12 | Port Disbursement (PDA/FDA) & Variance | ✅ |
+| 13 | Cargo Document, Delay Log, Portal Security, Cron & Email | ✅ |
+| 14 | Views Polish, OWL/Leaflet Dashboard & Acceptance Final | ✅ |
+
+**22/22 unit test pass (gabungan `vessel_chartering` + `vessel_voyage_operations`). 10/11 acceptance criteria terverifikasi otomatis, 1 poin (dashboard visual) menunggu konfirmasi manual browser. Restrukturisasi app "Maritime" terpisah dari Fleet di tengah siklus (di luar rencana awal, permintaan user).**
+
+---

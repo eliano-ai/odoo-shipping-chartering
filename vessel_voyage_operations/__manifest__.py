@@ -53,6 +53,7 @@ Referensi: TECH_SPEC_vessel_voyage_operations.md
         'views/vessel_port_disbursement_views.xml',
         'views/vessel_cargo_document_views.xml',
         'views/vessel_voyage_delay_views.xml',
+        'views/vessel_dashboard_map_actions.xml',
         'views/vessel_voyage_operations_menus.xml',
         'data/vessel_voyage_operations_mail_template_data.xml',
         'data/vessel_voyage_operations_cron_data.xml',
@@ -64,6 +65,19 @@ Referensi: TECH_SPEC_vessel_voyage_operations.md
         'data/vessel_voyage_operations_cargo_document_demo.xml',
         'data/vessel_voyage_operations_delay_demo.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            # Leaflet di-vendor sebagai static asset lokal (bukan CDN) — konsisten
+            # dengan environment Docker self-hosted. Tile map tetap fetch dari
+            # OpenStreetMap public tile server saat runtime browser (bukan dependency
+            # server Odoo, dan self-hosting tile data dunia di luar scope MVP).
+            'vessel_voyage_operations/static/lib/leaflet/leaflet.css',
+            'vessel_voyage_operations/static/lib/leaflet/leaflet.js',
+            'vessel_voyage_operations/static/src/scss/dashboard_map.scss',
+            'vessel_voyage_operations/static/src/js/dashboard_map.js',
+            'vessel_voyage_operations/static/src/xml/dashboard_map.xml',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,

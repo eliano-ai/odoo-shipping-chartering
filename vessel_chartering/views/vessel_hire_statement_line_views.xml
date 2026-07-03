@@ -38,4 +38,66 @@
             </form>
         </field>
     </record>
+
+    <!-- ─── List ────────────────────────────────────────────────────────── -->
+    <record id="vessel_hire_statement_line_view_list" model="ir.ui.view">
+        <field name="name">vessel.hire.statement.line.list</field>
+        <field name="model">vessel.hire.statement.line</field>
+        <field name="arch" type="xml">
+            <list string="Hire Statement">
+                <field name="contract_id"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+                <field name="net_hire_days"/>
+                <field name="total_amount" sum="Total"/>
+                <field name="currency_id" column_invisible="1"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state == 'draft'"
+                       decoration-warning="state == 'invoiced'"
+                       decoration-success="state == 'paid'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Calendar ────────────────────────────────────────────────────── -->
+    <record id="vessel_hire_statement_line_view_calendar" model="ir.ui.view">
+        <field name="name">vessel.hire.statement.line.calendar</field>
+        <field name="model">vessel.hire.statement.line</field>
+        <field name="arch" type="xml">
+            <calendar string="Hire Statement — Jatuh Tempo" date_start="period_start"
+                      date_stop="period_end" color="contract_id" mode="month">
+                <field name="contract_id"/>
+                <field name="total_amount"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- ─── Search ──────────────────────────────────────────────────────── -->
+    <record id="vessel_hire_statement_line_view_search" model="ir.ui.view">
+        <field name="name">vessel.hire.statement.line.search</field>
+        <field name="model">vessel.hire.statement.line</field>
+        <field name="arch" type="xml">
+            <search string="Cari Hire Statement">
+                <field name="contract_id"/>
+                <filter string="Belum Diinvoice" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <group>
+                    <filter string="Status" name="group_state" context="{'group_by':'state'}"/>
+                    <filter string="Kontrak" name="group_contract" context="{'group_by':'contract_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Actions ─────────────────────────────────────────────────────── -->
+    <record id="action_vessel_hire_statement_line" model="ir.actions.act_window">
+        <field name="name">Hire Statement</field>
+        <field name="res_model">vessel.hire.statement.line</field>
+        <field name="view_mode">list,calendar,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada hire statement</p>
+            <p>Hire statement dibuat dari tombol "Generate Hire Statement" di form kontrak time charter.</p>
+        </field>
+    </record>
+
 </odoo>

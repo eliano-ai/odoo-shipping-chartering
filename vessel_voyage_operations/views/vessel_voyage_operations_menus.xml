@@ -80,6 +80,12 @@
               action="action_vessel_voyage_delay_analysis"
               sequence="10"/>
 
+    <menuitem id="menu_vessel_fleet_map_dashboard"
+              name="Dashboard Posisi Armada"
+              parent="menu_vessel_voyage_operations_reports"
+              action="action_vessel_fleet_map_dashboard"
+              sequence="20"/>
+
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"
               parent="menu_vessel_voyage_operations_root"

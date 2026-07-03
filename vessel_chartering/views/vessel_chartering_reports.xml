@@ -89,4 +89,10 @@
               action="action_vessel_voyage_estimate_analysis"
               sequence="30"/>
 
+    <menuitem id="menu_vessel_hire_statement_line"
+              name="Hire Statement"
+              parent="menu_vessel_chartering_reports"
+              action="action_vessel_hire_statement_line"
+              sequence="40"/>
+
 </odoo>

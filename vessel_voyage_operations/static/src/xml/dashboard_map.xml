@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+    <t t-name="vessel_voyage_operations.FleetMapDashboard">
+        <div class="o_fleet_map_dashboard h-100 d-flex flex-column">
+            <div class="o_fleet_map_legend d-flex gap-3 p-2 border-bottom bg-light">
+                <span><span class="o_fleet_map_legend_dot" style="background-color:#6c757d;"/> Tersedia</span>
+                <span><span class="o_fleet_map_legend_dot" style="background-color:#0F6E56;"/> Voyage Charter</span>
+                <span><span class="o_fleet_map_legend_dot" style="background-color:#1F4E79;"/> Time Charter</span>
+                <span><span class="o_fleet_map_legend_dot" style="background-color:#854F0B;"/> Charter-In</span>
+            </div>
+            <div class="o_fleet_map_container flex-grow-1" t-ref="mapContainer"/>
+        </div>
+    </t>
+</templates>

@@ -970,3 +970,42 @@ Interpretasi task 1 sprint file ("masing-masing state=draft") **disesuaikan** ja
 Dengan ini, roadmap 3 modul (`vessel_chartering` → `vessel_voyage_operations` → `vessel_voyage_pnl`) yang direncanakan sejak awal proyek **tuntas seluruhnya**. Push ke `github` remote dilakukan sekali di akhir sprint ini (bukan per-sprint), sesuai instruksi user 2026-07-03.
 
 ---
+
+## Setup — vessel_bunker_management (Modul Kelima, Layer 3 Finansial) — 2026-07-03
+
+Sesuai `TECH_SPEC_vessel_bunker_management.md`, roadmap #4 setelah `vessel_voyage_pnl`. Environment/repo/branch **lanjutan** (langsung setelah push MVP `vessel_voyage_pnl` ke github).
+
+### Fakta Environment (dicek langsung, bukan diasumsikan)
+- **Tidak ada konsep `stock.location` per kapal** di `fleet_fuel_log` maupun `fleet_model_sparepart` — keduanya cuma pakai lokasi stok generik (`stock.stock_location_stock`/`stock.stock_location_production`). **Keputusan teknis** (bukan business decision, diputuskan langsung): modul ini akan membuat 1 `stock.location` per kapal.
+- `stock` module sudah jadi dependency existing di 3 modul fleet lain — tidak perlu instalasi tambahan.
+
+### Keputusan Sebelum Sprint Dimulai (dijawab user via pertanyaan terstruktur, semua pilih "Recommended")
+- **Portal surveyor eksternal**: TIDAK di MVP — staff internal input hasil survey dari laporan PDF surveyor
+- **Threshold ROB reconciliation**: global (`res.company`) + override per kapal (`fleet.vehicle`) — pola identik `budget_variance_threshold_pct`
+- **BOD/BOR settlement**: scope MVP Time Charter murni — relet ditunda ke Fase 2
+- **Approval nominasi supplier**: role `group_bunker_manager` tunggal, tanpa approval matrix berjenjang
+
+### Mode Eksekusi
+**AUTONOMOUS** (lanjutan dari `vessel_voyage_pnl`) — commit lokal tiap sprint, email otomatis tiap sprint selesai, lanjut otomatis ke sprint berikutnya, **push ke github cuma sekali di akhir** (setelah Sprint 28 selesai).
+
+### Breakdown Sprint
+7 sprint (nomor lanjut global: **22–28**):
+
+| Sprint | Fokus |
+|---|---|
+| 22 | Foundation & Master Data |
+| 23 | Procurement (Inquiry, Quote, PO Integration) |
+| 24 | BDN, Survey, Dispute & Stock Integration |
+| 25 | ROB Reconciliation (Inti Anti-Fraud) |
+| 26 | BOD/BOR Settlement (Time Charter) |
+| 27 | Cron Lengkap & Email |
+| 28 | Views Polish, Laporan & Acceptance Final |
+
+Detail lengkap tiap sprint di `sprints/sprint_22.md` s.d. `sprint_28.md`.
+
+### Catatan
+- Berbeda dari `vessel_voyage_pnl`, dependency ke `fleet_fuel_log` DAN `vessel_voyage_operations` **wajib (hard)**, bukan soft — ROB reconciliation (fitur inti) butuh kedua sisi data (konsumsi + ROB) sekaligus, tidak bisa "berdiri sendiri tanpa makna" seperti pola bridge modul sebelumnya
+- Arah dependency ke `vessel_chartering` harus dijaga satu arah — modul ini extend `vessel.charter.contract` (hook BOD/BOR), TAPI `vessel_chartering` sendiri TIDAK boleh diubah untuk tahu tentang modul ini (cross-check final di Sprint 28)
+- Pelajaran dari fresh-install verification `vessel_voyage_pnl` Sprint 21 (fresh-install-dari-nol dengan `--test-enable` bisa memakan waktu sangat lama) sudah didokumentasikan di `sprint_28.md` sebagai catatan proaktif, supaya tidak terulang kagetnya
+
+---

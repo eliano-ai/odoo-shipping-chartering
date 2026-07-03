@@ -27,9 +27,10 @@ Layer 2 (Komersial) — app terpisah **`maritime`** (bukan submenu Fleet, sejak 
 - `vessel_voyage_operations` — **selesai** (MVP 7 sprint, Sprint 8-14, lihat `TECH_SPEC_vessel_voyage_operations.md`). Hard dependency ke `vessel_chartering`.
 
 Layer 3 (Finansial):
-- `vessel_voyage_pnl` — **sedang dikembangkan** (roadmap #3, setelah `vessel_voyage_operations`, Sprint 15-21), lihat `TECH_SPEC_vessel_voyage_pnl.md`. Hard dependency ke `vessel_chartering` DAN `vessel_voyage_operations` (murni agregasi lintas keduanya). `hr_payroll`/`account_asset` **tidak tersedia** di environment ini (Enterprise-only, tidak ada di addons path) — crew cost & depreciation allocation selalu `manual` di MVP. `spreadsheet_dashboard` **sudah terinstall**, dashboard direksi dibangun penuh sesuai spec.
+- `vessel_voyage_pnl` — **selesai** (MVP 7 sprint, Sprint 15-21), lihat `TECH_SPEC_vessel_voyage_pnl.md`. Hard dependency ke `vessel_chartering` DAN `vessel_voyage_operations` (murni agregasi lintas keduanya), **dan ke `spreadsheet_dashboard`** (hard depend, bukan soft-check — dashboard direksi butuh model itu ADA saat XML data di-load; efek samping: auto-install beberapa modul `spreadsheet_dashboard_*` content-pack lain via mekanisme `auto_install` Odoo saat fresh install dari database kosong). `hr_payroll`/`account_asset` **tidak tersedia** di environment ini (Enterprise-only, tidak ada di addons path) — crew cost & depreciation allocation selalu `manual` di MVP.
+- `vessel_bunker_management` — **sedang dikembangkan** (roadmap #4, setelah `vessel_voyage_pnl`, Sprint 22-28), lihat `TECH_SPEC_vessel_bunker_management.md`. **Hard dependency** ke `fleet_fuel_log`, `vessel_chartering`, DAN `vessel_voyage_operations` (beda pola dari 3 modul sebelumnya yang soft-dependency — ROB reconciliation, fitur inti modul ini, tidak bermakna tanpa data konsumsi & noon report). Tidak ada konsep `stock.location` per kapal di modul existing manapun — dibuat baru di modul ini (1 lokasi per kapal, child dari parent "Vessels"). Portal surveyor eksternal, relet BOD/BOR, dan approval matrix nominasi supplier semuanya **di luar scope MVP** (keputusan user 2026-07-03) — lihat `TECH_SPEC_vessel_bunker_management.md` §11 untuk detail pertanyaan yang dijawab.
 
-Kalau install lengkap: install `maritime` (auto-tarik `vessel_chartering` + `vessel_voyage_operations` sebagai dependency) supaya menu ter-reparent dengan benar — jangan cuma install modul individual kalau mau app Maritime muncul.
+Kalau install lengkap: install `maritime` (auto-tarik `vessel_chartering` + `vessel_voyage_operations` sebagai dependency) supaya menu ter-reparent dengan benar — jangan cuma install modul individual kalau mau app Maritime muncul. `vessel_voyage_pnl` dan `vessel_bunker_management` tidak ter-reparent ke Maritime otomatis lewat `maritime` module (mereka masing-masing `depends: ['maritime']` sendiri dan reparent menu root-nya sendiri).
 
 Ringkasan fitur & tujuan bisnis tiap modul fleet: lihat `FLEET_MODULES_OVERVIEW.md`.
 
@@ -37,6 +38,7 @@ Ringkasan fitur & tujuan bisnis tiap modul fleet: lihat `FLEET_MODULES_OVERVIEW.
 - Tech spec `vessel_chartering`: `TECH_SPEC_vessel_chartering.md`
 - Tech spec `vessel_voyage_operations`: `TECH_SPEC_vessel_voyage_operations.md`
 - Tech spec `vessel_voyage_pnl`: `TECH_SPEC_vessel_voyage_pnl.md`
+- Tech spec `vessel_bunker_management`: `TECH_SPEC_vessel_bunker_management.md`
 - Overview modul fleet existing: `FLEET_MODULES_OVERVIEW.md`
 - Pengetahuan Odoo 19 (ORM, views, security, dll): gunakan skill `odoo-19` jika tersedia
 
@@ -57,7 +59,7 @@ Semua command dari `D:\Sunartha Claude Skills\commands\` (`sunartha-claude-skill
 
 **Update 2026-07-03**: user eksplisit minta full automation ("kirim email tiap sprint selesai, otomatis jalanin next sprint abis kirim emailnya") — override dari mode checkpoint yang berlaku sebelumnya (Sprint 1-14). Mode checkpoint (stop tiap sprint, tanya sebelum email & lanjut) tetap didokumentasikan di bawah sebagai riwayat/fallback kalau user minta kembali ke mode itu.
 
-Mode **autonomous** (berlaku mulai Sprint 15, modul `vessel_voyage_pnl`):
+Mode **autonomous** (berlaku mulai Sprint 15, modul `vessel_voyage_pnl` — dan berlanjut untuk `vessel_bunker_management` Sprint 22-28, serta modul roadmap berikutnya kecuali user eksplisit ubah lagi):
 1. Jalankan seluruh task di satu file `sprints/sprint_NN.md`
 2. Jalankan verifikasi & Definition of Done
 3. Update `SPRINT_REPORT.md`

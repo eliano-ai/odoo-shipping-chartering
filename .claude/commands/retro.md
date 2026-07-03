@@ -21,10 +21,15 @@ Untuk tiap sprint file: nama sprint, jumlah task, ada/tidaknya section Verifikas
 
 ```bash
 git log --oneline
-git log --oneline --all | grep -iE "(fix|revert|hotfix|patch|repair|workaround|typo|oops|wrong|broken|error)" || echo "Tidak ada commit masalah"
+git log --oneline --all | grep -iE "\b(fix|revert|hotfix|patch|repair|workaround|typo|oops|wrong|broken|error)\b" || echo "Tidak ada commit masalah"
 git log --oneline | grep -E "feat\(sprint-[0-9]+\)" | head -20
 git log --name-only --pretty=format: | sort | uniq -c | sort -rn | head -15
 ```
+<!-- improved: retro Sprint 1-7 vessel_chartering — grep substring polos sempat false-positive
+     match "fix" di dalam kata "pre-fixture" dan "patch" di dalam "despatch" (istilah domain maritim
+     legit, bukan indikasi bug); ganti ke word-boundary \b agar tidak match substring (2026-07-03) -->
+
+Catatan: word-boundary tetap bisa false-positive di istilah lain yang kebetulan sama persis dengan kata utuh (bukan cuma substring) — tetap baca manual commit yang match sebelum menyimpulkan itu "commit bermasalah".
 
 ## Langkah 4 — Analisis SPRINT_REPORT.md
 

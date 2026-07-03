@@ -44,6 +44,36 @@ done
 find <modul yang disentuh> -name "*.xml" -exec python3 -c "import sys,xml.dom.minidom; xml.dom.minidom.parse(sys.argv[1])" {} \; 2>&1 | grep -i error || echo "XML OK"
 ```
 
+### Pre-flight: Pola Odoo 19 Terlarang (grep sebelum install, bukan sesudah error)
+<!-- improved: retro Sprint 1-7 vessel_chartering — decoration-secondary kejadian 2x (Sprint 2 & 4)
+     meski sudah "dicatat sebagai pelajaran"; catatan prosa terbukti tidak cukup, harus di-grep aktif (2026-07-03) -->
+
+Jalankan SEBELUM install, untuk modul yang disentuh sprint ini. Kalau ada hasil match, perbaiki dulu sebelum lanjut:
+
+```bash
+for m in <daftar modul yang disentuh sprint ini>; do
+  echo "=== $m ==="
+  grep -rn "decoration-secondary" "$m"/views/*.xml "$m"/wizard/*.xml 2>/dev/null && echo "FIX: decoration-secondary tidak valid di Odoo 19 (pakai muted/info/warning/success/danger)"
+  grep -rn "<group[^>]*\(string=\|expand=\)" "$m"/views/*.xml 2>/dev/null | grep -v "invisible\|groups=" && echo "FIX: <group string=/expand=> tidak valid di search view Odoo 19, hapus atributnya"
+  grep -rn "\.groups_id\b" "$m"/models/*.py "$m"/tests/*.py 2>/dev/null && echo "FIX: res.users.groups_id di-rename jadi group_ids di Odoo 19"
+done
+```
+
+### Pre-flight: Field/Xpath dari Model Modul Lain (verifikasi proaktif, bukan reaktif)
+<!-- improved: retro Sprint 1-7 — invoice_policy (bukan field core product.product) dan xpath
+     res.config.settings (invoicing_policy vs invoicing_settings) ketahuan reaktif setelah install
+     gagal (2026-07-03) -->
+
+Kalau sprint ini menulis field seed data atau xpath yang menyentuh model dari modul LAIN (bukan model modul kita sendiri — misal `product.product`, `res.config.settings`, `res.partner`), **cek dulu field/block id benar-benar ada** sebelum menulis XML:
+
+```bash
+# Contoh: cek field ada di model tertentu sebelum dipakai di seed data
+MSYS_NO_PATHCONV=1 docker compose exec odoo grep -n "nama_field = fields" /usr/lib/python3/dist-packages/odoo/addons/<modul>/models/*.py
+
+# Contoh: cek block id ada sebelum dipakai sebagai xpath target di res.config.settings
+MSYS_NO_PATHCONV=1 docker compose exec odoo grep -n "<block.*id=" /usr/lib/python3/dist-packages/odoo/addons/<modul>/views/res_config_settings_views.xml
+```
+
 ## Langkah 5 — Implementasi Semua Task
 
 Untuk tiap task: mark `in_progress` di TodoWrite → implementasi (Write/Edit/Bash) → verifikasi mini → mark `completed` → lanjut.
@@ -54,6 +84,7 @@ Untuk tiap task: mark `in_progress` di TodoWrite → implementasi (Write/Edit/Ba
 - Jangan buat file dokumentasi tambahan kecuali sprint file memintanya
 - Jika task ambigu dan **bukan** genuinely-open-question dari tech spec: interpretasikan wajar, lanjutkan, catat asumsi di sprint report
 - Jika task menyentuh salah satu "Pertanyaan Terbuka" di tech spec yang belum dijawab user: **berhenti, tanya user** — jangan tebak keputusan bisnis/desain
+- **Unit test**: tulis SATU test, langsung jalankan (`--test-tags module:Class.test_nama`), baru lanjut ke test berikutnya — jangan tulis seluruh suite baru dulu lalu debug massal di akhir <!-- improved: retro Sprint 1-7 — Sprint 6 vessel_chartering nulis 4 test sekaligus, hasilnya 3 fail + 4 error harus di-debug bareng; iterasi kecil per-test lebih cepat ketemu akar masalah (2026-07-03) -->
 
 ### Menangani Error
 1. Baca pesan error teliti (terutama traceback Odoo — cari baris `odoo.exceptions` atau `File ".../<nama modul kita>/..."`)
@@ -78,6 +109,9 @@ Jika sprint ini menambah model baru yang butuh master data untuk testing (cargo 
 ## Langkah 8 — Jalankan Verifikasi Sprint
 
 Jalankan semua command di section `## Verifikasi` sprint file. Catat ✅/❌ per item. Semua harus ✅ sebelum lanjut.
+
+**Kalau task sprint ini menyebut nomor acceptance criteria tech spec (§10.x dst)**: cross-check langsung ke tabel acceptance criteria lengkap di tech spec SAAT INI JUGA, jangan ditunda ke sprint terakhir. <!-- improved: retro Sprint 1-7 — gap §10.8 (COA butuh 3 shipment, dummy data cuma 2) baru ketahuan di sprint penutup (Sprint 7), padahal COA pertama kali diimplementasi di Sprint 2; kalau cross-check dilakukan sejak awal, gap ketahuan jauh lebih cepat (2026-07-03) -->
+
 
 ## Langkah 9 — Git Commit
 

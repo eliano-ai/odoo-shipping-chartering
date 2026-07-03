@@ -73,6 +73,22 @@ Setiap sprint selesai (atau ada progress signifikan), update `SPRINT_REPORT.md` 
 - Cron job untuk notifikasi proaktif (expiry, reminder) — pola sudah mapan di modul existing
 - Jangan buat file dokumentasi/komentar berlebih kecuali diminta
 
+### Checklist Odoo 19 Gotcha (WAJIB grep sebelum install, bukan diandalkan dari ingatan)
+<!-- improved: retro Sprint 1-7 vessel_chartering — "pelajaran" yang cuma ditulis sebagai prosa di
+     SPRINT_REPORT.md terbukti gampang lupa (decoration-secondary kepakai lagi persis di Sprint 4
+     padahal sudah jadi blocker di Sprint 2). Checklist ini dimaksud untuk di-grep aktif via
+     Pre-flight sprint.md, bukan cuma dibaca (2026-07-03) -->
+
+| Pola lama (Odoo <19 / kebiasaan lama) | Yang benar di Odoo 19 |
+|---|---|
+| `decoration-secondary` di list/kanban view | Tidak valid — cuma `muted`/`info`/`warning`/`success`/`danger` |
+| `<group expand="0" string="Group By">` di search view | Atribut `string`/`expand` tidak valid di `<group>` search view — hapus, cukup `<group>` polos |
+| `res.users.groups_id` | Rename jadi `res.users.group_ids` |
+| Field custom modul lain diasumsikan ada tanpa dicek | Grep dulu source model di container sebelum pakai (`docker compose exec odoo grep ...`) — pernah salah asumsi `invoice_policy` ada di core `product.product` (padahal punya modul `sale`) |
+| Xpath target `res.config.settings` ditebak dari nama block yang "masuk akal" | Grep dulu `<block ... id="...">` di source view sebelum nulis xpath — pernah salah tebak `invoicing_policy` (harusnya `invoicing_settings`) |
+
+Kalau nemu pola baru yang bikin blocker berulang (≥2x kejadian), tambahkan baris baru ke tabel ini — jangan cuma catat di SPRINT_REPORT.md.
+
 ## Git
 
 - Remote: repo GitHub pribadi (fresh start, tanpa histori GitLab lama) — lihat commit awal untuk baseline

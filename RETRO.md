@@ -63,12 +63,12 @@
 
 | Prioritas | Skill File | Masalah | Saran Perbaikan | Status |
 |-----------|-----------|---------|-----------------|--------|
-| HIGH | `sprint.md` (Pre-flight) | Tidak grep pola RNG/API Odoo 19 yang sudah 2× kejadian (`decoration-secondary` dll) | Tambah langkah grep eksplisit untuk daftar pola terlarang sebelum tiap install: `decoration-secondary`, `<group ... string=/expand=>` di search view, `.groups_id` (harus `.group_ids`) | ⬜ pending |
-| HIGH | `sprint.md` | Extend field/xpath dari modul lain (product, res.config.settings dst) dicek reaktif, bukan proaktif | Tambah langkah: sebelum nulis field/xpath yang menyentuh model modul lain, grep dulu source model itu di container untuk konfirmasi field/block id benar-benar ada | ⬜ pending |
-| MED | `sprint.md` | Cross-check acceptance criteria tech spec cuma di sprint terakhir | Tiap sprint yang tasknya eksplisit menyebut nomor acceptance criteria (§10.x dst), tambahkan sub-langkah "cross-check ke tabel acceptance criteria lengkap", bukan ditunda ke sprint penutup | ⬜ pending |
-| MED | `sprint.md` | Test ditulis sekaligus lalu di-debug massal (3 fail+4 error bareng di Sprint 6) | Tambah guidance: jalankan tiap test individual segera setelah ditulis (`--test-tags module:Class.test_name`) sebelum lanjut test berikutnya | ⬜ pending |
-| LOW | `retro.md` | Grep fix/revert/patch substring polos, false positive di "pre-fixture"/"despatch" | Ganti ke word-boundary regex (`\bfix\b`, `\bpatch\b`, dst) | ⬜ pending |
-| LOW | `CLAUDE.md` | "Pelajaran" Odoo 19 cuma prosa naratif di SPRINT_REPORT, gampang lupa (terbukti dari kejadian #3 di atas) | Pindahkan ke checklist grep-able terpisah di CLAUDE.md (bukan cuma narasi), supaya bisa langsung dijalankan sebagai command, bukan diandalkan dari ingatan | ⬜ pending |
+| HIGH | `sprint.md` (Pre-flight) | Tidak grep pola RNG/API Odoo 19 yang sudah 2× kejadian (`decoration-secondary` dll) | Tambah langkah grep eksplisit untuk daftar pola terlarang sebelum tiap install: `decoration-secondary`, `<group ... string=/expand=>` di search view, `.groups_id` (harus `.group_ids`) | ✅ applied (2026-07-03) |
+| HIGH | `sprint.md` | Extend field/xpath dari modul lain (product, res.config.settings dst) dicek reaktif, bukan proaktif | Tambah langkah: sebelum nulis field/xpath yang menyentuh model modul lain, grep dulu source model itu di container untuk konfirmasi field/block id benar-benar ada | ✅ applied (2026-07-03) |
+| MED | `sprint.md` | Cross-check acceptance criteria tech spec cuma di sprint terakhir | Tiap sprint yang tasknya eksplisit menyebut nomor acceptance criteria (§10.x dst), tambahkan sub-langkah "cross-check ke tabel acceptance criteria lengkap", bukan ditunda ke sprint penutup | ✅ applied (2026-07-03) |
+| MED | `sprint.md` | Test ditulis sekaligus lalu di-debug massal (3 fail+4 error bareng di Sprint 6) | Tambah guidance: jalankan tiap test individual segera setelah ditulis (`--test-tags module:Class.test_name`) sebelum lanjut test berikutnya | ✅ applied (2026-07-03) |
+| LOW | `retro.md` | Grep fix/revert/patch substring polos, false positive di "pre-fixture"/"despatch" | Ganti ke word-boundary regex (`\bfix\b`, `\bpatch\b`, dst) | ✅ applied (2026-07-03) |
+| LOW | `CLAUDE.md` | "Pelajaran" Odoo 19 cuma prosa naratif di SPRINT_REPORT, gampang lupa (terbukti dari kejadian #3 di atas) | Pindahkan ke checklist grep-able terpisah di CLAUDE.md (bukan cuma narasi), supaya bisa langsung dijalankan sebagai command, bukan diandalkan dari ingatan | ✅ applied (2026-07-03) |
 
 ### 💡 Rekomendasi untuk Siklus Berikutnya
 

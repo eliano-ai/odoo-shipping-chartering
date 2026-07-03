@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="spreadsheet_dashboard_group_maritime" model="spreadsheet.dashboard.group">
+        <field name="name">Maritime</field>
+        <field name="sequence">450</field>
+    </record>
+
+    <!-- Widget chart/pivot LIVE (utilisasi armada, TCE trend, top 10 voyage rugi,
+         demurrage outstanding, realisasi vs budget) ditambahkan manual via Spreadsheet
+         UI (Insert > Pivot/Chart) — hand-authoring o-spreadsheet JSON penuh dengan data
+         source valid di luar tooling yang tersedia di sesi ini (butuh akses UI browser
+         langsung untuk membangun & export pivot/chart definition yang benar). File JSON
+         ini sudah valid & terinstall (bukan placeholder rusak), berisi section
+         label+sumber data untuk tiap widget supaya Finance/Direksi tinggal Insert Chart
+         di posisi yang sudah ditandai. Lihat SPRINT_REPORT.md Sprint 21 untuk detail. -->
+    <record id="spreadsheet_dashboard_maritime_pnl" model="spreadsheet.dashboard">
+        <field name="name">Maritime P&amp;L — Direksi</field>
+        <field name="spreadsheet_binary_data" type="base64"
+               file="vessel_voyage_pnl/data/files/maritime_dashboard.json"/>
+        <field name="main_data_model_ids"
+               eval="[(4, ref('model_vessel_voyage_pnl')), (4, ref('model_vessel_vessel_pnl')), (4, ref('model_vessel_vessel_budget'))]"/>
+        <field name="dashboard_group_id" ref="spreadsheet_dashboard_group_maritime"/>
+        <field name="group_ids"
+               eval="[(4, ref('vessel_voyage_pnl.group_voyage_pnl_finance')), (4, ref('vessel_voyage_pnl.group_voyage_pnl_manager')), (4, ref('vessel_voyage_pnl.group_voyage_pnl_director'))]"/>
+        <field name="sequence">10</field>
+        <field name="is_published">True</field>
+    </record>
+
+</odoo>

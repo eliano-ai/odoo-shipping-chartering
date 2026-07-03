@@ -32,6 +32,14 @@ Referensi: TECH_SPEC_vessel_voyage_pnl.md
         'vessel_chartering',
         'vessel_voyage_operations',
         'maritime',
+        # spreadsheet_dashboard: soft dependency menurut §7 tech spec (Enterprise,
+        # opsional secara umum) — TAPI di environment project ini sudah dikonfirmasi
+        # terinstall (Sprint 15) dan keputusan user adalah "dashboard dibangun penuh,
+        # bukan fallback". Dijadikan hard depend di sini (bukan soft-check Python)
+        # karena XML <record model="spreadsheet.dashboard"> butuh model itu ADA saat
+        # data file di-load — beda dari soft dependency lain (fleet_fuel_log dst.)
+        # yang cukup di-check di runtime Python, bukan di XML load time.
+        'spreadsheet_dashboard',
     ],
     'data': [
         'security/vessel_voyage_pnl_groups.xml',
@@ -51,6 +59,7 @@ Referensi: TECH_SPEC_vessel_voyage_pnl.md
         'views/vessel_voyage_pnl_menus.xml',
         'data/vessel_voyage_pnl_mail_template_data.xml',
         'data/vessel_voyage_pnl_cron_data.xml',
+        'data/vessel_voyage_pnl_dashboard_data.xml',
         'data/vessel_voyage_pnl_demo.xml',
     ],
     'installable': True,

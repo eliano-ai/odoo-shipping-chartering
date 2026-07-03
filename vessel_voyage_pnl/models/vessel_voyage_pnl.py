@@ -313,6 +313,36 @@ class VesselVoyagePnl(models.Model):
             'context': {'default_pnl_id': self.id},
         }
 
+    def action_view_voyage(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'vessel.voyage',
+            'res_id': self.voyage_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_view_contract(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'vessel.charter.contract',
+            'res_id': self.contract_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
+    def action_view_estimate(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'vessel.voyage.estimate',
+            'res_id': self.estimate_id.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
+
     def _clear_auto_lines(self, category_group):
         """Hapus line non-manual (bukan adjustment Finance) untuk grup kategori tertentu,
         supaya Recompute tidak menumpuk duplikat."""

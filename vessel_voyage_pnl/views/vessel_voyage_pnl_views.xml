@@ -39,6 +39,29 @@
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_voyage"
+                                class="oe_stat_button" icon="fa-ship"
+                                invisible="not voyage_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Voyage</span>
+                            </div>
+                        </button>
+                        <button type="object" name="action_view_contract"
+                                class="oe_stat_button" icon="fa-file-text-o"
+                                invisible="not contract_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Kontrak Charter</span>
+                            </div>
+                        </button>
+                        <button type="object" name="action_view_estimate"
+                                class="oe_stat_button" icon="fa-calculator"
+                                invisible="not estimate_id">
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Estimate</span>
+                            </div>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="voyage_id" readonly="state != 'draft'"/>
@@ -156,10 +179,103 @@
         </field>
     </record>
 
+    <record id="view_vessel_voyage_pnl_search" model="ir.ui.view">
+        <field name="name">vessel.voyage.pnl.search</field>
+        <field name="model">vessel.voyage.pnl</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="voyage_id"/>
+                <field name="vessel_id"/>
+                <field name="contract_id"/>
+                <filter string="Perlu Review" name="pending_review" domain="[('state', '=', 'computed')]"/>
+                <filter string="Locked" name="locked" domain="[('state', '=', 'locked')]"/>
+                <filter string="Rugi" name="loss_only" domain="[('voyage_result', '&lt;', 0)]"/>
+                <group>
+                    <filter string="Kapal" name="group_vessel" context="{'group_by': 'vessel_id'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
     <record id="action_vessel_voyage_pnl" model="ir.actions.act_window">
         <field name="name">Semua Voyage P&amp;L</field>
         <field name="res_model">vessel.voyage.pnl</field>
         <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_vessel_voyage_pnl_search"/>
+    </record>
+
+    <record id="action_vessel_voyage_pnl_pending_review" model="ir.actions.act_window">
+        <field name="name">Perlu Review</field>
+        <field name="res_model">vessel.voyage.pnl</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'computed')]</field>
+        <field name="search_view_id" ref="view_vessel_voyage_pnl_search"/>
+    </record>
+
+    <record id="view_vessel_voyage_pnl_top_loss_list" model="ir.ui.view">
+        <field name="name">vessel.voyage.pnl.top.loss.list</field>
+        <field name="model">vessel.voyage.pnl</field>
+        <field name="arch" type="xml">
+            <list default_order="voyage_result asc" limit="10" create="0">
+                <field name="voyage_id"/>
+                <field name="vessel_id"/>
+                <field name="total_revenue"/>
+                <field name="total_direct_cost"/>
+                <field name="total_allocated_cost"/>
+                <field name="voyage_result" decoration-danger="voyage_result &lt; 0"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vessel_voyage_pnl_top_loss" model="ir.actions.act_window">
+        <field name="name">Top Voyage Rugi</field>
+        <field name="res_model">vessel.voyage.pnl</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '!=', 'draft')]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_vessel_voyage_pnl_top_loss_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_vessel_voyage_pnl_form')})]"/>
+        <field name="search_view_id" ref="view_vessel_voyage_pnl_search"/>
+    </record>
+
+    <record id="view_vessel_voyage_pnl_estimate_vs_actual_list" model="ir.ui.view">
+        <field name="name">vessel.voyage.pnl.estimate.vs.actual.list</field>
+        <field name="model">vessel.voyage.pnl</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="voyage_id"/>
+                <field name="vessel_id"/>
+                <field name="estimate_id"/>
+                <field name="revenue_variance"/>
+                <field name="revenue_variance_pct" widget="percentage"/>
+                <field name="cost_variance"/>
+                <field name="cost_variance_pct" widget="percentage"/>
+                <field name="tce_variance"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_voyage_pnl_estimate_vs_actual_pivot" model="ir.ui.view">
+        <field name="name">vessel.voyage.pnl.estimate.vs.actual.pivot</field>
+        <field name="model">vessel.voyage.pnl</field>
+        <field name="arch" type="xml">
+            <pivot>
+                <field name="vessel_id" type="row"/>
+                <field name="revenue_variance_pct" type="measure"/>
+                <field name="cost_variance_pct" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_vessel_voyage_pnl_estimate_vs_actual" model="ir.actions.act_window">
+        <field name="name">Estimate vs Actual</field>
+        <field name="res_model">vessel.voyage.pnl</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="domain">[('estimate_id', '!=', False)]</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_vessel_voyage_pnl_estimate_vs_actual_list')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('view_vessel_voyage_pnl_estimate_vs_actual_pivot')})]"/>
     </record>
 
 </odoo>

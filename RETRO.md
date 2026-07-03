@@ -3,6 +3,101 @@
 
 ---
 
+## 2026-07-03 — Retrospektif Sprint 8–14 (MVP `vessel_voyage_operations` complete)
+
+**Project**: Odoo Shipping Vertical Solution — modul `vessel_voyage_operations` (+ restrukturisasi app `maritime`, + 3 calendar view tambahan di `vessel_chartering`)
+**Scope**: Sprint 8 sampai Sprint 14 (7 sprint, roadmap Layer 2 Komersial #2)
+**Reviewed**: 2026-07-03
+**Reviewed by**: Claude Code Retro Agent
+
+### 📊 Ringkasan Kuantitatif
+
+| Metric | Nilai |
+|--------|-------|
+| Sprint dianalisis | 7 (Sprint 8-14) + 1 restrukturisasi mid-cycle (app Maritime) |
+| Total tasks (approx, dari checklist tiap sprint) | ~68 |
+| Fix/revert commits | 0 (grep word-boundary bersih, tidak ada false positive kali ini) |
+| Unique blocker entries | 10 mention, 4 di antaranya pola berulang (≥2 kejadian) |
+| Recurring blockers baru (kategori sama >1x, di luar yang sudah resolved dari retro Sprint 1-7) | 3 kategori baru, 1 kategori lanjutan dari retro sebelumnya |
+| Skill gap terdeteksi | 5 (4 baru + 1 lanjutan proses sinkronisasi) |
+
+### 🔁 Pola Blocker Sistemik
+
+#### 1. Odoo 19 API rename/removal — lanjutan pola dari retro Sprint 1-7, 2 kejadian baru
+- **Severity**: HIGH
+- **Kejadian konkret**:
+  1. Sprint 11: `_sql_constraints = [(name, sql, message), ...]` (list attribute klasik) ternyata **silent no-op** di Odoo 19 — tidak ada error, tidak ada warning, constraint database memang tidak pernah ter-apply. Baru ketahuan karena unit test yang sengaja menguji constraint itu gagal (`IntegrityError not raised`). Ganti ke `models.Constraint('sql...', 'message')` sebagai atribut kelas terpisah.
+  2. Sprint 12: `res.groups.users` (ambil anggota grup) sudah tidak ada — rename jadi `res.groups.user_ids`. Kali ini **langsung ketahuan** sebagai `ParseError` saat load demo data (bukan silent seperti kejadian #1), karena dipanggil dari `<function>` XML tag.
+- **Root cause**: sama seperti retro Sprint 1-7 — pengetahuan API Odoo dari versi lebih lama, Odoo 19 breaking change tanpa deprecation warning yang konsisten (kadang silent no-op seperti `_sql_constraints`, kadang `AttributeError` jelas seperti `res.groups.users`).
+- **Skill yang perlu diupdate**: `sprint.md` (Pre-flight Check) — **gap penting**: kedua pola ini SUDAH masuk `CLAUDE.md` Checklist Odoo 19 Gotcha (dokumentasi manual saat ditemukan), TAPI belum pernah disinkronkan ke grep list otomatis di `sprint.md` Langkah 4 (yang masih berhenti di 3 pola dari retro Sprint 1-7: `decoration-secondary`, `<group string=/expand=>`, `.groups_id`).
+- **Saran perbaikan**: tambah 2 pola baru ke grep list `sprint.md`, DAN tambahkan aturan proses eksplisit — setiap kali baris baru masuk ke `CLAUDE.md` Gotcha table, WAJIB sinkron ke grep list `sprint.md` di commit yang sama. Kalau tidak, pola "dokumentasi ada tapi tidak di-grep aktif" — persis masalah yang sudah dipecahkan retro Sprint 1-7 — akan terulang terus untuk tiap gotcha baru.
+
+#### 2. Model baru lupa `mail.thread`/`mail.activity.mixin` — pola baru, 1 kejadian jadi bug laten 3 sprint
+- **Severity**: HIGH
+- **Kejadian konkret**:
+  1. Sprint 12: `vessel.port.disbursement` pakai `activity_schedule()` di `_check_variance_threshold()` tapi model tidak `_inherit` mixin apapun — `AttributeError` langsung ketahuan saat install (karena `_check_variance_threshold` dipanggil dari demo data via `<function>` tag).
+  2. Sprint 13 (tapi bug-nya lahir Sprint 10): `vessel.port.call` pakai `message_post()` di `_check_estimated_actual_sequence()` sejak Sprint 10, TIDAK pernah `_inherit mail.thread`. Constraint itu tidak pernah benar-benar ter-trigger oleh dummy data selama Sprint 10-12 (kondisi ETA/ATA inconsistent tidak pernah muncul di skenario test), jadi bug ini **tidur selama 3 sprint** tanpa terdeteksi. Baru ketahuan Sprint 13 saat cron `_cron_eta_reminder`/`_cron_clearance_pending_alert` (fitur baru yang butuh `activity_schedule()`) pertama kali benar-benar mengeksekusi jalur kode itu.
+- **Root cause**: bukan Odoo 19 breaking change — murni disiplin coding sendiri (lupa satu baris `_inherit`). Tapi **jauh lebih berbahaya** dari typo biasa karena bisa lolos review dan testing berminggu-minggu kalau code path yang memicu error jarang dieksekusi oleh dummy data/test yang ada.
+- **Skill yang perlu diupdate**: `sprint.md` (Pre-flight Check)
+- **Saran perbaikan**: tambah pre-flight check baru — untuk tiap model baru di modul yang disentuh sprint, grep apakah file model itu memanggil `message_post`/`activity_schedule`; kalau ya, verifikasi `_inherit` model tsb benar-benar mengandung `mail.thread` atau `mail.activity.mixin` sebelum install.
+
+#### 3. Demo data idempotency break dari write()-override / action-method-via-XML — pola baru, sudah teratasi sendiri
+- **Severity**: MED
+- **Kejadian konkret**:
+  1. Sprint 11: override `write()` di `vessel.noon.report` untuk block edit record `approved`/`rejected` — ternyata memblokir ORM data loader sendiri (demo data XML re-write field yang sama saat `-u` kedua kali → `UserError` karena state sudah bukan draft → **install gagal total**). Diperbaiki dengan menghapus override, pindah ke view-level `readonly` attribute.
+  2. Sprint 12: belajar dari kejadian #1, sengaja set `state=confirmed` via `<field>` langsung di demo data (bukan panggil `action_confirm()` yang state-transition-guarded), lalu trigger side-effect (`_check_variance_threshold`) terpisah lewat `<function>` XML tag yang idempotent-guarded sendiri.
+- **Root cause**: pola umum di banyak project Odoo (proteksi "read-only setelah approved" secara naive di level model), tapi berbenturan dengan cara Odoo me-reload demo data XML setiap `-u` (selalu re-write, bukan cuma create sekali).
+- **Skill yang perlu diupdate**: `sprint.md` (Aturan Implementasi)
+- **Saran perbaikan**: tambah guidance eksplisit — kalau butuh "read-only setelah state tertentu", implementasi di level VIEW (`readonly="state in (...)"`), BUKAN override `write()` Python. Pola ini sudah dipahami & konsisten dihindari sejak Sprint 12, tapi belum ada tulisan eksplisit di skill file supaya tidak perlu ditemukan ulang di sprint/modul berikutnya.
+
+#### 4. Security group reference tidak di-cross-check ke tabel §6 tech spec — 1 kejadian, mirip pola §10 dari retro sebelumnya
+- **Severity**: MED
+- **Kejadian konkret**: Sprint 12 pakai `account.group_account_manager` untuk notifikasi "Finance" tanpa cross-check ke tabel §6 tech spec, yang sebenarnya eksplisit menyebut `account.group_account_invoice`. Ketahuan & diperbaiki Sprint 13 saat security lengkap di-review sistematis.
+- **Root cause**: sama persis pola "cross-check acceptance criteria §10 cuma di sprint terakhir" dari retro Sprint 1-7 — kali ini untuk tabel security §6, bukan §10.
+- **Skill yang perlu diupdate**: `sprint.md`
+- **Saran perbaikan**: perluas guidance cross-check yang sudah ada (§10) supaya juga cover §6 (security group references) — kalau sprint task menyentuh group dari modul lain, cross-check dulu xmlid persis ke tech spec, jangan asumsi nama yang "kedengaran benar" (pola gagal yang sama seperti xpath `res.config.settings` di retro Sprint 1-7).
+
+### 🐛 Pola Git (Masalah Kode)
+
+- **File sering diubah ulang**: `SPRINT_REPORT.md`, `sprints/.current_sprint`, `CLAUDE.md`, `vessel_voyage_operations/views/vessel_voyage_operations_menus.xml` (7×), `vessel_voyage_operations/__manifest__.py` (7×), `vessel_chartering/data/vessel_chartering_demo.xml` (7×) — semua wajar (file yang memang bertumbuh tiap sprint by design).
+- **Commit masalah**: **tidak ada** commit fix/revert/hotfix sungguhan di 7 sprint (grep word-boundary bersih, tidak ada false positive kali ini — perbaikan retro Sprint 1-7 terbukti bekerja).
+- **1 commit di luar pola sprint biasa**: `6af4d05` (restrukturisasi app Maritime) — bukan "commit masalah", tapi commit non-sprint mid-cycle atas permintaan user, didokumentasikan terpisah di `SPRINT_REPORT.md` sesuai konvensi.
+
+### 🕳️ Gap Skill Coverage
+
+1. **`sprint.md` Pre-flight grep list Pola Odoo 19 Terlarang tidak sinkron dengan `CLAUDE.md` Gotcha table** — 2 baris baru masuk dokumentasi tapi tidak masuk grep aktif (lihat Pola #1 di atas). Ini gap proses, bukan cuma gap satu command file.
+2. **Tidak ada pre-flight check untuk kelengkapan `mail.thread`/`mail.activity.mixin`** pada model baru yang pakai `message_post`/`activity_schedule` (Pola #2).
+3. **Tidak ada guidance tertulis soal anti-pattern write()-override untuk "read-only after state"** (Pola #3) — sudah dipahami tim (yaitu saya sendiri, tapi across sprints) secara tacit, belum eksplisit di skill file.
+4. **Tidak ada cross-check security group (§6) sepadan dengan cross-check acceptance criteria (§10) yang sudah ada** (Pola #4).
+5. **Command file (`sprint.md`) tidak punya mekanisme "sinkronisasi wajib" antara `CLAUDE.md` (dokumentasi) dan grep list-nya sendiri (executable check)** — meta-gap yang mendasari Pola #1: menambah baris ke tabel dokumentasi TIDAK otomatis berarti pola itu benar-benar di-enforce oleh pre-flight.
+
+### ✅ Yang Berjalan Baik
+
+- **Zero commit fix/revert sungguhan di 7 sprint** — sama seperti Sprint 1-7, semua masalah diselesaikan sebelum commit.
+- **22/22 unit test pass** (12 `vessel_chartering` + 10 `vessel_voyage_operations`), tidak ada regresi sepanjang 7 sprint + restrukturisasi Maritime.
+- **Fresh-install test 8 modul bareng** (5 fleet + `vessel_chartering` + `vessel_voyage_operations` + `maritime`) dijalankan eksplisit di Sprint 14 sebagai bagian audit final — bukan cuma "setiap sprint `-u` bersih" seperti Sprint 1-7, tapi benar-benar database kosong dari nol, kemudian di-drop lagi (tidak ada residu).
+- **Idempotency selalu diverifikasi eksplisit tiap sprint**, termasuk kasus non-trivial: jumlah `mail.activity` tidak dobel setelah 2× `-u` (Sprint 12), yang butuh guard eksplisit di kode (bukan cuma count record biasa).
+- **Blocker tidak pernah dibiarkan carry-over** — semua 4 pola di atas ditemukan & diperbaiki dalam sprint yang sama atau sprint berikutnya, tidak pernah menumpuk.
+- **Keputusan desain ambigu selalu ditanyakan ke user**, bukan diasumsikan diam-diam — 2 contoh eksplisit sprint ini: 4 opsi nama app (Maritime dipilih user) dan 3 opsi cakupan calendar view (per-model dipilih user), keduanya via pertanyaan terstruktur dengan preview konkret sebelum eksekusi.
+- **Technical debt didokumentasikan secara sadar, bukan disembunyikan** — `fleet_trip_id` (Sprint 9) dan `assigned_user_ids` compute chain (Sprint 13) sama-sama soft-dependency ke modul lain yang "diasumsikan selalu terinstall di environment ini", ditulis eksplisit sebagai keputusan trade-off di kode & SPRINT_REPORT, bukan menyembunyikan risikonya.
+
+### 🔧 Kandidat Perbaikan Skill
+
+| Prioritas | Skill File | Masalah | Saran Perbaikan | Status |
+|-----------|-----------|---------|-----------------|--------|
+| HIGH | `sprint.md` (Pre-flight) | Grep list Pola Odoo 19 Terlarang tidak sinkron dengan CLAUDE.md Gotcha table (2 pola baru: `_sql_constraints=`, `res.groups.users`) | Tambah 2 pola ke grep list + aturan proses "setiap baris baru CLAUDE.md Gotcha WAJIB sinkron ke grep list sprint.md di commit yang sama" | ⬜ pending |
+| HIGH | `sprint.md` (Pre-flight) | Tidak ada check kelengkapan mail.thread/mail.activity.mixin untuk model baru yang pakai message_post/activity_schedule | Tambah pre-flight: grep model baru yang pakai message_post/activity_schedule, verifikasi _inherit mixin ada | ⬜ pending |
+| MED | `sprint.md` (Aturan Implementasi) | Tidak ada guidance tertulis anti-pattern write()-override untuk "read-only after state" (break demo data idempotency) | Tambah catatan eksplisit: read-only-after-state via view attribute, bukan override write() Python | ⬜ pending |
+| MED | `sprint.md` | Cross-check security group (§6) tidak seketat cross-check acceptance criteria (§10) yang sudah ada | Perluas guidance cross-check existing supaya cover §6 juga | ⬜ pending |
+
+### 💡 Rekomendasi untuk Siklus Berikutnya
+
+1. Terapkan HIGH #1 dan #2 duluan — sama-sama berpotensi jadi silent/laten bug yang lolos berminggu-minggu tanpa error jelas.
+2. Untuk modul ketiga (`vessel_voyage_pnl`, roadmap #3), mulai dengan checklist Odoo 19 gotcha + mixin-check yang sudah lengkap dari retro ini — jangan mulai dari nol, dan pastikan `/improve` benar-benar dijalankan sebelum sprint pertama dimulai (bukan cuma didokumentasikan di retro).
+3. `vessel_voyage_pnl` punya kompleksitas baru yang belum pernah dihadapi 2 modul sebelumnya: agregasi lintas-modul (query `account.move.line` by `analytic_distribution`) dan alokasi biaya tidak langsung (`vessel.cost.allocation.rule`) — pertimbangkan sprint breakdown yang lebih granular untuk model inti (`vessel.voyage.pnl`) mengikuti saran tech spec §12.2 poin 3 (revenue dulu, baru direct cost, baru allocated cost — jangan sekaligus).
+
+---
+
 ## 2026-07-02 — Retrospektif Sprint 1–7 (MVP `vessel_chartering` complete)
 
 **Project**: Odoo Shipping Vertical Solution — modul `vessel_chartering`

@@ -1,5 +1,5 @@
 {
-  "project": "Odoo Shipping Vertical Solution — vessel_chartering",
+  "project": "Odoo Shipping Vertical Solution — vessel_chartering + vessel_voyage_operations",
   "last_updated": "2026-07-03",
   "sprints": [
     {
@@ -85,6 +85,92 @@
       "tasks_total": 8,
       "tasks_done": 8,
       "completion_pct": 100
+    },
+    {
+      "number": 8,
+      "name": "vessel_voyage_operations: Foundation & Master Data",
+      "commit": "fc0a682",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 9,
+      "name": "vessel_voyage_operations: Core Voyage Model & State Machine",
+      "commit": "40e62f4",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 10,
+      "tasks_done": 10,
+      "completion_pct": 100
+    },
+    {
+      "number": 10,
+      "name": "vessel_voyage_operations: Port Call & Clearance Checklist",
+      "commit": "c469409",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100,
+      "note": "Latent bug ditemukan Sprint 13: model vessel.port.call yang dibuat di sini ternyata tidak pernah inherit mail.thread/mail.activity.mixin meski sudah pakai message_post sejak awal — tidak pernah error karena jalur kode itu jarang ter-trigger dummy data."
+    },
+    {
+      "number": 11,
+      "name": "vessel_voyage_operations: Noon Report & Approval Workflow",
+      "commit": "7296c4d",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 10,
+      "tasks_done": 10,
+      "completion_pct": 100
+    },
+    {
+      "number": 12,
+      "name": "vessel_voyage_operations: Port Disbursement (PDA/FDA) & Variance",
+      "commit": "e50ecf9",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 13,
+      "name": "vessel_voyage_operations: Cargo Document, Delay Log, Portal Security, Cron & Email",
+      "commit": "5ee40fb",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 11,
+      "tasks_done": 11,
+      "completion_pct": 100
+    },
+    {
+      "number": 14,
+      "name": "vessel_voyage_operations: Views Polish, OWL/Leaflet Dashboard & Acceptance Final",
+      "commit": "17230f1",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 10,
+      "tasks_done": 10,
+      "completion_pct": 100,
+      "note": "MVP vessel_voyage_operations selesai. Fitur tambahan di luar rencana (3 calendar view) atas permintaan user di tengah sprint — menyentuh vessel_chartering juga."
     }
   ],
   "recurring_blockers": [
@@ -111,6 +197,42 @@
       "first_seen": "Sprint 6",
       "last_seen": "Sprint 6",
       "resolved": true
+    },
+    {
+      "item": "Odoo 19 API rename/removal baru ditemukan reaktif (lanjutan pola Sprint 1-7): _sql_constraints list attribute silent no-op (tanpa error/warning sama sekali, ganti models.Constraint), res.groups.users rename jadi user_ids",
+      "occurrences": 2,
+      "severity": "HIGH",
+      "first_seen": "Sprint 11",
+      "last_seen": "Sprint 12",
+      "resolved": false,
+      "detail": "Sudah didokumentasikan di CLAUDE.md Checklist Odoo 19 Gotcha (dokumentasi), TAPI belum masuk pre-flight grep list otomatis di sprint.md Langkah 4 (yang cuma cover decoration-secondary/group string-expand/.groups_id dari retro Sprint 1-7) — gap yang sama polanya: catatan pasif tidak cukup, harus grep aktif."
+    },
+    {
+      "item": "Model baru pakai message_post()/activity_schedule() tapi lupa _inherit mail.thread/mail.activity.mixin — satu kejadian jadi bug laten 3 sprint (vessel.port.call dibuat Sprint 10, baru ketahuan Sprint 13 saat cron pertama kali memicu jalur kode itu)",
+      "occurrences": 2,
+      "severity": "HIGH",
+      "first_seen": "Sprint 10 (origin) / Sprint 12 (pertama ketahuan)",
+      "last_seen": "Sprint 13",
+      "resolved": false,
+      "detail": "Bukan Odoo 19 breaking change — murni disiplin coding sendiri (human error), tapi cukup berbahaya karena bisa lolos berminggu-minggu tanpa error kalau jalur kode (constraint/cron) jarang ter-trigger dummy data. Belum ada pre-flight check untuk ini."
+    },
+    {
+      "item": "Demo data idempotency break dari pola write()-override atau action-method-via-XML (state-transition-guarded method dipanggil ulang saat -u kedua kali, raise UserError karena state sudah bukan draft)",
+      "occurrences": 2,
+      "severity": "MED",
+      "first_seen": "Sprint 11",
+      "last_seen": "Sprint 12",
+      "resolved": true,
+      "detail": "Pola sudah dipahami & konsisten dihindari sejak Sprint 12 (set state via <field> langsung + <function> tag untuk trigger side-effect terpisah), tapi belum ada guidance eksplisit tertulis di sprint.md."
+    },
+    {
+      "item": "Security group reference di kode tidak di-cross-check ke tabel §6 tech spec (Finance group dipakai account.group_account_manager, seharusnya account.group_account_invoice persis sesuai spec)",
+      "occurrences": 1,
+      "severity": "MED",
+      "first_seen": "Sprint 12",
+      "last_seen": "Sprint 12",
+      "resolved": true,
+      "detail": "Sudah diperbaiki di Sprint 13. Mirip pola gap acceptance criteria §10 dari retro Sprint 1-7 (yang sudah diperbaiki), tapi untuk tabel security §6 belum ada pre-flight cross-check serupa."
     }
   ],
   "skill_improvement_candidates": [
@@ -167,6 +289,34 @@
       "applied": true,
       "applied_date": "2026-07-03",
       "applied_summary": "Tambah section 'Checklist Odoo 19 Gotcha' (tabel) di CLAUDE.md bagian Konvensi Kode, dengan instruksi tambah baris baru kalau ada pola berulang baru"
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Pre-flight grep list Pola Odoo 19 Terlarang (Langkah 4) tidak pernah di-update sinkron dengan CLAUDE.md Checklist Odoo 19 Gotcha — 2 pola baru (_sql_constraints=, res.groups.users) ditemukan Sprint 11-12, sudah masuk CLAUDE.md tapi belum masuk grep list sprint.md",
+      "suggested_fix": "Tambah 2 pola baru ke grep list Pre-flight: `_sql_constraints\\s*=` (harus models.Constraint) dan `\\.users\\b` pada res.groups (harus .user_ids) — sekaligus tambahkan catatan proses: setiap kali baris baru ditambah ke CLAUDE.md Gotcha table, WAJIB sinkron juga ke grep list sprint.md Langkah 4 di commit yang sama",
+      "priority": "HIGH",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Tidak ada pre-flight check untuk model baru yang pakai message_post()/activity_schedule() tapi lupa _inherit mail.thread/mail.activity.mixin — kejadian 2x, salah satu jadi bug laten 3 sprint (vessel.port.call, Sprint 10 -> ketahuan Sprint 13)",
+      "suggested_fix": "Tambah sub-section Pre-flight baru: untuk tiap model baru di modul yang disentuh sprint ini, grep apakah file model memanggil message_post/activity_schedule; kalau ya, pastikan _inherit model tsb mengandung mail.thread atau mail.activity.mixin — kalau tidak, block sebelum install",
+      "priority": "HIGH",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Tidak ada guidance eksplisit soal pola 'read-only setelah state tertentu' harus diimplementasi di level view (readonly attr), bukan override write() model — override write() memblokir ORM data loader saat re-run -u (demo data re-write field yang sama), ketahuan reaktif Sprint 11",
+      "suggested_fix": "Tambah catatan guidance di Langkah 5 (Aturan Implementasi) sprint.md: kalau butuh field/record read-only setelah state tertentu, implementasi via view readonly attribute, BUKAN override write() Python — supaya tidak memecah idempotency -u ulang terhadap demo data",
+      "priority": "MED",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Referensi security group (xmlid) dari tabel §6 tech spec tidak di-cross-check sebelum dipakai di kode — Finance group salah pakai account.group_account_manager, seharusnya account.group_account_invoice",
+      "suggested_fix": "Tambah catatan di pre-flight/Langkah 8: kalau sprint task menyentuh security group dari modul lain (mis. account.group_account_invoice), cross-check dulu xmlid persis ke tabel §6 tech spec atau grep container, jangan asumsi nama group yang 'kedengaran benar'",
+      "priority": "MED",
+      "applied": false
     }
   ],
   "improvement_history": [

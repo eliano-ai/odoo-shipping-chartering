@@ -701,3 +701,42 @@ Commit `6af4d05`, pushed. Sprint 13 lanjut setelah ini.
 **22/22 unit test pass (gabungan `vessel_chartering` + `vessel_voyage_operations`). 10/11 acceptance criteria terverifikasi otomatis, 1 poin (dashboard visual) menunggu konfirmasi manual browser. Restrukturisasi app "Maritime" terpisah dari Fleet di tengah siklus (di luar rencana awal, permintaan user).**
 
 ---
+
+## Setup — vessel_voyage_pnl (Modul Ketiga, Layer 3 Finansial) — 2026-07-03
+
+Sesuai `TECH_SPEC_vessel_voyage_pnl.md`, roadmap #3 setelah `vessel_voyage_operations`. Environment/repo/branch **lanjutan**. Retro Sprint 8-14 + `/improve` dijalankan sebelum sprint breakdown ini (lihat entry terpisah di atas).
+
+### Fakta Environment (dicek langsung, bukan diasumsikan)
+- **`hr_payroll` dan `account_asset` tidak tersedia sama sekali** di environment ini — dicek via `ir_module_module` DAN `find` addons path container, keduanya nihil (bukan cuma uninstalled). Konsekuensi: crew cost & depreciation allocation di MVP selalu `allocation_method='manual'`, bukan keputusan bisnis melainkan keterbatasan platform Community.
+- **`spreadsheet_dashboard` sudah terinstall** — dashboard direksi (§5 tech spec) bisa dibangun penuh, tidak perlu fallback pivot/graph.
+- `fleet_maintenance_schedule` dikonfirmasi punya field `actual_cost` — sesuai asumsi sumber data maintenance cost di spec §2.2.
+
+### Keputusan Sebelum Sprint Dimulai (dijawab user via pertanyaan terstruktur)
+- Definisi TCE aktual: **exclude allocated cost** (crew/maintenance/depresiasi/overhead) — konsisten dengan `vessel.voyage.estimate`
+- Historical backfill: **sertakan wizard bulk-generate P&L** untuk voyage completed yang sudah ada sebelum modul terinstall (bukan cuma voyage baru ke depan)
+- Threshold variance budget: **configurable per kapal** (`fleet.vehicle.budget_variance_threshold_pct`) dengan fallback default global `res.company` — pola sama seperti threshold PDA/FDA di `vessel_voyage_operations`
+
+### Perubahan Mode Eksekusi — CHECKPOINT → AUTONOMOUS (2026-07-03)
+User eksplisit minta full automation mulai modul ini: **email notifikasi otomatis terkirim tiap sprint selesai** (bukan tunggu instruksi), **lanjut otomatis ke sprint berikutnya** tanpa berhenti minta approval — beda dari mode checkpoint yang berlaku Sprint 1-14. Pengecualian yang TETAP berlaku: kalau task sprint menyentuh "Pertanyaan Terbuka" tech spec yang genuinely perlu keputusan bisnis/desain, tetap wajib stop & tanya user (automation ini soal ritme/notifikasi, bukan bypass keputusan). Didokumentasikan di `CLAUDE.md` bagian "Mode Eksekusi Sprint" (riwayat mode checkpoint tetap disimpan di situ sebagai referensi).
+
+### Breakdown Sprint
+7 sprint (nomor lanjut global: **15–21**):
+
+| Sprint | Fokus |
+|---|---|
+| 15 | Foundation & Master Data |
+| 16 | Core P&L Model (Revenue & Direct Cost) |
+| 17 | Allocated Cost & Alokasi Logic |
+| 18 | Estimate vs Actual + Vessel P&L Bulanan |
+| 19 | Budget |
+| 20 | Historical Backfill, Cron Lengkap & Email |
+| 21 | Views Polish, Dashboard Direksi & Acceptance Final |
+
+Detail lengkap tiap sprint di `sprints/sprint_15.md` s.d. `sprint_21.md`.
+
+### Catatan
+- Model inti (`vessel.voyage.pnl`) sengaja dipecah compute-nya jadi 3 tahap sprint terpisah (revenue Sprint 16, direct cost Sprint 16, allocated cost Sprint 17) sesuai saran eksplisit §12.2 poin 3 tech spec — jangan implementasi sekaligus, supaya lebih mudah di-test bertahap
+- Keputusan menu root (masuk app `maritime` atau tetap `fleet.menu_root`) ditunda ke Sprint 21 (bisa direparent belakangan tanpa masalah, pola sudah terbukti aman dari restrukturisasi Maritime kemarin)
+- Pelajaran retro Sprint 8-14 (sinkronisasi CLAUDE.md↔sprint.md, mail.thread/mail.activity.mixin check, dll — sudah diterapkan via `/improve` sebelum sprint ini) otomatis berlaku untuk semua sprint 15-21 karena sudah masuk skill file `sprint.md`, tidak perlu diulang manual di tiap sprint file
+
+---

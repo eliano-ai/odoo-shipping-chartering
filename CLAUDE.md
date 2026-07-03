@@ -24,15 +24,19 @@ Odoo Shipping adalah kumpulan modul custom Odoo 19 untuk perusahaan pelayaran/fl
 Layer 2 (Komersial) — app terpisah **`maritime`** (bukan submenu Fleet, sejak restrukturisasi 2026-07-03):
 - `maritime` — app root container, **tidak ada model sendiri**, cuma menyatukan menu root `vessel_chartering` + `vessel_voyage_operations` di bawah 1 app "Maritime" (depends ke keduanya, reparent menu via xmlid tanpa mengubah modul asal)
 - `vessel_chartering` — **selesai** (MVP 7 sprint, lihat `TECH_SPEC_vessel_chartering.md`)
-- `vessel_voyage_operations` — **sedang dikembangkan** (roadmap #2, setelah `vessel_chartering`), lihat `TECH_SPEC_vessel_voyage_operations.md`. Hard dependency ke `vessel_chartering`.
+- `vessel_voyage_operations` — **selesai** (MVP 7 sprint, Sprint 8-14, lihat `TECH_SPEC_vessel_voyage_operations.md`). Hard dependency ke `vessel_chartering`.
 
-Kalau install lengkap: install `maritime` (auto-tarik `vessel_chartering` + `vessel_voyage_operations` sebagai dependency) supaya menu ter-reparent dengan benar — jangan cuma install `vessel_chartering`/`vessel_voyage_operations` sendiri kalau mau app Maritime muncul.
+Layer 3 (Finansial):
+- `vessel_voyage_pnl` — **sedang dikembangkan** (roadmap #3, setelah `vessel_voyage_operations`, Sprint 15-21), lihat `TECH_SPEC_vessel_voyage_pnl.md`. Hard dependency ke `vessel_chartering` DAN `vessel_voyage_operations` (murni agregasi lintas keduanya). `hr_payroll`/`account_asset` **tidak tersedia** di environment ini (Enterprise-only, tidak ada di addons path) — crew cost & depreciation allocation selalu `manual` di MVP. `spreadsheet_dashboard` **sudah terinstall**, dashboard direksi dibangun penuh sesuai spec.
+
+Kalau install lengkap: install `maritime` (auto-tarik `vessel_chartering` + `vessel_voyage_operations` sebagai dependency) supaya menu ter-reparent dengan benar — jangan cuma install modul individual kalau mau app Maritime muncul.
 
 Ringkasan fitur & tujuan bisnis tiap modul fleet: lihat `FLEET_MODULES_OVERVIEW.md`.
 
 ## Source Documentation
 - Tech spec `vessel_chartering`: `TECH_SPEC_vessel_chartering.md`
 - Tech spec `vessel_voyage_operations`: `TECH_SPEC_vessel_voyage_operations.md`
+- Tech spec `vessel_voyage_pnl`: `TECH_SPEC_vessel_voyage_pnl.md`
 - Overview modul fleet existing: `FLEET_MODULES_OVERVIEW.md`
 - Pengetahuan Odoo 19 (ORM, views, security, dll): gunakan skill `odoo-19` jika tersedia
 
@@ -49,14 +53,29 @@ Semua command dari `D:\Sunartha Claude Skills\commands\` (`sunartha-claude-skill
 - `sprint.md`, `retro.md` — **sudah diadaptasi** untuk konteks Odoo/Windows (lihat isi file, beda dari sumber asli)
 - `devops.md`, `docs.md`, `improve.md`, `pm.md`, `qa.md`, `release.md`, `review.md`, `security.md`, `ux.md` — **masih raw/belum diadaptasi**, di-copy apa adanya dari sumber. Sebelum benar-benar dipakai, cek dulu apakah pre-flight check/asumsi tech stack-nya cocok (kemungkinan besar tidak — sama seperti `sprint.md`/`retro.md` sebelum diadaptasi: asumsi `backend/`+`uv`+pytest, `frontend/`+pnpm, email via AppleScript+Mail.app macOS). `ux.md` kemungkinan besar **tidak relevan sama sekali** untuk project ini (Odoo backend module dev, bukan custom frontend web app).
 
-## Mode Eksekusi Sprint: CHECKPOINT (bukan autonomous)
+## Mode Eksekusi Sprint: AUTONOMOUS (berubah dari CHECKPOINT, 2026-07-03)
 
-Berbeda dari default `/sprint` skill (yang jalan tanpa henti sampai semua sprint selesai), project ini pakai mode **checkpoint per sprint**:
+**Update 2026-07-03**: user eksplisit minta full automation ("kirim email tiap sprint selesai, otomatis jalanin next sprint abis kirim emailnya") — override dari mode checkpoint yang berlaku sebelumnya (Sprint 1-14). Mode checkpoint (stop tiap sprint, tanya sebelum email & lanjut) tetap didokumentasikan di bawah sebagai riwayat/fallback kalau user minta kembali ke mode itu.
+
+Mode **autonomous** (berlaku mulai Sprint 15, modul `vessel_voyage_pnl`):
+1. Jalankan seluruh task di satu file `sprints/sprint_NN.md`
+2. Jalankan verifikasi & Definition of Done
+3. Update `SPRINT_REPORT.md`
+4. Commit ke git, push ke `github` remote (bukan `origin`)
+5. **Kirim email notifikasi otomatis** (lihat Reporting di bawah — beda dari sebelumnya yang WAJIB tanya dulu)
+6. **Lanjut otomatis ke sprint berikutnya** tanpa menunggu approval — kecuali kalau task sprint menyentuh "Pertanyaan Terbuka" tech spec yang genuinely perlu keputusan bisnis/desain dari user (itu tetap wajib stop & tanya, tidak berubah oleh instruksi automation ini — automation cuma soal ritme antar-sprint & email, bukan soal keputusan bisnis)
+
+<details>
+<summary>Riwayat: Mode CHECKPOINT (berlaku Sprint 1-14, sebelum diubah user)</summary>
+
+Berbeda dari default `/sprint` skill (yang jalan tanpa henti sampai semua sprint selesai), project ini sempat pakai mode **checkpoint per sprint**:
 1. Jalankan seluruh task di satu file `sprints/sprint_NN.md`
 2. Jalankan verifikasi & Definition of Done
 3. Update `SPRINT_REPORT.md` (bukan email — lihat bagian Reporting di bawah)
 4. Commit ke git
 5. **Berhenti, tunggu review/approval user sebelum lanjut ke sprint berikutnya** — jangan auto-lanjut
+
+</details>
 
 ## Reporting
 
@@ -64,9 +83,16 @@ Setiap sprint selesai (atau ada progress signifikan), update `SPRINT_REPORT.md` 
 - Tambahkan entry baru di **bawah** (kronologis, bukan di atas)
 - Format: nama sprint, tanggal, task selesai, blocker ditemukan (+ cara resolve), hasil verifikasi
 
-**Email notifikasi**: tidak pakai AppleScript+Mail.app (macOS-only, tidak jalan di sini) — pakai Outlook desktop via PowerShell COM automation (`scripts/send_sprint_email.ps1`). Default: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id`. Prasyarat: Outlook desktop harus running (script auto-launch jika belum).
+**Email notifikasi**: tidak pakai AppleScript+Mail.app (macOS-only, tidak jalan di sini) — pakai Outlook desktop via PowerShell COM automation (`scripts/send_sprint_email.ps1`). Default: To `eliano@sunartha.co.id`, Cc `daru@sunartha.co.id`. Prasyarat: Outlook desktop harus running (script auto-launch jika belum). Template body ikuti format `[[feedback_sprint_email_template.md]]` (section SPRINT SELESAI/YANG DIIMPLEMENTASI/KENDALA, sign-off "-- Claude Code Sprint Agent").
+
+**Update 2026-07-03 — email OTOMATIS terkirim tiap sprint selesai** (bukan tunggu instruksi lagi, override dari aturan Sprint 1-14 di bawah). Urutan tiap sprint selesai: update SPRINT_REPORT.md → commit+push → kirim email → lanjut sprint berikutnya, semua tanpa jeda tanya user.
+
+<details>
+<summary>Riwayat: aturan email manual (berlaku Sprint 1-14, sebelum diubah user)</summary>
 
 **PENTING — jangan kirim email otomatis, dan urutan tanya ke user WAJIB: email dulu, baru lanjut sprint.** Siapkan body email & laporkan sprint selesai ke user via chat, lalu tanya dua hal secara terpisah dan berurutan: (1) apakah email mau dikirim sekarang, (2) baru setelah itu apakah mau lanjut ke sprint berikutnya. Jangan gabung jadi satu pertanyaan, dan jangan lompat ke pertanyaan lanjut-sprint sebelum urusan email selesai ditanyakan. Ini dikoreksi user setelah Sprint 4 (awalnya email dikirim otomatis) dan Sprint 5 (urutan tanya diperjelas).
+
+</details>
 
 ## Konvensi Kode (Odoo Module Development)
 

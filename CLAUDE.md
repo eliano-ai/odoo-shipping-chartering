@@ -86,6 +86,7 @@ Setiap sprint selesai (atau ada progress signifikan), update `SPRINT_REPORT.md` 
 | `res.users.groups_id` | Rename jadi `res.users.group_ids` |
 | Field custom modul lain diasumsikan ada tanpa dicek | Grep dulu source model di container sebelum pakai (`docker compose exec odoo grep ...`) — pernah salah asumsi `invoice_policy` ada di core `product.product` (padahal punya modul `sale`) |
 | Xpath target `res.config.settings` ditebak dari nama block yang "masuk akal" | Grep dulu `<block ... id="...">` di source view sebelum nulis xpath — pernah salah tebak `invoicing_policy` (harusnya `invoicing_settings`) |
+| `_sql_constraints = [(name, sql, message), ...]` (list attribute) | **Silent no-op di Odoo 19** — tidak error, tidak warning, constraint DB memang tidak pernah ter-apply. Ganti `models.Constraint('sql...', 'message')` sebagai atribut kelas terpisah (lihat `odoo/addons/base/models/res_lang.py` untuk contoh). Ditemukan Sprint 11 `vessel_voyage_operations` — juga terbukti mengenai `vessel_seafarer.py` (`vessel_crew_management`, pre-existing, belum diperbaiki — di luar scope sprint ini). **Paling berbahaya di tabel ini karena tidak muncul di log sama sekali** — hanya ketahuan lewat unit test yang sengaja menguji constraint-nya. |
 
 Kalau nemu pola baru yang bikin blocker berulang (≥2x kejadian), tambahkan baris baru ke tabel ini — jangan cuma catat di SPRINT_REPORT.md.
 

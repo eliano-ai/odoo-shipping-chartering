@@ -507,3 +507,39 @@ Tidak ada blocker baru — desain constraint warning-only (bukan `ValidationErro
 - Mulai sprint ini, email sprint mengikuti template baru (SPRINT SELESAI/YANG DIIMPLEMENTASI/KENDALA) sesuai contoh yang diberikan user
 
 ---
+
+## Sprint 11 — vessel_voyage_operations: Noon Report & Approval Workflow — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.noon.report` — semua field §3.4: posisi (lat/long digits (10,6), course, speed), distance (run/to-go), ROB (FO/DO/FW/lube oil), cuaca (wind force Beaufort, sea state, RPM, slip%), approval (`state`, `approved_by`, `approved_date`, `rejection_reason`), `source` (portal/manual/email_parsed — `email_parsed` cuma di selection, tidak diimplementasi logic-nya sesuai instruksi)
+- [x] Constraint lat -90..90 / long -180..180 (`ValidationError`); unique `voyage_id`+`report_datetime` via `models.Constraint` (**bukan** `_sql_constraints` list — lihat Blocker)
+- [x] Workflow §4.2: `action_submit` (draft→submitted), `action_approve` (submitted→approved, jalankan 2 warning check), `action_reject` (submitted→rejected, wajib `rejection_reason`) — **approved/rejected read-only ditegakkan di level view** (`readonly="state in (...)"`), bukan override `write()` model (lihat Blocker)
+- [x] Warning saat approve (bukan blokir, via `message_post` ke voyage): (a) gap >30 jam dengan noon report approved sebelumnya, (b) ROB FO/DO naik tanpa event bunkering (`call_purpose='bunkering'` dengan `atb` di rentang waktu terkait) — **keduanya diverifikasi via shell**
+- [x] Update `vessel.voyage._compute_total_distance_nm` — sekarang sum `distance_run_nm` dari `noon_report_ids` state=`approved` saja (ganti placeholder Sprint 9)
+- [x] Update `fleet.vehicle._compute_current_position` — ambil lat/long dari noon report approved terakhir milik `current_voyage_id` (ganti placeholder Sprint 9) — **`current_voyage_id` diubah jadi `store=True`** (lihat Blocker)
+- [x] Security access `vessel.noon.report`: manager/user CRUD (user tanpa unlink), portal read+write+create tanpa unlink (record rule ditunda Sprint 13 sesuai rencana)
+- [x] Views: form 1 halaman (section Posisi&Kecepatan, ROB, Cuaca&Performa, field readonly setelah approved/rejected), smart button + tab "Noon Reports" di form voyage, list, search (filter Pending Approval default), menu Operasional → Noon Reports
+- [x] **4 unit test `TransactionCase`** (`tests/test_noon_report.py`), semua pass 0 failed/0 error: (a) `total_distance_nm` compute dari beberapa approved, (b) reject → histori tidak hilang + resubmit sukses, (c) constraint lat/long range, (d) constraint unique voyage+datetime
+- [x] Dummy data: 5 noon report di `demo_voyage_2` — 3 approved berurutan (220/215/205 NM), 1 rejected (distance tidak masuk akal), 1 resubmit approved (208 NM) — total_distance_nm demo = 848 NM
+
+### Blocker & Resolusi
+- **`_sql_constraints = [...]` (list attribute) silent no-op di Odoo 19** — constraint unique `voyage_id`+`report_datetime` ditulis dengan pola lama (persis sama seperti `vessel_seafarer.py` di `vessel_crew_management`), install/upgrade **tanpa error sama sekali**, tapi test_04 gagal karena constraint ternyata tidak pernah ter-apply ke DB (`\d vessel_noon_report` tidak menunjukkan unique constraint apapun). **Root cause**: Odoo 19 mengganti mekanisme jadi `models.Constraint('sql...', 'message')` sebagai atribut kelas terpisah (`_table_objects` internal, bukan `_sql_constraints` list lagi — dikonfirmasi baca source `odoo/orm/models.py` & `odoo/addons/base/models/res_lang.py`). **Resolusi**: ganti ke `_uniq_voyage_datetime = models.Constraint(...)`, constraint langsung muncul di `\d` setelah `-u`. **Ini gotcha paling berbahaya sejauh ini** — tidak ada log ERROR/WARNING sama sekali, cuma ketahuan karena unit test eksplisit menguji constraint-nya. Ditambahkan ke `CLAUDE.md` Checklist Odoo 19 Gotcha. `vessel_seafarer.py` (modul lain, di luar scope sprint ini) juga kena bug yang sama — dicatat sebagai known issue, **belum diperbaiki** (bukan tanggung jawab sprint `vessel_voyage_operations`).
+- **Override `write()` untuk block edit approved/rejected memecah idempotency `-u`** — implementasi awal sesuai literal task file (raise `UserError` di `write()` kalau state in approved/rejected), tapi ini memblokir ORM data loader sendiri: XML `<record>` demo data yang di-load ulang saat `-u` kedua kali memanggil `write()` dengan SEMUA field (termasuk yang sudah `state=approved` dari load sebelumnya) → `UserError` → install gagal total. **Resolusi**: hapus override `write()`, ganti ke proteksi level view (`readonly="state in (...)"`) — **konsisten dengan pola yang sudah dipakai `vessel.charter.contract`/`vessel.laytime.calculation` di `vessel_chartering`**, tidak ada satupun model di codebase ini yang hard-block `write()` di level Python. Trade-off: proteksi ini UI-level saja (bisa di-bypass lewat API/dev mode), diterima sebagai standar MVP yang sama dengan modul lain.
+- **Field dependency non-searchable saat compute chain lewat `current_voyage_id`** — `_compute_current_position` depends ke `current_voyage_id.noon_report_ids...`, tapi `current_voyage_id` (Sprint 9) di-compute tanpa `store=True` sehingga Odoo tidak bisa menentukan `fleet.vehicle` mana yang perlu di-recompute saat `noon_report_ids` berubah (`UserWarning: ... should be searchable`). **Resolusi**: tambah `store=True` ke `current_voyage_id`.
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `.groups_id` — 0 hasil
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL/WARNING, idempotent (re-run `-u` kedua kali)
+- ✅ 4/4 unit test pass (0 failed, 0 error)
+- ✅ Approve noon report → muncul di `total_distance_nm` voyage — **diverifikasi via psql**: demo `VOY/2026/0002` total_distance_nm = 848 (220+215+205+208, exclude 340 yang rejected) — acceptance criteria §10.5
+- ✅ Reject → record lama tetap ada sebagai histori, resubmit baru berhasil approved — **diverifikasi via psql**: 5 record noon report demo semua masih ada (termasuk yang rejected) — acceptance criteria §10.6
+- ✅ `current_position_lat/lng` fleet.vehicle = lat/long noon report approved terakhir — diverifikasi via shell dengan assertion
+- ✅ Warning gap>30h dan ROB naik tanpa bunkering — **diverifikasi via shell**: keduanya berhasil trigger `message_post` ke voyage, tidak block approve, di-rollback
+
+### Catatan
+- Field `source='email_parsed'` cuma ada di selection, tidak ada logic parsing email — sesuai instruksi eksplisit task file (future-proof placeholder)
+- Record rule portal (Nakhoda cuma lihat voyage kapalnya sendiri) masih ditunda ke Sprint 13 sesuai rencana — Sprint ini portal group baru dapat access CSV dasar (read+write+create, tanpa unlink), belum ada domain filter
+
+---

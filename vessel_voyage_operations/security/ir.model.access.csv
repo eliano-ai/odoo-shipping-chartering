@@ -15,3 +15,6 @@ access_vessel_port_call_user,vessel.port.call.user,model_vessel_port_call,vessel
 access_vessel_port_call_portal,vessel.port.call.portal,model_vessel_port_call,vessel_voyage_operations.group_voyage_ops_portal,1,0,0,0
 access_vessel_port_clearance_line_manager,vessel.port.clearance.line.manager,model_vessel_port_clearance_line,vessel_voyage_operations.group_voyage_ops_manager,1,1,1,1
 access_vessel_port_clearance_line_user,vessel.port.clearance.line.user,model_vessel_port_clearance_line,vessel_voyage_operations.group_voyage_ops_user,1,1,1,0
+access_vessel_noon_report_manager,vessel.noon.report.manager,model_vessel_noon_report,vessel_voyage_operations.group_voyage_ops_manager,1,1,1,1
+access_vessel_noon_report_user,vessel.noon.report.user,model_vessel_noon_report,vessel_voyage_operations.group_voyage_ops_user,1,1,1,0
+access_vessel_noon_report_portal,vessel.noon.report.portal,model_vessel_noon_report,vessel_voyage_operations.group_voyage_ops_portal,1,1,1,0

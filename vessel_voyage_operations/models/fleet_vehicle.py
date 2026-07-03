@@ -10,7 +10,7 @@ class FleetVehicleVoyageOperations(models.Model):
     )
     current_voyage_id = fields.Many2one(
         'vessel.voyage', string='Voyage Berjalan',
-        compute='_compute_current_voyage_id',
+        compute='_compute_current_voyage_id', store=True,
     )
     current_position_lat = fields.Float(
         string='Posisi Terkini — Latitude', compute='_compute_current_position',
@@ -29,10 +29,15 @@ class FleetVehicleVoyageOperations(models.Model):
             )[:1]
             vehicle.current_voyage_id = active
 
-    @api.depends('current_voyage_id')
+    @api.depends(
+        'current_voyage_id', 'current_voyage_id.noon_report_ids.state',
+        'current_voyage_id.noon_report_ids.latitude', 'current_voyage_id.noon_report_ids.longitude',
+    )
     def _compute_current_position(self):
-        # Placeholder — akan diisi dari noon_report_ids approved terakhir
-        # setelah vessel.noon.report ada (Sprint 11).
         for vehicle in self:
-            vehicle.current_position_lat = 0.0
-            vehicle.current_position_lng = 0.0
+            voyage = vehicle.current_voyage_id
+            last_report = voyage.noon_report_ids.filtered(
+                lambda r: r.state == 'approved'
+            ).sorted('report_datetime', reverse=True)[:1] if voyage else self.env['vessel.noon.report']
+            vehicle.current_position_lat = last_report.latitude or 0.0
+            vehicle.current_position_lng = last_report.longitude or 0.0

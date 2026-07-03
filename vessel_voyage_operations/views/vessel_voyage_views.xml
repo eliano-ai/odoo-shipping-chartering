@@ -33,6 +33,13 @@
                            statusbar_visible="draft,fixed,sailing,at_port,completed"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_noon_reports" type="object"
+                                class="oe_stat_button" icon="fa-map-marker"
+                                invisible="noon_report_count == 0">
+                            <field name="noon_report_count" widget="statinfo" string="Noon Reports"/>
+                        </button>
+                    </div>
                     <div class="oe_title">
                         <h1><field name="name" readonly="1"/></h1>
                     </div>
@@ -75,6 +82,21 @@
                                     <field name="ata"/>
                                     <field name="atb"/>
                                     <field name="atd"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Noon Reports" name="noon_reports">
+                            <field name="noon_report_ids" readonly="1">
+                                <list>
+                                    <field name="report_datetime"/>
+                                    <field name="report_type"/>
+                                    <field name="distance_run_nm"/>
+                                    <field name="speed_knots"/>
+                                    <field name="state" widget="badge"
+                                           decoration-muted="state == 'draft'"
+                                           decoration-warning="state == 'submitted'"
+                                           decoration-success="state == 'approved'"
+                                           decoration-danger="state == 'rejected'"/>
                                 </list>
                             </field>
                         </page>

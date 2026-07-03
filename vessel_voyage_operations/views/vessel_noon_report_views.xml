@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Form ────────────────────────────────────────────────────────── -->
+    <record id="vessel_noon_report_view_form" model="ir.ui.view">
+        <field name="name">vessel.noon.report.form</field>
+        <field name="model">vessel.noon.report</field>
+        <field name="arch" type="xml">
+            <form string="Noon Report">
+                <header>
+                    <button name="action_submit" type="object"
+                            string="Submit" class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object"
+                            string="Approve" class="btn-primary"
+                            invisible="state != 'submitted'"/>
+                    <button name="action_reject" type="object"
+                            string="Reject"
+                            invisible="state != 'submitted'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="voyage_id" readonly="state != 'draft'"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="report_datetime" readonly="state in ('approved', 'rejected')"/>
+                            <field name="report_type" readonly="state in ('approved', 'rejected')"/>
+                            <field name="source" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                        <group>
+                            <field name="approved_by" invisible="not approved_by"/>
+                            <field name="approved_date" invisible="not approved_date"/>
+                            <field name="rejection_reason" invisible="state != 'rejected'"/>
+                            <field name="company_id" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Posisi &amp; Kecepatan">
+                        <group>
+                            <field name="latitude" readonly="state in ('approved', 'rejected')"/>
+                            <field name="longitude" readonly="state in ('approved', 'rejected')"/>
+                            <field name="course_deg" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                        <group>
+                            <field name="speed_knots" readonly="state in ('approved', 'rejected')"/>
+                            <field name="distance_run_nm" readonly="state in ('approved', 'rejected')"/>
+                            <field name="distance_to_go_nm" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                    </group>
+                    <group string="ROB (Remaining on Board)">
+                        <group>
+                            <field name="rob_fo" readonly="state in ('approved', 'rejected')"/>
+                            <field name="rob_do" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                        <group>
+                            <field name="rob_fw" readonly="state in ('approved', 'rejected')"/>
+                            <field name="rob_lube_oil" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                    </group>
+                    <group string="Cuaca &amp; Performa">
+                        <group>
+                            <field name="wind_force_bft" readonly="state in ('approved', 'rejected')"/>
+                            <field name="sea_state" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                        <group>
+                            <field name="rpm" readonly="state in ('approved', 'rejected')"/>
+                            <field name="slip_pct" readonly="state in ('approved', 'rejected')"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <!-- ─── List ────────────────────────────────────────────────────────── -->
+    <record id="vessel_noon_report_view_list" model="ir.ui.view">
+        <field name="name">vessel.noon.report.list</field>
+        <field name="model">vessel.noon.report</field>
+        <field name="arch" type="xml">
+            <list string="Noon Reports"
+                  decoration-muted="state == 'rejected'"
+                  decoration-success="state == 'approved'">
+                <field name="voyage_id"/>
+                <field name="report_datetime"/>
+                <field name="report_type"/>
+                <field name="distance_run_nm"/>
+                <field name="speed_knots"/>
+                <field name="state" widget="badge"
+                       decoration-muted="state == 'draft'"
+                       decoration-warning="state == 'submitted'"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'rejected'"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ─── Search ──────────────────────────────────────────────────────── -->
+    <record id="vessel_noon_report_view_search" model="ir.ui.view">
+        <field name="name">vessel.noon.report.search</field>
+        <field name="model">vessel.noon.report</field>
+        <field name="arch" type="xml">
+            <search string="Cari Noon Report">
+                <field name="voyage_id"/>
+                <filter string="Pending Approval" name="filter_pending"
+                        domain="[('state', '=', 'submitted')]"/>
+                <group>
+                    <filter string="Status" name="group_state" context="{'group_by':'state'}"/>
+                    <filter string="Voyage" name="group_voyage" context="{'group_by':'voyage_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ─── Actions ─────────────────────────────────────────────────────── -->
+    <record id="action_vessel_noon_report" model="ir.actions.act_window">
+        <field name="name">Noon Reports</field>
+        <field name="res_model">vessel.noon.report</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{'search_default_filter_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada noon report</p>
+            <p>Noon report dibuat oleh Nakhoda (portal) atau Operations (manual).</p>
+        </field>
+    </record>
+
+</odoo>

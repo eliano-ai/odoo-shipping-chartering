@@ -40,6 +40,12 @@
               action="action_vessel_port_call"
               sequence="10"/>
 
+    <menuitem id="menu_vessel_noon_report"
+              name="Noon Reports"
+              parent="menu_vessel_voyage_operations_operasional"
+              action="action_vessel_noon_report"
+              sequence="20"/>
+
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"
               parent="menu_vessel_voyage_operations_root"

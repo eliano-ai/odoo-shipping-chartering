@@ -57,6 +57,9 @@ class VesselVoyage(models.Model):
     port_call_ids = fields.One2many(
         'vessel.port.call', 'voyage_id', string='Port Rotation',
     )
+    noon_report_ids = fields.One2many(
+        'vessel.noon.report', 'voyage_id', string='Noon Reports',
+    )
     total_distance_nm = fields.Float(
         string='Total Jarak (NM)', compute='_compute_total_distance_nm', store=True,
     )
@@ -75,17 +78,22 @@ class VesselVoyage(models.Model):
         'res.users', string='Operations',
         default=lambda self: self.env.user,
     )
+    noon_report_count = fields.Integer(string='Jumlah Noon Report', compute='_compute_noon_report_count')
 
     # ─────────────────────────────────────────────────────────────────────
     # Compute — placeholder, diisi data riil setelah model terkait ada
     # ─────────────────────────────────────────────────────────────────────
 
-    @api.depends('state')
+    @api.depends('noon_report_ids.distance_run_nm', 'noon_report_ids.state')
     def _compute_total_distance_nm(self):
-        # Placeholder — akan depend ke noon_report_ids.distance_run_nm setelah
-        # vessel.noon.report ada (Sprint 11).
         for rec in self:
-            rec.total_distance_nm = 0.0
+            approved = rec.noon_report_ids.filtered(lambda r: r.state == 'approved')
+            rec.total_distance_nm = sum(approved.mapped('distance_run_nm'))
+
+    @api.depends('noon_report_ids')
+    def _compute_noon_report_count(self):
+        for rec in self:
+            rec.noon_report_count = len(rec.noon_report_ids)
 
     @api.depends('state')
     def _compute_total_delay_hours(self):
@@ -259,3 +267,14 @@ class VesselVoyage(models.Model):
             if rec.state != 'cancelled':
                 raise UserError(_('Hanya voyage Cancelled yang bisa dikembalikan ke Draft.'))
             rec.state = 'draft'
+
+    def action_view_noon_reports(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Noon Reports — %s') % self.name,
+            'res_model': 'vessel.noon.report',
+            'view_mode': 'list,form',
+            'domain': [('voyage_id', '=', self.id)],
+            'context': {'default_voyage_id': self.id},
+        }

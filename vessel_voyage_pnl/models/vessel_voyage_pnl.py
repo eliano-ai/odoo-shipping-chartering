@@ -72,9 +72,30 @@ class VesselVoyagePnl(models.Model):
         string='Total Direct Cost', compute='_compute_total_direct_cost', store=True,
     )
 
+    # ── Allocated Cost ───────────────────────────────────────────────────
+    crew_cost_allocated = fields.Monetary(string='Crew Cost (Alokasi)', readonly=True)
+    maintenance_cost_allocated = fields.Monetary(string='Maintenance (Alokasi)', readonly=True)
+    depreciation_allocated = fields.Monetary(string='Depreciation (Alokasi)', readonly=True)
+    overhead_allocated = fields.Monetary(string='Overhead (Alokasi)', readonly=True)
+    total_allocated_cost = fields.Monetary(
+        string='Total Allocated Cost', compute='_compute_total_allocated_cost', store=True,
+    )
+
+    # ── Hasil ────────────────────────────────────────────────────────────
+    voyage_result = fields.Monetary(
+        string='Voyage Result', compute='_compute_voyage_result', store=True,
+    )
+    tce_actual_per_day = fields.Monetary(
+        string='TCE Aktual / Hari', compute='_compute_voyage_result', store=True,
+        help='(Total Revenue - Total Direct Cost) / Voyage Days — EXCLUDE allocated cost '
+             '(crew/maintenance/depresiasi/overhead), konsisten definisi TCE standar industri.',
+    )
+
     line_ids = fields.One2many('vessel.voyage.pnl.line', 'pnl_id', string='Rincian')
     state = fields.Selection(STATE, default='draft', required=True, tracking=True, copy=False)
     computed_date = fields.Datetime(string='Terakhir Dihitung', readonly=True, copy=False)
+    locked_by = fields.Many2one('res.users', string='Dikunci Oleh', readonly=True, copy=False)
+    locked_date = fields.Datetime(string='Tanggal Lock', readonly=True, copy=False)
     currency_id = fields.Many2one(
         'res.currency', string='Mata Uang',
         default=lambda self: self.env.company.currency_id,
@@ -97,22 +118,54 @@ class VesselVoyagePnl(models.Model):
                 rec.voyage_days = 0.0
 
     @api.depends('freight_revenue', 'demurrage_revenue', 'despatch_cost',
-                 'brokerage_cost', 'other_revenue')
+                 'brokerage_cost', 'other_revenue',
+                 'line_ids.amount', 'line_ids.is_manual_adjustment', 'line_ids.category_group')
     def _compute_total_revenue(self):
         for rec in self:
+            adjustment = sum(rec.line_ids.filtered(
+                lambda l: l.is_manual_adjustment and l.category_group == 'revenue'
+            ).mapped('amount'))
             rec.total_revenue = (
                 rec.freight_revenue + rec.demurrage_revenue - rec.despatch_cost
-                - rec.brokerage_cost + rec.other_revenue
+                - rec.brokerage_cost + rec.other_revenue + adjustment
             )
 
     @api.depends('bunker_cost', 'port_cost', 'cargo_handling_cost',
-                 'insurance_voyage_cost', 'other_direct_cost')
+                 'insurance_voyage_cost', 'other_direct_cost',
+                 'line_ids.amount', 'line_ids.is_manual_adjustment', 'line_ids.category_group')
     def _compute_total_direct_cost(self):
         for rec in self:
+            # Line adjustment cost tersimpan negatif (konvensi tanda line_ids.amount) —
+            # negasikan supaya menambah total_direct_cost sebagai magnitude positif.
+            adjustment = -sum(rec.line_ids.filtered(
+                lambda l: l.is_manual_adjustment and l.category_group == 'direct_cost'
+            ).mapped('amount'))
             rec.total_direct_cost = (
                 rec.bunker_cost + rec.port_cost + rec.cargo_handling_cost
-                + rec.insurance_voyage_cost + rec.other_direct_cost
+                + rec.insurance_voyage_cost + rec.other_direct_cost + adjustment
             )
+
+    @api.depends('crew_cost_allocated', 'maintenance_cost_allocated',
+                 'depreciation_allocated', 'overhead_allocated',
+                 'line_ids.amount', 'line_ids.is_manual_adjustment', 'line_ids.category_group')
+    def _compute_total_allocated_cost(self):
+        for rec in self:
+            adjustment = -sum(rec.line_ids.filtered(
+                lambda l: l.is_manual_adjustment and l.category_group == 'allocated_cost'
+            ).mapped('amount'))
+            rec.total_allocated_cost = (
+                rec.crew_cost_allocated + rec.maintenance_cost_allocated
+                + rec.depreciation_allocated + rec.overhead_allocated + adjustment
+            )
+
+    @api.depends('total_revenue', 'total_direct_cost', 'total_allocated_cost', 'voyage_days')
+    def _compute_voyage_result(self):
+        for rec in self:
+            rec.voyage_result = rec.total_revenue - rec.total_direct_cost - rec.total_allocated_cost
+            if rec.voyage_days:
+                rec.tce_actual_per_day = (rec.total_revenue - rec.total_direct_cost) / rec.voyage_days
+            else:
+                rec.tce_actual_per_day = 0.0
 
     # ── Generate / Recompute ────────────────────────────────────────────
     def action_generate_pnl(self):
@@ -125,6 +178,7 @@ class VesselVoyagePnl(models.Model):
                 )[:1]
             rec._compute_revenue()
             rec._compute_direct_cost()
+            rec._compute_allocated_cost()
             rec.state = 'computed'
             rec.computed_date = fields.Datetime.now()
 
@@ -134,7 +188,30 @@ class VesselVoyagePnl(models.Model):
                 raise UserError(_('Recompute hanya bisa dilakukan saat state Draft/Computed.'))
             rec._compute_revenue()
             rec._compute_direct_cost()
+            rec._compute_allocated_cost()
             rec.computed_date = fields.Datetime.now()
+
+    def action_lock(self):
+        for rec in self:
+            if rec.state != 'computed':
+                raise UserError(_('Hanya P&L Computed yang bisa di-Lock.'))
+            if not (self.env.user.has_group('vessel_voyage_pnl.group_voyage_pnl_finance')
+                    or self.env.user.has_group('vessel_voyage_pnl.group_voyage_pnl_manager')):
+                raise UserError(_('Hanya Finance/Manager yang bisa melakukan Lock.'))
+            rec.state = 'locked'
+            rec.locked_by = self.env.user.id
+            rec.locked_date = fields.Datetime.now()
+
+    def action_open_adjustment_wizard(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Adjustment Manual — %s') % self.display_name,
+            'res_model': 'vessel.pnl.adjustment.wizard',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_pnl_id': self.id},
+        }
 
     def _clear_auto_lines(self, category_group):
         """Hapus line non-manual (bukan adjustment Finance) untuk grup kategori tertentu,
@@ -144,7 +221,8 @@ class VesselVoyagePnl(models.Model):
         ).unlink()
 
     def _create_line(self, cost_category_xmlid, amount, description,
-                      source_model=False, source_res_id=False):
+                      source_model=False, source_res_id=False,
+                      is_allocated=False, allocation_rule_id=False):
         category = self.env.ref('vessel_voyage_pnl.%s' % cost_category_xmlid)
         return self.env['vessel.voyage.pnl.line'].create({
             'pnl_id': self.id,
@@ -153,6 +231,8 @@ class VesselVoyagePnl(models.Model):
             'description': description,
             'source_model': source_model,
             'source_res_id': source_res_id,
+            'is_allocated': is_allocated,
+            'allocation_rule_id': allocation_rule_id,
         })
 
     def _compute_revenue(self):
@@ -271,6 +351,147 @@ class VesselVoyagePnl(models.Model):
             'cargo_handling_cost': cargo_handling_total,
             'insurance_voyage_cost': insurance_total,
         })
+
+    # ── Allocated Cost (§2.3, §4.2) ─────────────────────────────────────
+    # Field -> xmlid kategori biaya allocated_cost yang di-seed Sprint 15.
+    _ALLOCATED_FIELD_MAP = {
+        'cost_category_crew_cost': 'crew_cost_allocated',
+        'cost_category_maintenance': 'maintenance_cost_allocated',
+        'cost_category_depreciation': 'depreciation_allocated',
+        'cost_category_overhead': 'overhead_allocated',
+    }
+
+    def _compute_allocated_cost(self):
+        """Baca vessel.cost.allocation.rule aktif per kategori, alokasikan pool bulanan
+        kapal sesuai allocation_method (§2.3) — satu function terpisah per method supaya
+        gampang ditambah metode baru fase 2 (§12.2 poin 4)."""
+        self.ensure_one()
+        self._clear_auto_lines('allocated_cost')
+        rules_by_category = {
+            r.cost_category_id.id: r
+            for r in self.env['vessel.cost.allocation.rule'].search([('active', '=', True)])
+        }
+        values = {}
+        for xmlid, field_name in self._ALLOCATED_FIELD_MAP.items():
+            category = self.env.ref('vessel_voyage_pnl.%s' % xmlid, raise_if_not_found=False)
+            if not category:
+                values[field_name] = 0.0
+                continue
+            rule = rules_by_category.get(category.id)
+            amount = self._compute_allocation_for_category(category, rule)
+            values[field_name] = amount
+            if amount:
+                self._create_line(
+                    xmlid, -amount,
+                    _('Alokasi %(method)s') % {
+                        'method': dict(rule._fields['allocation_method'].selection).get(
+                            rule.allocation_method,
+                        ) if rule else 'Manual',
+                    },
+                    is_allocated=True, allocation_rule_id=rule.id if rule else False,
+                )
+        self.write(values)
+
+    def _compute_allocation_for_category(self, category, rule):
+        """Dispatch ke _allocate_<method>() sesuai allocation_method rule aktif."""
+        self.ensure_one()
+        method = rule.allocation_method if rule else 'manual'
+        if method == 'manual' or not self.voyage_id.date_departure:
+            return self._allocate_manual()
+
+        if method == 'fixed_percentage':
+            pct = rule.fixed_percentage_value if rule else 0.0
+            return self._allocate_fixed_percentage(pct, self.total_revenue)
+
+        vessel = self.vessel_id
+        first_day, next_first_day = self._get_month_bounds(self.voyage_id.date_departure)
+        pool = self._get_monthly_pool(vessel, category, first_day, next_first_day)
+        if not pool:
+            return 0.0
+
+        if method == 'per_voyage_day':
+            total_active_days = self._get_total_active_voyage_days(
+                vessel, first_day, next_first_day,
+            )
+            return self._allocate_per_voyage_day(pool, self.voyage_days, total_active_days)
+        if method == 'per_calendar_day':
+            calendar_days = (next_first_day - first_day).days
+            return self._allocate_per_calendar_day(pool, self.voyage_days, calendar_days)
+        if method == 'equal_split':
+            active_count = self.search_count([
+                ('vessel_id', '=', vessel.id),
+                ('voyage_id.date_departure', '>=', first_day),
+                ('voyage_id.date_departure', '<', next_first_day),
+            ])
+            return self._allocate_equal_split(pool, active_count)
+        return 0.0
+
+    @api.model
+    def _allocate_per_voyage_day(self, pool, voyage_days, total_active_days):
+        """§10.4 acceptance criteria: pool 30,000, voyage 10/30 hari -> allocated 10,000."""
+        if not total_active_days:
+            return 0.0
+        return pool * (voyage_days / total_active_days)
+
+    @api.model
+    def _allocate_per_calendar_day(self, pool, voyage_days_in_month, calendar_days):
+        """Fase 2 (§9 tech spec) — belum diimplementasi penuh (butuh pro-rata pool per
+        hari aktual lintas-bulan). Return 0.0 aman: tidak ada seed rule yang pakai method
+        ini di MVP, cuma stub supaya pilihan di UI tidak crash kalau dipilih Finance."""
+        return 0.0
+
+    @api.model
+    def _allocate_equal_split(self, pool, active_voyage_count):
+        if not active_voyage_count:
+            return 0.0
+        return pool / active_voyage_count
+
+    @api.model
+    def _allocate_fixed_percentage(self, fixed_percentage_value, total_revenue):
+        return total_revenue * ((fixed_percentage_value or 0.0) / 100.0)
+
+    @api.model
+    def _allocate_manual(self):
+        return 0.0
+
+    def _get_month_bounds(self, dt):
+        """(awal_bulan, awal_bulan_berikutnya) sebagai date — pool diambil dari bulan
+        date_departure voyage saja (§4.2 MVP, voyage lintas-bulan pro-rata di fase 2)."""
+        d = dt.date() if hasattr(dt, 'date') else dt
+        first = d.replace(day=1)
+        if first.month == 12:
+            next_first = first.replace(year=first.year + 1, month=1)
+        else:
+            next_first = first.replace(month=first.month + 1)
+        return first, next_first
+
+    def _get_monthly_pool(self, vessel, category, first_day, next_first_day):
+        """Sumber pool cuma tersedia untuk Maintenance (fleet_maintenance_schedule) di
+        MVP — Crew Cost & Depreciation selalu manual (hr_payroll/account_asset tidak
+        ada), Overhead pakai fixed_percentage (tidak butuh pool)."""
+        maintenance_cat = self.env.ref(
+            'vessel_voyage_pnl.cost_category_maintenance', raise_if_not_found=False,
+        )
+        if maintenance_cat and category.id == maintenance_cat.id:
+            schedules = self.env['fleet.maintenance.schedule'].search([
+                ('vehicle_id', '=', vessel.id),
+                ('state', '=', 'done'),
+                ('completed_date', '>=', first_day),
+                ('completed_date', '<', next_first_day),
+            ])
+            return sum(schedules.mapped('actual_cost'))
+        return 0.0
+
+    def _get_total_active_voyage_days(self, vessel, first_day, next_first_day):
+        """Total hari voyage (semua vessel.voyage.pnl kapal ini) yang date_departure
+        jatuh di bulan yang sama — proxy 'hari kapal beroperasi' (bukan hari kalender,
+        supaya idle days tidak ikut terhitung, beda dari per_calendar_day)."""
+        pnls = self.search([
+            ('vessel_id', '=', vessel.id),
+            ('voyage_id.date_departure', '>=', first_day),
+            ('voyage_id.date_departure', '<', next_first_day),
+        ])
+        return sum(pnls.mapped('voyage_days'))
 
     def _compute_mapped_account_cost(self, cost_category_xmlid):
         """Kategori tanpa sumber terstruktur (Cargo Handling, Insurance Voyage) —
@@ -423,6 +644,49 @@ class VesselVoyagePnl(models.Model):
                     'price_per_liter': 1.2,
                     'state': 'approved',
                 })
+
+        # Pool Maintenance — replikasi angka acceptance criteria §10.4 (pool 30,000).
+        # Ratio real yang keluar bukan persis 10/30 (voyage_days demo_voyage_3 = 5 hari,
+        # satu-satunya voyage kapal ini bulan itu -> ratio 100%) — pembuktian formula
+        # 10/30 -> 10,000 persis dilakukan via unit test (angka murni, tidak tergantung
+        # fixture demo), lihat tests/test_allocation.py.
+        existing_maintenance = self.env['fleet.maintenance.schedule'].search([
+            ('vehicle_id', '=', voyage.vessel_id.id),
+            ('maintenance_type', '=', 'preventive'),
+            ('description', '=', 'Demo — Maintenance Voyage P&L (pool 30,000)'),
+        ], limit=1)
+        if not existing_maintenance:
+            completed = (voyage.date_departure or fields.Datetime.now()).date()
+            schedule = self.env['fleet.maintenance.schedule'].create({
+                'vehicle_id': voyage.vessel_id.id,
+                'maintenance_type': 'preventive',
+                'description': 'Demo — Maintenance Voyage P&L (pool 30,000)',
+                'schedule_basis': 'date',
+                'scheduled_date': completed,
+                'completed_date': completed,
+                'state': 'done',
+            })
+            # unit_cost/subtotal_cost adalah compute+store yang saling bergantung
+            # (unit_cost <- product_id.standard_price, subtotal_cost <- qty*unit_cost).
+            # standard_price sendiri company-dependent (property field) — assignment
+            # literal di create() tidak reliably persisten. Cara paling aman: create
+            # dulu (apapun hasil compute-nya), baru overwrite subtotal_cost via write()
+            # TERPISAH setelah create selesai — write() ke field biasa (bukan lewat
+            # cascade compute dependency) tidak akan tertimpa ulang oleh compute lain.
+            spare_part_product = self.env['product.product'].search([
+                ('name', '=', 'Demo Sparepart — Voyage P&L Pool'),
+            ], limit=1)
+            if not spare_part_product:
+                spare_part_product = self.env['product.product'].create({
+                    'name': 'Demo Sparepart — Voyage P&L Pool',
+                    'type': 'consu',
+                })
+            part = self.env['fleet.maintenance.part'].create({
+                'schedule_id': schedule.id,
+                'product_id': spare_part_product.id,
+                'qty_planned': 1,
+            })
+            part.write({'subtotal_cost': 30000})
 
         existing_pnl = self.env['vessel.voyage.pnl'].search([('voyage_id', '=', voyage.id)], limit=1)
         if not existing_pnl:

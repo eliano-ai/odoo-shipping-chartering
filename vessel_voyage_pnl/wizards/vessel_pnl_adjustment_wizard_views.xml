@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_pnl_adjustment_wizard_form" model="ir.ui.view">
+        <field name="name">vessel.pnl.adjustment.wizard.form</field>
+        <field name="model">vessel.pnl.adjustment.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Adjustment Manual">
+                <group>
+                    <field name="pnl_id" readonly="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="cost_category_id"/>
+                    <field name="amount"/>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_apply" type="object" string="Terapkan"
+                            class="btn-primary"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

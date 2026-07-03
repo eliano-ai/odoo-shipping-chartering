@@ -30,6 +30,12 @@
                             class="oe_highlight" invisible="state != 'draft'"/>
                     <button name="action_recompute" type="object" string="Recompute"
                             invisible="state not in ('draft', 'computed')"/>
+                    <button name="action_lock" type="object" string="Lock"
+                            class="oe_highlight" invisible="state != 'computed'"
+                            groups="vessel_voyage_pnl.group_voyage_pnl_finance"/>
+                    <button name="action_open_adjustment_wizard" type="object"
+                            string="Adjustment Manual" invisible="state != 'locked'"
+                            groups="vessel_voyage_pnl.group_voyage_pnl_finance"/>
                     <field name="state" widget="statusbar"/>
                 </header>
                 <sheet>
@@ -46,7 +52,12 @@
                             <field name="currency_id" invisible="1"/>
                             <field name="total_revenue"/>
                             <field name="total_direct_cost"/>
+                            <field name="total_allocated_cost"/>
+                            <field name="voyage_result"/>
+                            <field name="tce_actual_per_day"/>
                             <field name="computed_date" readonly="1"/>
+                            <field name="locked_by" readonly="1" invisible="not locked_by"/>
+                            <field name="locked_date" readonly="1" invisible="not locked_date"/>
                         </group>
                     </group>
                     <notebook>
@@ -89,6 +100,34 @@
                                     <button name="action_view_source" type="object"
                                             string="Lihat Sumber" icon="fa-external-link"
                                             invisible="not source_model"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Allocated Cost Detail" name="allocated_cost_detail">
+                            <group>
+                                <field name="crew_cost_allocated" readonly="1"/>
+                                <field name="maintenance_cost_allocated" readonly="1"/>
+                                <field name="depreciation_allocated" readonly="1"/>
+                                <field name="overhead_allocated" readonly="1"/>
+                            </group>
+                            <field name="line_ids" context="{'default_pnl_id': id}"
+                                   domain="[('category_group', '=', 'allocated_cost'), ('is_manual_adjustment', '=', False)]">
+                                <list create="0">
+                                    <field name="cost_category_id"/>
+                                    <field name="description"/>
+                                    <field name="allocation_rule_id" optional="show"/>
+                                    <field name="amount"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Adjustment Manual" name="adjustment_manual">
+                            <field name="line_ids" context="{'default_pnl_id': id}"
+                                   domain="[('is_manual_adjustment', '=', True)]">
+                                <list create="0">
+                                    <field name="cost_category_id"/>
+                                    <field name="category_group"/>
+                                    <field name="description"/>
+                                    <field name="amount"/>
                                 </list>
                             </field>
                         </page>

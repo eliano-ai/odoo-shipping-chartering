@@ -797,3 +797,36 @@ Warning `vessel.seafarer: inconsistent 'store' for computed fields` muncul di lo
 Sesuai saran §12.2 poin 3 tech spec, allocated cost (`crew_cost_allocated` dst.), `voyage_result`, `tce_actual_per_day`, dan tombol Lock **sengaja belum diimplementasi** — menyusul Sprint 17 (bagian paling kompleks, dipisah supaya lebih mudah di-test bertahap).
 
 ---
+
+## Sprint 17 — vessel_voyage_pnl: Allocated Cost & Alokasi Logic — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] `_compute_allocated_cost()` modular — satu function terpisah per `allocation_method`: `_allocate_per_voyage_day()`, `_allocate_per_calendar_day()` (stub Fase 2, return 0.0 aman — tidak ada seed rule yang pakainya), `_allocate_equal_split()`, `_allocate_fixed_percentage()`, `_allocate_manual()` — semua `@api.model`, murni fungsi matematika (pool/hari/dll sebagai parameter), gampang di-unit-test tanpa fixture DB kompleks
+- [x] `per_voyage_day` penuh: pool bulanan (dari `fleet_maintenance_schedule.actual_cost`, state=done, `completed_date` di bulan `date_departure` voyage) × (voyage_days / total hari voyage kapal ini di bulan yang sama — proxy "hari operasi", BUKAN hari kalender, supaya idle days tidak ikut, beda filosofi dari `per_calendar_day`)
+- [x] `equal_split` & `fixed_percentage` (overhead = pct × total_revenue) penuh
+- [x] Crew Cost & Depreciation tetap 0 (rule seeded `manual`, tidak error)
+- [x] `voyage_result` & `tce_actual_per_day` (compute+store, TCE **exclude** allocated cost sesuai keputusan user)
+- [x] Tombol **Lock** (guard `has_group` Finance/Manager, field header jadi read-only via VIEW saja — **bukan** override `write()`, sesuai pelajaran retro Sprint 8-14) + `locked_by`/`locked_date`
+- [x] Wizard `vessel.pnl.adjustment.wizard` — cost_category_id + amount + alasan wajib, create `vessel.voyage.pnl.line(is_manual_adjustment=True)`, tercatat di chatter via `message_post`
+- [x] `total_revenue`/`total_direct_cost`/`total_allocated_cost` di-extend supaya ikut menjumlahkan baris adjustment manual (bukan cuma header sub-field) — supaya adjustment post-lock benar-benar mempengaruhi bottom line
+- [x] Views: notebook "Allocated Cost Detail" + "Adjustment Manual", tombol Lock/Adjustment Manual di header, form wizard
+- [x] **6 unit test** (melebihi minimal 3) dengan angka berbeda membuktikan formula alokasi: `per_voyage_day` replikasi persis §10.4 (30,000, 10/30 → 10,000) + edge case 0 hari, `equal_split` (9,000/3 → 3,000) + edge case 0 voyage, `fixed_percentage` (5% × 100,000 → 5,000), `manual` (selalu 0)
+- [x] Dummy data: tambah `fleet.maintenance.schedule` (pool 30,000) untuk kapal `demo_voyage_3` — hasil real: Maintenance allocated 30,000 (ratio 100% karena cuma 1 voyage kapal itu bulan tsb), Overhead allocated 3,763.75 (5% × 75,275), **Voyage Result = 23,511.25**, **TCE Aktual = 11,455/hari**
+
+### Blocker & Resolusi
+1. **Field compute+store yang bergantung pada field compute LAIN yang belum diisi ikut ke-overwrite** — saat membuat demo `fleet.maintenance.part`, `subtotal_cost=30000` diisi literal di `create()` tapi hasilnya tetap 0. Root cause: `subtotal_cost` depends `unit_cost`, dan `unit_cost` (compute dari `product_id.standard_price`, TIDAK diisi eksplisit) tetap dihitung ulang saat `product_id` di-set — recompute `unit_cost` ini memicu cascade recompute `subtotal_cost` juga, menimpa nilai literal yang sudah diberikan. Sempat dicoba fix dengan set `standard_price` di product (juga gagal — `standard_price` di `product.product` adalah company-dependent property field, assignment literal di `create()` tidak reliably persisten). **Fix final**: create record dulu (apapun hasil compute-nya), baru `write()` **terpisah** setelah create selesai — write() langsung ke field (bukan lewat cascade compute dependency lain) tidak ditimpa ulang. Kandidat baris baru untuk checklist gotcha CLAUDE.md kalau pola ini kejadian lagi ≥2x.
+2. Testing manual via `odoo shell` sempat false-negatif ("Hanya Finance/Manager yang bisa Lock") — root cause bukan bug kode, tapi `env.user` default `odoo shell` adalah user teknis `__system__` (id=1), BUKAN `base.user_admin` — perlu eksplisit `.with_user(env.ref('base.user_admin'))` untuk test group-gated action via shell.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL (berkali-kali `-u`, jumlah schedule/pnl/line stabil)
+- **6/6 unit test pass** (`--test-tags vessel_voyage_pnl`)
+- §10.4 acceptance criteria **persis** via unit test murni (30,000, 10/30 → 10,000, tanpa tergantung fixture DB)
+- §10.6 acceptance criteria (Lock → read-only view, adjustment manual dengan alasan wajib) diverifikasi end-to-end via `odoo shell` (`with_user(base.user_admin)`): Lock berhasil, adjustment −500 pada Other Direct Cost → `total_direct_cost` 18,000→18,500, `voyage_result` ikut ter-update otomatis, tercatat di chatter
+- **Fresh install 9 modul** (`shipping_dev_test17`, temp DB, `--test-enable`): 0 ERROR/CRITICAL, 6/6 test pass, angka P&L identik dengan database dev (Maintenance 30,000, Overhead 3,763.75, Voyage Result 23,511.25) — dibersihkan setelah verifikasi
+
+### Catatan
+Field header P&L (`other_direct_cost` dst.) tetap bisa ditulis langsung via ORM meski `state=locked` — ini **disengaja**, konsisten pola project (readonly cuma di level VIEW, bukan `write()` override, supaya idempotency demo data & script internal tidak rusak). Proteksi sesungguhnya ada di UI (view readonly) + proses bisnis (adjustment wizard sebagai jalur resmi pasca-lock, tercatat chatter).
+
+---

@@ -63,6 +63,22 @@
                             <field name="user_id"/>
                         </group>
                     </group>
+                    <notebook>
+                        <page string="Port Rotation" name="port_rotation">
+                            <field name="port_call_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="port_id"/>
+                                    <field name="call_purpose"/>
+                                    <field name="agent_id"/>
+                                    <field name="eta"/>
+                                    <field name="ata"/>
+                                    <field name="atb"/>
+                                    <field name="atd"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
                 <chatter/>
             </form>

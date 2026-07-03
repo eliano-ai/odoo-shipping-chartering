@@ -29,6 +29,17 @@
               action="action_vessel_voyage_completed"
               sequence="30"/>
 
+    <menuitem id="menu_vessel_voyage_operations_operasional"
+              name="Operasional"
+              parent="menu_vessel_voyage_operations_root"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_port_call"
+              name="Port Calls"
+              parent="menu_vessel_voyage_operations_operasional"
+              action="action_vessel_port_call"
+              sequence="10"/>
+
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"
               parent="menu_vessel_voyage_operations_root"

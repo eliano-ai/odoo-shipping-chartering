@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Port rotation untuk demo_voyage_2 (time charter, sedang sailing) —
+         3 port call berurutan: 1 sudah selesai (load, ATD terisi), 2 masih pending. -->
+    <record id="demo_port_call_1" model="vessel.port.call">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="sequence">10</field>
+        <field name="port_id" ref="vessel_chartering.demo_port_tanjung_priok"/>
+        <field name="call_purpose">load</field>
+        <field name="eta" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="ata" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="atb" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="atd" eval="(datetime.today() - timedelta(days=4)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+    <record id="demo_port_call_2" model="vessel.port.call">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="sequence">20</field>
+        <field name="port_id" ref="vessel_chartering.demo_port_singapore"/>
+        <field name="call_purpose">bunkering</field>
+        <field name="eta" eval="(datetime.today() + timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+    <record id="demo_port_call_3" model="vessel.port.call">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="sequence">30</field>
+        <field name="port_id" ref="vessel_chartering.demo_port_balikpapan"/>
+        <field name="call_purpose">discharge</field>
+        <field name="eta" eval="(datetime.today() + timedelta(days=6)).strftime('%Y-%m-%d %H:%M:%S')"/>
+    </record>
+
+</odoo>

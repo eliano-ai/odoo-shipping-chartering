@@ -7,3 +7,5 @@ from . import res_company
 from . import vessel_voyage
 from . import fleet_vehicle
 from . import vessel_charter_contract
+from . import vessel_port_call
+from . import vessel_port_clearance_line

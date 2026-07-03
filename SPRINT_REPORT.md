@@ -475,3 +475,35 @@ Tidak ada blocker — pre-flight check baru dari `/improve` (grep pola Odoo 19 t
 - Validasi cargo document (`bl` type) di `action_complete` sengaja di-skip dengan komentar TODO eksplisit — model `vessel.cargo.document` baru ada Sprint 12
 
 ---
+
+## Sprint 10 — vessel_voyage_operations: Port Call & Clearance Checklist — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.port.call` — field §3.3: `voyage_id` (required, cascade), `sequence`, `port_id` (domain `is_port=True`), `call_purpose`, `agent_id` (domain `is_port_agent=True`), `eta`/`etb`/`etd`, `ata`/`atb`/`atd`, `berth_name`, `cargo_ops_commenced`/`cargo_ops_completed`, `cargo_ops_rate_mt_day` (compute placeholder 0, diisi Sprint 12), `notes` (Html)
+- [x] Constraint `_check_estimated_actual_sequence` — **warning via `message_post`, bukan blokir** (etb<eta, etd<etb, atb<ata, atd<atb) sesuai keputusan tech spec eksplisit (data lapangan tidak ideal)
+- [x] Model `vessel.port.clearance.line` — §3.7: `port_call_id` (required, cascade), `document_type_id`, `direction` (in/out), `status` (pending/submitted/cleared/rejected), `cleared_date`, `document_number`, `attachment_ids`
+- [x] Logic §4.3 — `_generate_clearance_lines()` dipanggil dari `create()` override `vessel.port.call`: auto-generate baris clearance dari `vessel.clearance.document.type` yang `default_required=True`, masing-masing untuk direction in & out — **diverifikasi**: 4 tipe default_required × 2 arah = 8 baris per port call
+- [x] Update `vessel.voyage.action_arrive_port`/`action_depart_port` — sekarang benar-benar pakai `port_call_ids`: `action_arrive_port` isi `ata`/`atb` di port call urutan terkecil yang belum `atb`; `action_depart_port` isi `atd` di port call aktif (`atb` terisi, `atd` kosong) — ganti dari placeholder toggle-state-saja Sprint 9
+- [x] Update `vessel.voyage.action_complete` — sekarang **benar-benar validasi**: semua port call kecuali yang terakhir (by sequence) wajib punya `atd`; port call terakhir (tujuan final) cukup `atb` — raise `ValidationError` jelas kalau belum, ganti dari placeholder skip Sprint 9
+- [x] Security access untuk `vessel.port.call` (manager/user CRUD, portal read-only) & `vessel.port.clearance.line` (manager/user, tanpa unlink untuk user)
+- [x] Views: tab "Port Rotation" di form voyage (inline editable list, sequence handle), form `vessel.port.call` terpisah dengan clearance checklist inline editable, list, calendar (by `eta`, color by port), menu "Operasional → Port Calls"
+- [x] Dummy data: 3 port call berurutan (sequence 10/20/30) di `demo_voyage_2` (time charter, sailing) — port call #1 sudah `load` selesai (atb+atd terisi), #2 `bunkering` & #3 `discharge` masih pending (hanya `eta`)
+
+### Blocker & Resolusi
+Tidak ada blocker baru — desain constraint warning-only (bukan `ValidationError` blocking) untuk ETA/ETB/ETD/ATA/ATB/ATD diimplementasikan langsung sesuai tech spec tanpa trial-error, karena polanya sudah familiar dari `_check_vessel_document_warning`/`_check_vessel_overlap` (message_post warning) di `vessel_chartering` Sprint 2/7.
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `.groups_id` — 0 hasil. `<group string=...>` ditemukan tapi semua di **form view** (pola valid, bukan search view — dicek manual, bukan false alarm yang perlu di-fix)
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL, idempotent (re-run `-u` kedua kali, 0 ERROR/CRITICAL)
+- ✅ 3 port call berurutan (sequence 10/20/30) — tidak error, urutan tampil benar (acceptance criteria §10.3)
+- ✅ Auto-generate clearance line — **diverifikasi via psql**: tiap port call = 8 baris (4 tipe `default_required=True` × 2 arah), sesuai formula DoD
+- ✅ `action_complete` block kalau ada port call (bukan terakhir) tanpa `atd` — **diverifikasi via shell**: `action_complete()` pada voyage dengan port call #2 belum `atd` raise `ValidationError` pesan jelas; setelah `action_arrive_port`/`action_depart_port` dijalankan berurutan sampai port call terakhir hanya perlu `atb`, `action_complete()` sukses — semua di-rollback (tidak ubah demo data permanen)
+
+### Catatan
+- `cargo_ops_rate_mt_day` masih placeholder 0.0 — akan diisi qty dari `cargo_document_ids` setelah `vessel.cargo.document` ada (Sprint 12)
+- `disbursement_ids` (PDA/FDA) belum ditambahkan ke `vessel.port.call` — model `vessel.port.disbursement` baru dibuat Sprint 12
+- Mulai sprint ini, email sprint mengikuti template baru (SPRINT SELESAI/YANG DIIMPLEMENTASI/KENDALA) sesuai contoh yang diberikan user
+
+---

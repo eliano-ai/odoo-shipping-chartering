@@ -54,6 +54,9 @@ class VesselVoyage(models.Model):
     final_port_id = fields.Many2one(
         'res.partner', string='Port Tujuan Final', domain=[('is_port', '=', True)],
     )
+    port_call_ids = fields.One2many(
+        'vessel.port.call', 'voyage_id', string='Port Rotation',
+    )
     total_distance_nm = fields.Float(
         string='Total Jarak (NM)', compute='_compute_total_distance_nm', store=True,
     )
@@ -175,26 +178,60 @@ class VesselVoyage(models.Model):
             rec.message_post(body=_('Voyage berangkat dari %s.') % rec.origin_port_id.name)
 
     def action_arrive_port(self):
-        """Toggle sailing -> at_port. Logic penuh terhubung port_call_ids (atb/atd)
-        di Sprint 10 — untuk sprint ini implementasi dasar transisi state saja."""
+        """Toggle sailing -> at_port. Isi atb di port_call_ids aktif (baris urutan
+        terkecil yang belum punya atb)."""
         for rec in self:
             if rec.state != 'sailing':
                 raise UserError(_('Hanya voyage Sailing yang bisa tiba di port.'))
+            next_call = rec.port_call_ids.filtered(lambda c: not c.atb).sorted('sequence')[:1]
+            if not next_call:
+                raise UserError(_(
+                    'Tidak ada port call berikutnya yang terjadwal (semua port_call_ids '
+                    'sudah punya ATB, atau belum ada port call sama sekali).'
+                ))
+            if not next_call.ata:
+                next_call.ata = fields.Datetime.now()
+            next_call.atb = fields.Datetime.now()
             rec.state = 'at_port'
-            rec.message_post(body=_('Voyage tiba di port.'))
+            rec.message_post(body=_('Voyage tiba di port %s.') % next_call.port_id.display_name)
 
     def action_depart_port(self):
-        """Toggle at_port -> sailing. Lihat catatan action_arrive_port."""
+        """Toggle at_port -> sailing. Isi atd di port_call_ids yang sedang aktif
+        (baris dengan atb terisi tapi atd belum)."""
         for rec in self:
             if rec.state != 'at_port':
                 raise UserError(_('Hanya voyage At Port yang bisa berangkat lagi.'))
+            current_call = rec.port_call_ids.filtered(
+                lambda c: c.atb and not c.atd
+            ).sorted('sequence')[:1]
+            if not current_call:
+                raise UserError(_(
+                    'Tidak ditemukan port call aktif (dengan ATB terisi, ATD kosong) '
+                    'untuk voyage ini.'
+                ))
+            current_call.atd = fields.Datetime.now()
             rec.state = 'sailing'
-            rec.message_post(body=_('Voyage berangkat lagi dari port.'))
+            rec.message_post(body=_('Voyage berangkat lagi dari port %s.') % current_call.port_id.display_name)
 
     def action_complete(self):
         for rec in self:
             if rec.state not in ('sailing', 'at_port'):
                 raise UserError(_('Hanya voyage Sailing/At Port yang bisa diselesaikan.'))
+            calls = rec.port_call_ids.sorted('sequence')
+            if calls:
+                for call in calls[:-1]:
+                    if not call.atd:
+                        raise ValidationError(_(
+                            'Port call %s belum punya ATD — voyage tidak bisa diselesaikan '
+                            'selama masih ada port singgah (bukan tujuan final) yang belum '
+                            'berangkat.'
+                        ) % call.port_id.display_name)
+                last_call = calls[-1]
+                if not last_call.atb:
+                    raise ValidationError(_(
+                        'Port call tujuan final (%s) belum punya ATB — voyage tidak bisa '
+                        'diselesaikan.'
+                    ) % last_call.port_id.display_name)
             # TODO(Sprint 12): validasi minimal 1 cargo_document_ids type=bl untuk voyage
             # charter — cargo_document_ids belum ada model-nya sampai Sprint 12.
             if not rec.date_arrival_final:

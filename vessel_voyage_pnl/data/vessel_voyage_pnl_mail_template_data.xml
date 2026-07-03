@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="email_template_pnl_ready_for_review" model="mail.template">
+        <field name="name">Voyage P&amp;L: Siap Review (Finance)</field>
+        <field name="model_id" ref="model_vessel_voyage_pnl"/>
+        <field name="subject">📊 Voyage P&amp;L Siap Review: {{ object.voyage_id.name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('account.group_account_invoice').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0F6E56; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Voyage P&amp;L Siap Review</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Voyage P&amp;L <b><t t-out="object.voyage_id.name"/></b> (kapal
+           <t t-out="object.vessel_id.display_name or '-'"/>) sudah selesai di-generate,
+           siap direview dan di-lock oleh Finance.</p>
+        <p>Total Revenue: <b><t t-out="object.total_revenue"/></b><br/>
+           Total Direct Cost: <b><t t-out="object.total_direct_cost"/></b><br/>
+           Voyage Result: <b><t t-out="object.voyage_result"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_pnl_estimate_variance_significant" model="mail.template">
+        <field name="name">Voyage P&amp;L: Variance Estimate Signifikan (Chartering Manager)</field>
+        <field name="model_id" ref="model_vessel_voyage_pnl"/>
+        <field name="subject">⚠️ Variance Estimate Signifikan: {{ object.voyage_id.name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('vessel_chartering.group_chartering_manager').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #854F0B; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Variance Estimate vs Actual Signifikan</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Voyage <b><t t-out="object.voyage_id.name"/></b> punya variance &gt;25% terhadap
+           estimate — feedback untuk akurasi fixture berikutnya.</p>
+        <p>Revenue Variance: <b><t t-out="'%.1f' % object.revenue_variance_pct"/>%</b><br/>
+           Cost Variance: <b><t t-out="'%.1f' % object.cost_variance_pct"/>%</b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_budget_variance_high" model="mail.template">
+        <field name="name">Voyage P&amp;L: Budget Variance Tinggi (Fleet Manager)</field>
+        <field name="model_id" ref="model_vessel_vessel_budget"/>
+        <field name="subject">🚨 Budget Variance Tinggi: {{ object.vessel_id.display_name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('fleet.fleet_group_manager').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #A21A1A; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Budget Variance Tinggi</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Budget kapal <b><t t-out="object.vessel_id.display_name"/></b> tahun
+           <t t-out="object.year"/> punya realisasi yang menyimpang di atas threshold.</p>
+        <p>Total Budget: <b><t t-out="object.total_budget_cost"/></b><br/>
+           Total Realisasi: <b><t t-out="object.total_actual_cost"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+</odoo>

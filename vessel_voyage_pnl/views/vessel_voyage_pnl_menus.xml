@@ -15,6 +15,10 @@
               parent="menu_voyage_pnl_list_root" action="action_vessel_voyage_pnl"
               sequence="10"/>
 
+    <menuitem id="menu_vessel_pnl_bulk_generate" name="Generate P&amp;L Massal"
+              parent="menu_voyage_pnl_list_root" action="action_vessel_pnl_bulk_generate_wizard"
+              sequence="20" groups="vessel_voyage_pnl.group_voyage_pnl_finance,vessel_voyage_pnl.group_voyage_pnl_manager"/>
+
     <menuitem id="menu_vessel_pnl_root" name="Vessel P&amp;L"
               parent="menu_voyage_pnl_root" sequence="20"/>
 

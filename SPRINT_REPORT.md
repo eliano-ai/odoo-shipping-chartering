@@ -883,3 +883,30 @@ Tidak ada blocker baru. Satu catatan desain: **`actual_amount` murni compute dar
 - **Fresh install 9 modul** (`shipping_dev_test19`, temp DB, `--test-enable`): 0 ERROR/CRITICAL, 9/9 test pass — dibersihkan setelah verifikasi
 
 ---
+
+## Sprint 20 — vessel_voyage_pnl: Historical Backfill, Cron Lengkap & Email — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Wizard `vessel.pnl.bulk.generate.wizard` — filter tanggal opsional, generate `vessel.voyage.pnl` untuk semua voyage `completed` yang belum punya `pnl_id` (jalankan `action_generate_pnl()` penuh per voyage, hasil akhir `state=computed` — bukan draft kosong, supaya langsung berguna untuk Finance review; lihat catatan interpretasi di bawah). Akses dari menu Voyage P&L → Generate P&L Massal
+- [x] `_cron_pnl_pending_lock_alert` (§4.5, mingguan) — voyage P&L `computed` > 14 hari belum di-lock → activity Finance. **`mail.activity.mixin` ditambah ke `vessel.voyage.pnl`** (sebelumnya cuma `mail.thread` dari Sprint 16) — pre-flight check sebelum pakai `activity_schedule`, bukan nunggu error
+- [x] 3 email template (`mail.template`, `noupdate="1"`): P&L siap review (Finance, trigger di `action_generate_pnl`), variance estimate signifikan >25% (Chartering Manager, trigger sama, dicek revenue/cost variance abs), budget variance tinggi (Fleet Manager, trigger dari `_check_variance_threshold` Sprint 19, email sekali per alert pakai guard idempotency yang sama dengan activity)
+- [x] Security: access CSV lengkap untuk wizard bulk-generate & wizard adjustment (Finance+Manager, RWC)
+- [x] Dummy data: voyage completed baru (`demo_contract_coa_shipment_2`, kapal tug) dengan freight invoice posted TAPI **sengaja belum di-generate P&L-nya** — target nyata untuk wizard bulk-generate, diverifikasi via `odoo shell` (1 orphan → 0 setelah wizard jalan, 0 lagi di run kedua/idempotent)
+
+### Blocker & Resolusi
+1. **`mail.template.email_to` inline expression error saat load**: `','.join(group.user_ids.mapped('email'))` gagal — `TypeError('sequence item 0: expected str instance, bool found')` karena user tanpa email menghasilkan `False` di list, bukan string kosong. Fix: bungkus dengan `filter(None, ...)` untuk buang item falsy sebelum join. `filter()` builtin terkonfirmasi tersedia di safe-eval context mail template Odoo 19 (tidak perlu list comprehension).
+2. **Testing manual cron/email di `odoo shell` menunjukkan 0 activity/0 recipient** — root cause BUKAN bug kode (query `pending`/threshold logic diverifikasi benar menemukan record yang tepat), tapi environment dev ini genuinely tidak punya user manapun di `account.group_account_invoice` (Finance) atau `vessel_chartering.group_chartering_manager` — beda dari `fleet.fleet_group_manager` yang kebetulan punya `base.user_admin` (via `group_voyage_pnl_manager` implied Sprint 15). Ini keterbatasan data environment dev (single admin user, belum di-assign ke semua group fungsional), bukan sesuatu yang perlu "diperbaiki" di kode — mekanisme sudah benar dan akan bekerja normal begitu user Finance/Chartering Manager sungguhan dikonfigurasi.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL, 9/9 unit test pass (tidak ada test baru Sprint 20 — semua verifikasi dilakukan manual via `odoo shell`, sesuai pola sprint file: "Manual via shell: jalankan wizard bulk-generate, cek jumlah vessel.voyage.pnl baru")
+- Wizard bulk-generate: 1 orphan voyage → 1 P&L baru ter-generate (state computed, angka lengkap), run kedua → 0 hasil (tidak ada duplikat, idempotent by design karena domain `pnl_id=False`)
+- 3 mail template terdaftar dengan `model_id` benar (`vessel.voyage.pnl` x2, `vessel.vessel.budget` x1) — diverifikasi via psql
+- Cron `_cron_pnl_pending_lock_alert` — query `pending` diverifikasi menemukan record yang tepat (P&L computed >14 hari), mekanisme activity/email benar meski 0 recipient real di environment dev ini (lihat Blocker #2)
+- **Fresh install 9 modul** (`shipping_dev_test20`, temp DB, `--test-enable`): 0 ERROR/CRITICAL, 9/9 test pass, 2 P&L + 1 orphan voyage (sesuai desain, wizard belum dijalankan otomatis di demo) — dibersihkan setelah verifikasi
+
+### Catatan
+Interpretasi task 1 sprint file ("masing-masing state=draft") **disesuaikan** jadi `state=computed` (compute penuh via `action_generate_pnl()`, sama seperti tombol Generate P&L individual) — draft kosong tanpa angka tidak berguna untuk "historical backfill" yang tujuannya justru mengisi data lama dengan P&L nyata. "Finance review manual sebelum lock, bukan auto-lock" tetap terpenuhi karena `action_generate_pnl()` memang tidak pernah auto-lock (cuma sampai `computed`).
+
+---

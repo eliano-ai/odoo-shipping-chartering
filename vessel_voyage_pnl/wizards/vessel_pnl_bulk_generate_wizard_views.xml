@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_pnl_bulk_generate_wizard_form" model="ir.ui.view">
+        <field name="name">vessel.pnl.bulk.generate.wizard.form</field>
+        <field name="model">vessel.pnl.bulk.generate.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Generate P&amp;L Massal">
+                <p>Generate Voyage P&amp;L untuk semua voyage completed yang belum punya P&amp;L
+                   (historical backfill). Kosongkan tanggal untuk memproses semua voyage.</p>
+                <group>
+                    <field name="date_from"/>
+                    <field name="date_to"/>
+                </group>
+                <footer>
+                    <button name="action_generate" type="object" string="Generate"
+                            class="btn-primary"/>
+                    <button string="Batal" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_pnl_bulk_generate_wizard" model="ir.actions.act_window">
+        <field name="name">Generate P&amp;L Massal</field>
+        <field name="res_model">vessel.pnl.bulk.generate.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

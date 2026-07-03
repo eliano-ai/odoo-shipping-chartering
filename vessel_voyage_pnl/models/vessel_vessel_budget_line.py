@@ -79,7 +79,8 @@ class VesselVesselBudgetLine(models.Model):
             ('res_model', '=', 'vessel.vessel.budget'),
             ('res_id', '=', self.budget_id.id),
         ]).mapped('user_id')
-        for user in (recipients - existing_users):
+        new_recipients = recipients - existing_users
+        for user in new_recipients:
             # Guard idempotency: -u ulang / re-trigger tidak boleh dobel activity
             # untuk budget + user yang sama.
             self.budget_id.activity_schedule(
@@ -95,3 +96,11 @@ class VesselVesselBudgetLine(models.Model):
                 },
                 user_id=user.id,
             )
+        if new_recipients:
+            # §4.6 — email cuma dikirim sekali saat alert pertama kali muncul (dipakai
+            # new_recipients yang sama sebagai guard idempotency dengan activity di atas).
+            template = self.env.ref(
+                'vessel_voyage_pnl.email_template_budget_variance_high', raise_if_not_found=False,
+            )
+            if template:
+                template.send_mail(self.budget_id.id, force_send=False)

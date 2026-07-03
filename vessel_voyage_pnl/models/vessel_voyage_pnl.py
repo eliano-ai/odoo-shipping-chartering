@@ -17,7 +17,10 @@ STATE = [
 class VesselVoyagePnl(models.Model):
     _name = 'vessel.voyage.pnl'
     _description = 'P&L per Voyage'
-    _inherit = ['mail.thread']
+    # mail.activity.mixin ditambah Sprint 20 (awalnya cuma mail.thread sesuai §3.2 tech
+    # spec) — _cron_pnl_pending_lock_alert butuh activity_schedule. Pre-flight check
+    # sebelum pakai, bukan nunggu error dulu (pelajaran retro Sprint 8-14).
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'voyage_id desc'
 
     voyage_id = fields.Many2one(
@@ -225,6 +228,59 @@ class VesselVoyagePnl(models.Model):
             rec._compute_allocated_cost()
             rec.state = 'computed'
             rec.computed_date = fields.Datetime.now()
+            rec._send_pnl_ready_email()
+            rec._send_estimate_variance_email_if_significant()
+
+    def _send_pnl_ready_email(self):
+        """§4.6 — email siap-review ke Finance, trigger saat state jadi computed."""
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_voyage_pnl.email_template_pnl_ready_for_review', raise_if_not_found=False,
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
+
+    def _send_estimate_variance_email_if_significant(self):
+        """§4.6 — variance estimate >25% (revenue atau cost) -> email ke Chartering
+        Manager, feedback akurasi fixture."""
+        self.ensure_one()
+        if not self.estimate_id:
+            return
+        if abs(self.revenue_variance_pct) > 25.0 or abs(self.cost_variance_pct) > 25.0:
+            template = self.env.ref(
+                'vessel_voyage_pnl.email_template_pnl_estimate_variance_significant',
+                raise_if_not_found=False,
+            )
+            if template:
+                template.send_mail(self.id, force_send=False)
+
+    @api.model
+    def _cron_pnl_pending_lock_alert(self):
+        """§4.5 — mingguan, voyage P&L state=computed > 14 hari belum di-lock ->
+        activity ke Finance."""
+        deadline = fields.Datetime.now() - timedelta(days=14)
+        pending = self.search([
+            ('state', '=', 'computed'),
+            ('computed_date', '<=', deadline),
+        ])
+        finance_group = self.env.ref('account.group_account_invoice', raise_if_not_found=False)
+        recipients = finance_group.user_ids if finance_group else self.env['res.users']
+        for pnl in pending:
+            existing_users = self.env['mail.activity'].search([
+                ('res_model', '=', 'vessel.voyage.pnl'),
+                ('res_id', '=', pnl.id),
+            ]).mapped('user_id')
+            for user in (recipients - existing_users):
+                # Guard idempotency: -u ulang / cron re-trigger tidak boleh dobel
+                # activity untuk record + user yang sama.
+                pnl.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Voyage P&L Belum Di-lock >14 Hari'),
+                    note=_(
+                        'Voyage %(voyage)s sudah computed sejak %(date)s, belum di-lock.'
+                    ) % {'voyage': pnl.voyage_id.name, 'date': pnl.computed_date},
+                    user_id=user.id,
+                )
 
     def action_recompute(self):
         for rec in self:
@@ -803,3 +859,37 @@ class VesselVoyagePnl(models.Model):
                 'period_month': str(month),
                 'period_year': year,
             })
+
+    @api.model
+    def _demo_setup_orphan_voyage_for_backfill(self):
+        """Sprint 20 — sengaja SATU voyage completed dengan freight invoice posted
+        TAPI belum di-generate P&L-nya, supaya wizard Generate P&L Massal ada sesuatu
+        nyata untuk diverifikasi (bukan 0 hasil). Idempoten — guard existing sebelum
+        create, dan TIDAK memanggil action_generate_pnl (biar tetap orphan sampai
+        wizard/verifikasi manual yang generate)."""
+        contract2 = self.env.ref(
+            'vessel_chartering.demo_contract_coa_shipment_2', raise_if_not_found=False,
+        )
+        if not contract2:
+            return
+        voyage = self.env['vessel.voyage'].search([
+            ('charter_contract_id', '=', contract2.id),
+        ], limit=1)
+        if not voyage:
+            contract2._ensure_voyage_analytic_account()
+            departure = fields.Datetime.now() - timedelta(days=15)
+            arrival = fields.Datetime.now() - timedelta(days=10)
+            voyage = self.env['vessel.voyage'].create({
+                'charter_contract_id': contract2.id,
+                'date_departure': departure,
+                'date_arrival_final': arrival,
+                'state': 'completed',
+            })
+            freight_product = self.env.ref('vessel_chartering.product_freight_revenue')
+            existing_freight = self.env['account.move'].search([
+                ('charter_contract_id', '=', contract2.id),
+                ('invoice_line_ids.product_id', '=', freight_product.id),
+            ], limit=1)
+            if not existing_freight:
+                move = contract2._create_freight_invoice(100)
+                move.action_post()

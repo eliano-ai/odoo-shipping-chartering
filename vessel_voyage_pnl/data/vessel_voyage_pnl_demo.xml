@@ -20,4 +20,8 @@
          memicu activity ke Fleet Manager. -->
     <function model="vessel.vessel.budget" name="_demo_setup_budget"/>
 
+    <!-- Sprint 20 — voyage completed dengan freight invoice tapi sengaja BELUM
+         di-generate P&L-nya, target uji wizard Generate P&L Massal (historical backfill). -->
+    <function model="vessel.voyage.pnl" name="_demo_setup_orphan_voyage_for_backfill"/>
+
 </odoo>

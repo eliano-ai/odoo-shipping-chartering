@@ -1,0 +1,160 @@
+{
+  "project": "Odoo Shipping Vertical Solution — vessel_chartering",
+  "last_updated": "2026-07-02",
+  "sprints": [
+    {
+      "number": 1,
+      "name": "Module Foundation & Master Data",
+      "commit": "78fb59c",
+      "status": "done",
+      "blockers_count": 4,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 11,
+      "tasks_done": 11,
+      "completion_pct": 100
+    },
+    {
+      "number": 2,
+      "name": "Core Charter Contract Model & State Machine",
+      "commit": "34c34ac",
+      "status": "done",
+      "blockers_count": 3,
+      "high_severity_blockers": 2,
+      "fix_commits": 0,
+      "tasks_total": 12,
+      "tasks_done": 12,
+      "completion_pct": 100
+    },
+    {
+      "number": 3,
+      "name": "Voyage Estimate",
+      "commit": "9afe1df",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 4,
+      "name": "Laytime, SOF & Demurrage/Despatch Calculator",
+      "commit": "4476be8",
+      "status": "done",
+      "blockers_count": 4,
+      "high_severity_blockers": 2,
+      "fix_commits": 0,
+      "tasks_total": 10,
+      "tasks_done": 10,
+      "completion_pct": 100
+    },
+    {
+      "number": 5,
+      "name": "Time Charter Hire Statement & Off-hire",
+      "commit": "00f9e6b",
+      "status": "done",
+      "blockers_count": 0,
+      "high_severity_blockers": 0,
+      "fix_commits": 0,
+      "tasks_total": 9,
+      "tasks_done": 9,
+      "completion_pct": 100
+    },
+    {
+      "number": 6,
+      "name": "Invoicing Integration",
+      "commit": "b13f192",
+      "status": "done",
+      "blockers_count": 4,
+      "high_severity_blockers": 2,
+      "fix_commits": 0,
+      "tasks_total": 12,
+      "tasks_done": 12,
+      "completion_pct": 100
+    },
+    {
+      "number": 7,
+      "name": "Cron, Notifikasi, Integrasi Soft, Laporan & Acceptance Final",
+      "commit": "33cd84b",
+      "status": "done",
+      "blockers_count": 2,
+      "high_severity_blockers": 1,
+      "fix_commits": 0,
+      "tasks_total": 8,
+      "tasks_done": 8,
+      "completion_pct": 100
+    }
+  ],
+  "recurring_blockers": [
+    {
+      "item": "Odoo 19 API/schema drift dari pengetahuan versi lama (decoration-secondary, group search view attrs, groups_id->group_ids rename, field/xpath modul lain tidak ada)",
+      "occurrences": 6,
+      "severity": "HIGH",
+      "first_seen": "Sprint 2",
+      "last_seen": "Sprint 6",
+      "resolved": false
+    },
+    {
+      "item": "decoration-secondary dipakai lagi setelah sudah pernah jadi blocker (kesalahan sama berulang persis)",
+      "occurrences": 2,
+      "severity": "HIGH",
+      "first_seen": "Sprint 2",
+      "last_seen": "Sprint 4",
+      "resolved": true
+    },
+    {
+      "item": "Test ditulis sekaligus tanpa run per-test, hasil debug massal (3 fail + 4 error bareng)",
+      "occurrences": 1,
+      "severity": "MED",
+      "first_seen": "Sprint 6",
+      "last_seen": "Sprint 6",
+      "resolved": true
+    }
+  ],
+  "skill_improvement_candidates": [
+    {
+      "skill": "sprint.md",
+      "issue": "Pre-flight check tidak grep pola RNG/API Odoo 19 yang sudah terbukti 2x jadi blocker (decoration-secondary dkk)",
+      "suggested_fix": "Tambah langkah grep eksplisit di Pre-flight untuk daftar pola terlarang: decoration-secondary, <group string=/expand=> di search view, .groups_id (harus .group_ids)",
+      "priority": "HIGH",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Field/xpath dari model modul lain (product.product, res.config.settings) dicek reaktif setelah install gagal, bukan proaktif",
+      "suggested_fix": "Tambah langkah: sebelum menulis field/xpath yang menyentuh model dari modul lain, grep dulu source model tsb di container untuk konfirmasi field/block id benar-benar ada",
+      "priority": "HIGH",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Cross-check acceptance criteria tech spec §10 cuma dilakukan sistematis di sprint terakhir, gap §10.8 baru ketahuan di ujung",
+      "suggested_fix": "Tiap sprint yang tasknya menyebut nomor acceptance criteria, tambahkan sub-langkah cross-check ke tabel acceptance criteria lengkap saat itu juga, bukan ditunda ke sprint penutup",
+      "priority": "MED",
+      "applied": false
+    },
+    {
+      "skill": "sprint.md",
+      "issue": "Test ditulis sekaligus (seluruh suite baru) lalu di-debug massal, bukan iteratif per test",
+      "suggested_fix": "Tambah guidance: jalankan tiap test individual segera setelah ditulis (--test-tags module:Class.test_name) sebelum lanjut ke test berikutnya",
+      "priority": "MED",
+      "applied": false
+    },
+    {
+      "skill": "retro.md",
+      "issue": "Grep fix/revert/patch di Langkah 3 pakai substring polos, false positive di istilah domain (pre-fixture, despatch)",
+      "suggested_fix": "Ganti ke word-boundary regex (\\bfix\\b, \\bpatch\\b, dst) supaya tidak match substring di kata domain maritim",
+      "priority": "LOW",
+      "applied": false
+    },
+    {
+      "skill": "CLAUDE.md",
+      "issue": "Pelajaran Odoo 19 (RNG schema, field rename) cuma prosa naratif di SPRINT_REPORT.md, terbukti gampang lupa (decoration-secondary kepakai lagi persis di Sprint 4 meski sudah dicatat di Sprint 2)",
+      "suggested_fix": "Pindahkan ke checklist grep-able terpisah di CLAUDE.md, bukan cuma narasi, supaya bisa langsung dijalankan sebagai command pre-flight",
+      "priority": "LOW",
+      "applied": false
+    }
+  ]
+}

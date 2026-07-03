@@ -12,3 +12,5 @@ from . import vessel_port_clearance_line
 from . import vessel_noon_report
 from . import vessel_port_disbursement
 from . import vessel_port_disbursement_line
+from . import vessel_cargo_document
+from . import vessel_voyage_delay

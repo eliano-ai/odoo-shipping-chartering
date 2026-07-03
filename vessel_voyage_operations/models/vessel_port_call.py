@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
+from datetime import date, timedelta
+
 from odoo import api, fields, models, _
+
+_logger = logging.getLogger(__name__)
 
 CALL_PURPOSE = [
     ('load', 'Load'),
@@ -14,6 +19,7 @@ CALL_PURPOSE = [
 class VesselPortCall(models.Model):
     _name = 'vessel.port.call'
     _description = 'Port Call — Singgah Kapal per Voyage'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'voyage_id, sequence, id'
 
     voyage_id = fields.Many2one(
@@ -50,12 +56,22 @@ class VesselPortCall(models.Model):
         related='voyage_id.company_id', string='Perusahaan', store=True, readonly=True,
     )
 
-    @api.depends('cargo_ops_commenced', 'cargo_ops_completed')
+    @api.depends(
+        'cargo_ops_commenced', 'cargo_ops_completed',
+        'voyage_id.cargo_document_ids.qty_mt', 'voyage_id.cargo_document_ids.port_call_id',
+    )
     def _compute_cargo_ops_rate_mt_day(self):
-        # Placeholder — akan depend ke qty dari cargo_document_ids setelah
-        # vessel.cargo.document ada (Sprint 13).
         for rec in self:
-            rec.cargo_ops_rate_mt_day = 0.0
+            if not rec.cargo_ops_commenced or not rec.cargo_ops_completed:
+                rec.cargo_ops_rate_mt_day = 0.0
+                continue
+            duration_days = (rec.cargo_ops_completed - rec.cargo_ops_commenced).total_seconds() / 86400.0
+            if duration_days <= 0:
+                rec.cargo_ops_rate_mt_day = 0.0
+                continue
+            docs = rec.voyage_id.cargo_document_ids.filtered(lambda d: d.port_call_id == rec)
+            qty = sum(docs.mapped('qty_mt'))
+            rec.cargo_ops_rate_mt_day = (qty / duration_days) if qty else 0.0
 
     @api.constrains('eta', 'etb', 'etd', 'ata', 'atb', 'atd')
     def _check_estimated_actual_sequence(self):
@@ -125,3 +141,79 @@ class VesselPortCall(models.Model):
 
     def action_create_fda(self):
         return self._action_create_disbursement('fda')
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Cron Jobs — Sprint 13
+    # ─────────────────────────────────────────────────────────────────────
+
+    @api.model
+    def _cron_eta_reminder(self):
+        """Harian — port call eta H-2/H-0 tanpa ata terisi → activity Operations
+        + email reminder ke agen (kalau agent_id.email ada)."""
+        template = self.env.ref(
+            'vessel_voyage_operations.email_template_eta_reminder_agent',
+            raise_if_not_found=False,
+        )
+        for days in (2, 0):
+            target_date = date.today() + timedelta(days=days)
+            calls = self.search([
+                ('ata', '=', False),
+                ('eta', '>=', target_date.strftime('%Y-%m-%d 00:00:00')),
+                ('eta', '<=', target_date.strftime('%Y-%m-%d 23:59:59')),
+            ])
+            for call in calls:
+                existing = self.env['mail.activity'].search([
+                    ('res_model', '=', 'vessel.port.call'),
+                    ('res_id', '=', call.id),
+                    ('summary', 'like', 'ETA H-%s' % days),
+                ])
+                if existing:
+                    continue
+                call.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('ETA H-%(days)s: %(port)s') % {'days': days, 'port': call.port_id.display_name},
+                    note=_(
+                        'Port call %(port)s (voyage %(voyage)s) ETA %(eta)s (H-%(days)s) '
+                        'belum ada ATA. Koordinasi dengan agen/kapal.'
+                    ) % {
+                        'port': call.port_id.display_name, 'voyage': call.voyage_id.name,
+                        'eta': call.eta, 'days': days,
+                    },
+                    user_id=call.voyage_id.user_id.id or self.env.uid,
+                )
+                if template and call.agent_id and call.agent_id.email:
+                    try:
+                        template.send_mail(call.id, force_send=True, raise_exception=False)
+                    except Exception as e:
+                        _logger.warning('Gagal kirim email ETA reminder untuk port call %s: %s', call.id, e)
+
+    @api.model
+    def _cron_clearance_pending_alert(self):
+        """Harian — clearance_line_ids status pending/submitted >2 hari sejak atb."""
+        cutoff = fields.Datetime.now() - timedelta(days=2)
+        calls = self.search([('atb', '!=', False), ('atb', '<=', cutoff)])
+        for call in calls:
+            pending_lines = call.clearance_line_ids.filtered(
+                lambda line: line.status in ('pending', 'submitted')
+            )
+            if not pending_lines:
+                continue
+            existing = self.env['mail.activity'].search([
+                ('res_model', '=', 'vessel.port.call'),
+                ('res_id', '=', call.id),
+                ('summary', 'like', 'Clearance pending'),
+            ])
+            if existing:
+                continue
+            call.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Clearance pending >2 hari — %s') % call.port_id.display_name,
+                note=_(
+                    'Port call %(port)s (voyage %(voyage)s): %(count)s dokumen clearance '
+                    'masih pending/submitted lebih dari 2 hari sejak ATB.'
+                ) % {
+                    'port': call.port_id.display_name, 'voyage': call.voyage_id.name,
+                    'count': len(pending_lines),
+                },
+                user_id=call.voyage_id.user_id.id or self.env.uid,
+            )

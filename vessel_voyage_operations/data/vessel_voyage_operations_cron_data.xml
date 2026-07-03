@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="ir_actions_server_noon_report_missing_alert" model="ir.actions.server">
+        <field name="name">Voyage Operations: Noon Report Missing Alert</field>
+        <field name="model_id" ref="model_vessel_voyage"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_noon_report_missing_alert()</field>
+    </record>
+    <record id="cron_vessel_voyage_operations_noon_report_missing_alert" model="ir.cron">
+        <field name="name">Voyage Operations: Noon Report Missing Alert (30h)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_noon_report_missing_alert"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=45, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_eta_reminder" model="ir.actions.server">
+        <field name="name">Voyage Operations: ETA Reminder</field>
+        <field name="model_id" ref="model_vessel_port_call"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_eta_reminder()</field>
+    </record>
+    <record id="cron_vessel_voyage_operations_eta_reminder" model="ir.cron">
+        <field name="name">Voyage Operations: ETA Reminder (H-2/H-0)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_eta_reminder"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=0, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_clearance_pending_alert" model="ir.actions.server">
+        <field name="name">Voyage Operations: Clearance Pending Alert</field>
+        <field name="model_id" ref="model_vessel_port_call"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_clearance_pending_alert()</field>
+    </record>
+    <record id="cron_vessel_voyage_operations_clearance_pending_alert" model="ir.cron">
+        <field name="name">Voyage Operations: Clearance Pending Alert (&gt;2 hari)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_clearance_pending_alert"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=15, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_disbursement_variance_review" model="ir.actions.server">
+        <field name="name">Voyage Operations: Disbursement Variance Review</field>
+        <field name="model_id" ref="model_vessel_port_disbursement"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_disbursement_variance_review()</field>
+    </record>
+    <record id="cron_vessel_voyage_operations_disbursement_variance_review" model="ir.cron">
+        <field name="name">Voyage Operations: Disbursement Variance Review (Mingguan)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_disbursement_variance_review"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=30, second=0)"/>
+    </record>
+
+</odoo>

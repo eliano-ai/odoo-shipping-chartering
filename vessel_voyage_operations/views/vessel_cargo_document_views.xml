@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="vessel_cargo_document_view_list" model="ir.ui.view">
+        <field name="name">vessel.cargo.document.list</field>
+        <field name="model">vessel.cargo.document</field>
+        <field name="arch" type="xml">
+            <list string="Cargo Documents" editable="bottom">
+                <field name="voyage_id"/>
+                <field name="port_call_id"/>
+                <field name="document_type"/>
+                <field name="document_number"/>
+                <field name="document_date"/>
+                <field name="qty_mt"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vessel_cargo_document_view_form" model="ir.ui.view">
+        <field name="name">vessel.cargo.document.form</field>
+        <field name="model">vessel.cargo.document</field>
+        <field name="arch" type="xml">
+            <form string="Cargo Document">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="voyage_id"/>
+                            <field name="port_call_id"/>
+                            <field name="document_type"/>
+                        </group>
+                        <group>
+                            <field name="document_number"/>
+                            <field name="document_date"/>
+                            <field name="qty_mt"/>
+                        </group>
+                    </group>
+                    <group string="Lampiran">
+                        <field name="attachment_ids" nolabel="1"/>
+                    </group>
+                    <group string="Catatan">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_cargo_document" model="ir.actions.act_window">
+        <field name="name">Cargo Documents</field>
+        <field name="res_model">vessel.cargo.document</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Belum ada cargo document</p>
+        </field>
+    </record>
+
+</odoo>

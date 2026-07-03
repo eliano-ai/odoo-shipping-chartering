@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ─── Record Rule — Portal Nakhoda ───────────────────────────────────
+         Nakhoda cuma boleh lihat voyage & noon report kapal yang sedang
+         ditugaskan padanya (vessel.crew.assignment state=on_board). Berlaku
+         khusus group_voyage_ops_portal — group user/manager tidak terbatasi. -->
+    <record id="rule_vessel_voyage_portal" model="ir.rule">
+        <field name="name">Voyage: portal Nakhoda hanya kapal sendiri</field>
+        <field name="model_id" ref="model_vessel_voyage"/>
+        <field name="domain_force">[('assigned_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('vessel_voyage_operations.group_voyage_ops_portal'))]"/>
+    </record>
+
+    <record id="rule_vessel_noon_report_portal" model="ir.rule">
+        <field name="name">Noon Report: portal Nakhoda hanya kapal sendiri</field>
+        <field name="model_id" ref="model_vessel_noon_report"/>
+        <field name="domain_force">[('voyage_id.assigned_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('vessel_voyage_operations.group_voyage_ops_portal'))]"/>
+    </record>
+
+    <record id="rule_vessel_port_call_portal" model="ir.rule">
+        <field name="name">Port Call: portal Nakhoda hanya kapal sendiri</field>
+        <field name="model_id" ref="model_vessel_port_call"/>
+        <field name="domain_force">[('voyage_id.assigned_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('vessel_voyage_operations.group_voyage_ops_portal'))]"/>
+    </record>
+
+</odoo>

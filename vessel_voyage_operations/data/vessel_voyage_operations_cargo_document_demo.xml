@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- BL untuk demo_voyage_3 (completed) — contoh dokumen wajib sebelum voyage
+         charter bisa diselesaikan (action_complete validasi Sprint 13). -->
+    <record id="demo_cargo_document_1_bl" model="vessel.cargo.document">
+        <field name="voyage_id" ref="demo_voyage_3"/>
+        <field name="document_type">bl</field>
+        <field name="document_number">BL/2026/0001</field>
+        <field name="document_date" eval="(datetime.today() - timedelta(days=23)).strftime('%Y-%m-%d')"/>
+        <field name="qty_mt">6000</field>
+    </record>
+
+    <record id="demo_cargo_document_2_manifest" model="vessel.cargo.document">
+        <field name="voyage_id" ref="demo_voyage_3"/>
+        <field name="document_type">manifest</field>
+        <field name="document_number">MNF/2026/0001</field>
+        <field name="document_date" eval="(datetime.today() - timedelta(days=23)).strftime('%Y-%m-%d')"/>
+        <field name="qty_mt">6000</field>
+    </record>
+
+    <record id="demo_cargo_document_3_mate_receipt" model="vessel.cargo.document">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="port_call_id" ref="demo_port_call_1"/>
+        <field name="document_type">mate_receipt</field>
+        <field name="document_number">MR/2026/0001</field>
+        <field name="document_date" eval="(datetime.today() - timedelta(days=4)).strftime('%Y-%m-%d')"/>
+        <field name="qty_mt">5500</field>
+    </record>
+
+</odoo>

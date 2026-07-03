@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="email_template_voyage_fixed" model="mail.template">
+        <field name="name">Voyage Operations: Voyage Fixed (Internal)</field>
+        <field name="model_id" ref="model_vessel_voyage"/>
+        <field name="subject">🚢 Voyage di-fix: {{ object.name }}</field>
+        <field name="email_to">{{ object.user_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0F6E56; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Voyage Di-fix</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Voyage <b>{{ object.name }}</b> telah di-fix dari kontrak <t t-out="object.charter_contract_id.name"/>.</p>
+        <p>Kapal: <b><t t-out="object.vessel_id.display_name or '-'"/></b><br/>
+           Analytic Account: <t t-out="object.analytic_account_id.name or '-'"/></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_eta_reminder_agent" model="mail.template">
+        <field name="name">Voyage Operations: ETA Reminder (Agen)</field>
+        <field name="model_id" ref="model_vessel_port_call"/>
+        <field name="subject">⏰ ETA Reminder: {{ object.port_id.display_name }}</field>
+        <field name="email_to">{{ object.agent_id.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #854F0B; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Pengingat ETA</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Kapal <b><t t-out="object.voyage_id.vessel_id.display_name or '-'"/></b>
+           (voyage <t t-out="object.voyage_id.name"/>) dijadwalkan ETA di
+           <b><t t-out="object.port_id.display_name"/></b> pada <b><t t-out="object.eta"/></b>.</p>
+        <p>Mohon persiapan sandar/clearance sesuai jadwal.</p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_noon_report_rejected" model="mail.template">
+        <field name="name">Voyage Operations: Noon Report Rejected</field>
+        <field name="model_id" ref="model_vessel_noon_report"/>
+        <field name="subject">❌ Noon report ditolak: {{ object.voyage_id.name }}</field>
+        <field name="email_to">{{ object.create_uid.email or '' }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #A61E1E; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Noon Report Ditolak</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Noon report voyage <b><t t-out="object.voyage_id.name"/></b> tanggal
+           <t t-out="object.report_datetime"/> ditolak.</p>
+        <p>Alasan: <b><t t-out="object.rejection_reason or '-'"/></b></p>
+        <p>Silakan buat laporan baru dengan data yang benar.</p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_disbursement_variance_high" model="mail.template">
+        <field name="name">Voyage Operations: Variance PDA/FDA Tinggi</field>
+        <field name="model_id" ref="model_vessel_port_disbursement"/>
+        <field name="subject">⚠️ Variance PDA/FDA tinggi: {{ object.port_call_id.port_id.display_name }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #A61E1E; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Variance PDA/FDA Di Atas Threshold</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>FDA port call <b><t t-out="object.port_call_id.port_id.display_name"/></b>
+           (voyage <t t-out="object.port_call_id.voyage_id.name"/>) punya variance
+           <b><t t-out="object.variance_pct"/>%</b> dari PDA.</p>
+        <p>Total FDA: <t t-out="object.total_amount"/> <t t-out="object.currency_id.name"/><br/>
+           Variance: <b><t t-out="object.variance_amount"/> <t t-out="object.currency_id.name"/></b></p>
+        <p>Mohon direview.</p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+</odoo>

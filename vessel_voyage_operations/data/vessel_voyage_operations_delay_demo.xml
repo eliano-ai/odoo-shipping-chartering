@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="demo_delay_1_weather" model="vessel.voyage.delay">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="delay_type_id" ref="delay_type_weather"/>
+        <field name="datetime_start" eval="(datetime.today() - timedelta(days=3, hours=6)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="(datetime.today() - timedelta(days=3)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="description">Cuaca buruk di perairan Selat Karimata, kecepatan diturunkan.</field>
+        <field name="impacts_laytime" eval="False"/>
+    </record>
+
+    <record id="demo_delay_2_port_congestion" model="vessel.voyage.delay">
+        <field name="voyage_id" ref="demo_voyage_2"/>
+        <field name="port_call_id" ref="demo_port_call_2"/>
+        <field name="delay_type_id" ref="delay_type_port_congestion"/>
+        <field name="datetime_start" eval="(datetime.today() + timedelta(days=2)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="datetime_end" eval="(datetime.today() + timedelta(days=2, hours=8)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="description">Antrian sandar di Port of Singapore, anchorage penuh.</field>
+        <field name="impacts_laytime" eval="True"/>
+    </record>
+
+</odoo>

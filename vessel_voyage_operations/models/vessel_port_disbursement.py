@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+_logger = logging.getLogger(__name__)
 
 DISBURSEMENT_TYPE = [
     ('pda', 'PDA (Estimasi)'),
@@ -108,7 +112,7 @@ class VesselPortDisbursement(models.Model):
         manager_group = self.env.ref(
             'vessel_voyage_operations.group_voyage_ops_manager', raise_if_not_found=False,
         )
-        finance_group = self.env.ref('account.group_account_manager', raise_if_not_found=False)
+        finance_group = self.env.ref('account.group_account_invoice', raise_if_not_found=False)
         recipients = self.env['res.users']
         if manager_group:
             recipients |= manager_group.user_ids
@@ -118,7 +122,8 @@ class VesselPortDisbursement(models.Model):
             ('res_model', '=', 'vessel.port.disbursement'),
             ('res_id', '=', self.id),
         ]).mapped('user_id')
-        for user in recipients - existing_users:
+        new_recipients = recipients - existing_users
+        for user in new_recipients:
             # Guard idempotency: -u ulang / re-trigger tidak boleh dobel activity
             # untuk record + user yang sama.
             self.activity_schedule(
@@ -136,3 +141,60 @@ class VesselPortDisbursement(models.Model):
                 },
                 user_id=user.id,
             )
+        self._send_variance_high_email(new_recipients)
+
+    def _send_variance_high_email(self, recipients):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_voyage_operations.email_template_disbursement_variance_high',
+            raise_if_not_found=False,
+        )
+        if not template:
+            return
+        for user in recipients:
+            if not user.email:
+                continue
+            try:
+                template.send_mail(
+                    self.id, force_send=True, raise_exception=False,
+                    email_values={'email_to': user.email},
+                )
+            except Exception as e:
+                _logger.warning(
+                    'Gagal kirim email variance tinggi untuk disbursement %s ke %s: %s',
+                    self.id, user.email, e,
+                )
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Cron Jobs — Sprint 13
+    # ─────────────────────────────────────────────────────────────────────
+
+    @api.model
+    def _cron_disbursement_variance_review(self):
+        """Mingguan — FDA confirmed dengan reviewed=False → reminder Finance."""
+        pending = self.search([
+            ('disbursement_type', '=', 'fda'),
+            ('state', '=', 'confirmed'),
+            ('reviewed', '=', False),
+        ])
+        finance_group = self.env.ref('account.group_account_invoice', raise_if_not_found=False)
+        finance_users = finance_group.user_ids if finance_group else self.env['res.users']
+        for disbursement in pending:
+            existing_users = self.env['mail.activity'].search([
+                ('res_model', '=', 'vessel.port.disbursement'),
+                ('res_id', '=', disbursement.id),
+                ('summary', 'like', 'Review variance'),
+            ]).mapped('user_id')
+            for user in finance_users - existing_users:
+                disbursement.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Review variance FDA — %s') % disbursement.port_call_id.port_id.display_name,
+                    note=_(
+                        'FDA %(port)s confirmed dengan variance %(pct).1f%% belum direview. '
+                        'Tandai "Sudah Direview" setelah ditindaklanjuti.'
+                    ) % {
+                        'port': disbursement.port_call_id.port_id.display_name,
+                        'pct': disbursement.variance_pct,
+                    },
+                    user_id=user.id,
+                )

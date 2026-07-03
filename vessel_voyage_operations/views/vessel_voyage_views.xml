@@ -100,6 +100,30 @@
                                 </list>
                             </field>
                         </page>
+                        <page string="Cargo Documents" name="cargo_documents">
+                            <field name="cargo_document_ids">
+                                <list editable="bottom">
+                                    <field name="port_call_id"/>
+                                    <field name="document_type"/>
+                                    <field name="document_number"/>
+                                    <field name="document_date"/>
+                                    <field name="qty_mt"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Delay Log" name="delay_log">
+                            <field name="delay_event_ids">
+                                <list editable="bottom">
+                                    <field name="port_call_id"/>
+                                    <field name="delay_type_id"/>
+                                    <field name="datetime_start"/>
+                                    <field name="datetime_end"/>
+                                    <field name="duration_hours" sum="Total Jam" readonly="1"/>
+                                    <field name="description"/>
+                                    <field name="impacts_laytime"/>
+                                </list>
+                            </field>
+                        </page>
                     </notebook>
                 </sheet>
                 <chatter/>

@@ -46,6 +46,12 @@
               action="action_vessel_noon_report"
               sequence="20"/>
 
+    <menuitem id="menu_vessel_cargo_document"
+              name="Cargo Documents"
+              parent="menu_vessel_voyage_operations_operasional"
+              action="action_vessel_cargo_document"
+              sequence="30"/>
+
     <menuitem id="menu_vessel_voyage_operations_finance"
               name="Finansial Pendukung"
               parent="menu_vessel_voyage_operations_root"
@@ -62,6 +68,17 @@
               parent="menu_vessel_voyage_operations_finance"
               action="action_vessel_port_disbursement_variance_report"
               sequence="20"/>
+
+    <menuitem id="menu_vessel_voyage_operations_reports"
+              name="Laporan"
+              parent="menu_vessel_voyage_operations_root"
+              sequence="40"/>
+
+    <menuitem id="menu_vessel_voyage_delay_analysis"
+              name="Delay Analysis"
+              parent="menu_vessel_voyage_operations_reports"
+              action="action_vessel_voyage_delay_analysis"
+              sequence="10"/>
 
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"

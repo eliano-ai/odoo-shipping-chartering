@@ -577,3 +577,65 @@ Tidak ada blocker baru — desain constraint warning-only (bukan `ValidationErro
 - `<function>` XML tag (Odoo standar, belum pernah dipakai di project ini sebelumnya) dipakai untuk trigger side-effect method dari demo data tanpa lewat state-transition-guarded action method — pola baru untuk project ini, berguna kalau butuh replikasi skenario "sudah confirmed dengan efek samping" di dummy data pada sprint berikutnya
 
 ---
+
+## Restrukturisasi — App Maritime Terpisah dari Fleet — 2026-07-03
+
+Di tengah Sprint 13 (setelah model & security selesai, sebelum views/cron/email), user minta Chartering + Voyage Operations dipindah dari submenu Fleet ke app terpisah. Nama dipilih user dari 4 opsi yang diajukan (Maritime/Pelayaran/Pelayaran Niaga/Niaga Bahari): **Maritime**.
+
+### Diterapkan
+- Modul baru `maritime/` — murni app-root container, **tidak ada model**, `depends: ['vessel_chartering', 'vessel_voyage_operations']`
+- `views/maritime_menus.xml`: `menu_maritime_root` baru (tanpa parent → app tile terpisah), reparent `vessel_chartering.menu_vessel_chartering_root` & `vessel_voyage_operations.menu_vessel_voyage_operations_root` ke bawahnya via update xmlid — modul asal **tidak diubah sama sekali**
+
+### Blocker & Resolusi
+- **Reparent tanpa atribut `name` mereset label menu jadi string xmlid literal** — `<menuitem id="vessel_chartering.menu_vessel_chartering_root" parent="maritime.menu_maritime_root"/>` (tanpa `name`) membuat menu tampil sebagai "vessel_chartering.menu_vessel_chartering_root" alih-alih "Chartering". **Resolusi**: selalu sertakan `name` eksplisit saat menu-update-by-xmlid dari modul lain, meski cuma mau ubah `parent`.
+- **Model Sprint 13 yang sudah ditulis tapi belum di-`-u`** (cargo document, voyage delay) sempat bikin persistent Odoo server (`docker compose` long-running container) error "Missing model" saat browser diakses — karena Python source model sudah ke-load sebagian tapi tabelnya belum dibuat. **Resolusi**: jalankan `-u vessel_voyage_operations,maritime` bareng supaya konsisten, lalu `docker compose restart odoo` untuk registry benar-benar bersih.
+
+### Verifikasi
+- ✅ Menu "Chartering" & "Voyage Operations" hilang dari children `fleet.menu_root`, muncul benar di bawah app "Maritime" baru dengan nama tetap terjaga (setelah fix)
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL, restart container bersih tanpa error
+- ✅ Fungsionalitas Sprint 1-12 (Chartering + Voyage Operations) tetap utuh, cuma pindah app grouping
+
+Commit `6af4d05`, pushed. Sprint 13 lanjut setelah ini.
+
+---
+
+## Sprint 13 — vessel_voyage_operations: Cargo Document, Delay Log, Portal Security, Cron & Email — 2026-07-03
+
+**Status**: ✅ Done — **sprint terakhir sebelum Sprint 14 (views polish, OWL/Leaflet dashboard, acceptance final).**
+
+### Task Selesai
+- [x] Model `vessel.cargo.document` — §3.8: `document_type` (bl/manifest/mate_receipt/cargo_damage_report/other), `qty_mt`, `attachment_ids`, `notes` (Html)
+- [x] Model `vessel.voyage.delay` — §3.9: `delay_type_id`, `datetime_start`/`datetime_end`, `duration_hours` (compute store), `impacts_laytime` (informasional saja, **tidak** auto-sync ke SOF laytime sesuai §8 tech spec), plus `vessel_id` related (untuk pivot Delay Analysis)
+- [x] Update `vessel.voyage._compute_total_delay_hours` — sekarang real (sum `delay_event_ids.duration_hours`, ganti placeholder Sprint 9)
+- [x] Update `action_complete` — sekarang **benar-benar validasi** minimal 1 `cargo_document_ids` type=`bl` untuk voyage charter (ganti placeholder Sprint 9), **diverifikasi via shell**: block tanpa BL, sukses setelah BL ditambahkan
+- [x] **Record rule portal Nakhoda** (§6, resolve tunggakan Sprint 11) — field baru `assigned_user_ids` (Many2many res.users, compute+store) di `vessel.voyage`: dari `vessel_id.crew_assignment_ids` state=`on_board`, mapped `seafarer_id.employee_id.user_id`. Record rule untuk `vessel.voyage`, `vessel.noon.report` (`voyage_id.assigned_user_ids`), dan `vessel.port.call` (gap tambahan yang ditemukan — Sprint 10 kasih akses read tapi belum ada record rule domain) — semua scoped ke `group_voyage_ops_portal` saja
+- [x] `cargo_ops_rate_mt_day` di `vessel.port.call` — sekalian diisi nyata sekarang (qty dari `cargo_document_ids` terkait / durasi cargo ops), ganti placeholder Sprint 10 (task ini sebenarnya bukan scope eksplisit sprint file, tapi dependency-nya sudah ada jadi sekalian ditutup)
+- [x] Security lengkap sesuai §6: `group_voyage_ops_user`/`manager` RWC cargo document & delay; Finance (`account.group_account_invoice`, **bukan** `account.group_account_manager` — koreksi Sprint 12, lihat Blocker) read-only voyage & disbursement
+- [x] **4 cron job**: `_cron_noon_report_missing_alert` (harian, voyage sailing/at_port tanpa noon report approved 30 jam), `_cron_eta_reminder` (harian, port call ETA H-2/H-0 tanpa ATA — pola sama seperti `_cron_laycan_alert` `vessel_chartering`), `_cron_clearance_pending_alert` (harian, clearance pending/submitted >2 hari sejak ATB), `_cron_disbursement_variance_review` (mingguan, FDA confirmed `reviewed=False`) — semua idempotent-guarded (skip user yang sudah punya activity)
+- [x] **4 email template**: voyage fixed (internal, ke `user_id`), ETA reminder (ke `agent_id.email`), noon report rejected (ke `create_uid.email` — proxy untuk Nakhoda pembuat), variance PDA/FDA tinggi (multi-recipient manual loop pakai `email_values` override, bukan template `email_to` — karena resipien dinamis manager+finance)
+- [x] Views: tab "Cargo Documents" & "Delay Log" di form voyage (inline editable), form/list tersendiri untuk cargo document, list/pivot untuk delay, menu Operasional → Cargo Documents, menu Laporan → Delay Analysis (pivot: delay type × kapal × durasi)
+- [x] **6 unit test baru** (`tests/test_voyage_delay_cargo.py`): (a) `duration_hours` compute, (b) **record rule portal isolation** — 2 Nakhoda + 2 seafarer + 2 crew assignment + 2 voyage beda kapal, Nakhoda A `search([])` tidak menemukan voyage kapal B — total 10 test (4+4+2) semua pass
+- [x] Dummy data: 3 cargo document (1 BL untuk `demo_voyage_3`, 1 manifest, 1 mate's receipt), 2 delay event (Weather di laut, Port Congestion di `demo_port_call_2`)
+
+### Blocker & Resolusi
+- **`res.groups.users` (lagi) — kali ini di penulisan sendiri, sudah tercatat di `CLAUDE.md`** — tidak error karena sudah difix konsisten sejak awal sprint ini berkat entry Sprint 12.
+- **`vessel.port.call` tidak pernah punya `mail.thread`/`mail.activity.mixin` sejak Sprint 10, bug laten tidak terdeteksi** — `message_post()` dipakai di `_check_estimated_actual_sequence()` sejak Sprint 10, tapi TIDAK PERNAH benar-benar dipanggil di jalur manapun yang tereksekusi selama Sprint 10-12 (dummy data tidak pernah memicu kondisi ETA/ATA inconsistent). Baru ketahuan Sprint 13 saat `_cron_eta_reminder`/`_cron_clearance_pending_alert` (keduanya butuh `activity_schedule`) langsung `AttributeError: 'vessel.port.call' object has no attribute 'activity_schedule'` saat verifikasi manual via shell. **Resolusi**: tambah `_inherit = ['mail.thread', 'mail.activity.mixin']` + `<chatter/>` di form view. **Pelajaran**: constraint/warning yang jarang ke-trigger oleh dummy data bisa menyembunyikan bug struktural sampai fitur lain (cron) benar-benar memanggil method yang sama.
+- **Koreksi Sprint 12**: Finance group untuk activity/access seharusnya `account.group_account_invoice` (persis sesuai §6 tech spec: "Finance (`account.group_account_invoice`)"), bukan `account.group_account_manager` yang saya pakai waktu itu tanpa cross-check ke tabel security tech spec. Diperbaiki di `_check_variance_threshold()` dan `ir.model.access.csv` sprint ini.
+- **Restrukturisasi Maritime di tengah sprint** (lihat entry terpisah di atas) — sempat bikin persistent dev server error karena model baru ke-load parsial sebelum `-u` resmi; diselesaikan dengan `-u` gabungan + restart container.
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `.groups_id`, `_sql_constraints` list, `res.groups.users` (bukan `.user_ids`) — 0 hasil di semua
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL (cuma warning `vessel.seafarer` pre-existing), idempotent (re-run `-u` kedua kali)
+- ✅ **10/10 unit test pass** (4 Sprint 11 + 4 Sprint 12 + 2 Sprint 13), 0 failed/0 error, tidak ada regresi
+- ✅ Record rule portal — **diverifikasi test eksplisit**: Nakhoda A (`with_user`) `search([])` di `vessel.voyage` cuma menemukan voyage kapal sendiri, tidak menemukan voyage kapal Nakhoda B — acceptance criteria §10.4
+- ✅ `action_complete` block tanpa BL — **diverifikasi via shell**: raise `ValidationError` jelas tanpa BL, sukses setelah BL cargo document ditambahkan
+- ✅ **4 cron jalan tanpa error** — diverifikasi manual via shell satu-satu (sempat gagal 2 dari 4 karena bug `mail.activity.mixin` di atas, fix, lalu 4/4 sukses) — semua 4 `ir.cron` terdaftar `active=true` dengan interval benar (3 harian + 1 mingguan)
+- ✅ **4 email template terdaftar** — diverifikasi via psql, model target benar (`vessel.voyage`, `vessel.port.call`, `vessel.noon.report`, `vessel.port.disbursement`)
+- ✅ Dummy data: 3 cargo document, 2 delay event — sesuai jumlah yang direncanakan
+
+### Catatan
+- **MVP `vessel_voyage_operations` fungsional lengkap kecuali Sprint 14** (views polish, dashboard OWL/Leaflet, acceptance criteria final §10 checklist sistematis) — pola sama seperti `vessel_chartering` Sprint 6→7
+- Field `source='email_parsed'` (Sprint 11) masih placeholder selection saja, belum ada logic — tetap out of scope sesuai keputusan awal
+- Pelajaran `mail.thread`/`mail.activity.mixin` dari sprint ini (constraint/cron yang jarang ter-trigger dummy data bisa menyembunyikan bug struktural) dicatat sebagai reminder proses, bukan ditambah ke `CLAUDE.md` Odoo 19 Gotcha table (ini bukan breaking change Odoo 19, murni disiplin coding sendiri) — akan jadi item eksplisit di checklist Sprint 14 acceptance final: grep semua model baru pastikan ada mixin kalau pakai `message_post`/`activity_schedule`
+
+---

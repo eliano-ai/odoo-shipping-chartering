@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="vessel_voyage_delay_view_list" model="ir.ui.view">
+        <field name="name">vessel.voyage.delay.list</field>
+        <field name="model">vessel.voyage.delay</field>
+        <field name="arch" type="xml">
+            <list string="Delay Log" editable="bottom">
+                <field name="voyage_id"/>
+                <field name="port_call_id"/>
+                <field name="delay_type_id"/>
+                <field name="datetime_start"/>
+                <field name="datetime_end"/>
+                <field name="duration_hours" sum="Total Jam" readonly="1"/>
+                <field name="description"/>
+                <field name="impacts_laytime"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="vessel_voyage_delay_view_pivot" model="ir.ui.view">
+        <field name="name">vessel.voyage.delay.pivot</field>
+        <field name="model">vessel.voyage.delay</field>
+        <field name="arch" type="xml">
+            <pivot string="Delay Analysis">
+                <field name="delay_type_id" type="row"/>
+                <field name="vessel_id" type="col"/>
+                <field name="duration_hours" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_vessel_voyage_delay_analysis" model="ir.actions.act_window">
+        <field name="name">Delay Analysis</field>
+        <field name="res_model">vessel.voyage.delay</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="view_id" ref="vessel_voyage_delay_view_pivot"/>
+    </record>
+
+</odoo>

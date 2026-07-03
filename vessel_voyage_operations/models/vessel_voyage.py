@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
+from datetime import timedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 STATE = [
     ('draft', 'Draft'),
@@ -60,6 +65,21 @@ class VesselVoyage(models.Model):
     noon_report_ids = fields.One2many(
         'vessel.noon.report', 'voyage_id', string='Noon Reports',
     )
+    cargo_document_ids = fields.One2many(
+        'vessel.cargo.document', 'voyage_id', string='Cargo Documents',
+    )
+    delay_event_ids = fields.One2many(
+        'vessel.voyage.delay', 'voyage_id', string='Delay Log',
+    )
+    assigned_user_ids = fields.Many2many(
+        'res.users', compute='_compute_assigned_user_ids', store=True,
+        string='User Bertugas (Crew On Board)',
+        help='Dipakai record rule portal Nakhoda — user account dari vessel.seafarer '
+             'yang sedang on_board di kapal voyage ini. Bridge opsional ke '
+             'vessel_crew_management (soft dependency, pola sama seperti fleet_trip_id) — '
+             'diasumsikan aman karena vessel_crew_management selalu terinstall di '
+             'environment project ini (Layer 1).',
+    )
     total_distance_nm = fields.Float(
         string='Total Jarak (NM)', compute='_compute_total_distance_nm', store=True,
     )
@@ -95,12 +115,26 @@ class VesselVoyage(models.Model):
         for rec in self:
             rec.noon_report_count = len(rec.noon_report_ids)
 
-    @api.depends('state')
+    @api.depends('delay_event_ids.duration_hours')
     def _compute_total_delay_hours(self):
-        # Placeholder — akan depend ke delay_event_ids.duration_hours setelah
-        # vessel.voyage.delay ada (Sprint 13).
         for rec in self:
-            rec.total_delay_hours = 0.0
+            rec.total_delay_hours = sum(rec.delay_event_ids.mapped('duration_hours'))
+
+    # Technical debt (sama kelas dengan fleet_trip_id, Sprint 9): depends menyentuh
+    # field dari vessel_crew_management (soft dependency, tidak di manifest depends).
+    # Aman selama vessel_crew_management selalu terinstall di environment project ini
+    # (Layer 1) — di environment tanpa modul itu, resolve_depends() akan gagal saat
+    # registry setup (bukan silent, error jelas saat install).
+    @api.depends('vessel_id.crew_assignment_ids.state',
+                 'vessel_id.crew_assignment_ids.seafarer_id.employee_id.user_id')
+    def _compute_assigned_user_ids(self):
+        for rec in self:
+            if not rec.vessel_id:
+                rec.assigned_user_ids = [(5, 0, 0)]
+                continue
+            on_board = rec.vessel_id.crew_assignment_ids.filtered(lambda a: a.state == 'on_board')
+            users = on_board.mapped('seafarer_id.employee_id.user_id')
+            rec.assigned_user_ids = [(6, 0, users.ids)]
 
     # ─────────────────────────────────────────────────────────────────────
     # Constraints
@@ -173,6 +207,18 @@ class VesselVoyage(models.Model):
                 ) % rec.charter_contract_id.name)
             rec.state = 'fixed'
             rec.message_post(body=_('Voyage di-fix dari kontrak %s.') % rec.charter_contract_id.name)
+            rec._send_voyage_fixed_email()
+
+    def _send_voyage_fixed_email(self):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_voyage_operations.email_template_voyage_fixed', raise_if_not_found=False,
+        )
+        if template and self.user_id and self.user_id.email:
+            try:
+                template.send_mail(self.id, force_send=True, raise_exception=False)
+            except Exception as e:
+                _logger.warning('Gagal kirim email voyage fixed untuk %s: %s', self.name, e)
 
     def action_depart(self):
         for rec in self:
@@ -240,8 +286,12 @@ class VesselVoyage(models.Model):
                         'Port call tujuan final (%s) belum punya ATB — voyage tidak bisa '
                         'diselesaikan.'
                     ) % last_call.port_id.display_name)
-            # TODO(Sprint 12): validasi minimal 1 cargo_document_ids type=bl untuk voyage
-            # charter — cargo_document_ids belum ada model-nya sampai Sprint 12.
+            if rec.charter_contract_id.contract_type == 'voyage' \
+                    and not rec.cargo_document_ids.filtered(lambda d: d.document_type == 'bl'):
+                raise ValidationError(_(
+                    'Voyage charter wajib punya minimal 1 cargo document tipe Bill of '
+                    'Lading sebelum diselesaikan.'
+                ))
             if not rec.date_arrival_final:
                 rec.date_arrival_final = fields.Datetime.now()
             rec.state = 'completed'
@@ -278,3 +328,35 @@ class VesselVoyage(models.Model):
             'domain': [('voyage_id', '=', self.id)],
             'context': {'default_voyage_id': self.id},
         }
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Cron Jobs — Sprint 13
+    # ─────────────────────────────────────────────────────────────────────
+
+    @api.model
+    def _cron_noon_report_missing_alert(self):
+        """Harian — voyage sailing/at_port tanpa noon report approved 30 jam terakhir."""
+        cutoff = fields.Datetime.now() - timedelta(hours=30)
+        voyages = self.search([('state', 'in', ('sailing', 'at_port'))])
+        for voyage in voyages:
+            last_approved = voyage.noon_report_ids.filtered(
+                lambda r: r.state == 'approved'
+            ).sorted('report_datetime', reverse=True)[:1]
+            if last_approved and last_approved.report_datetime >= cutoff:
+                continue
+            existing = self.env['mail.activity'].search([
+                ('res_model', '=', 'vessel.voyage'),
+                ('res_id', '=', voyage.id),
+                ('summary', 'like', 'Noon report belum ada'),
+            ])
+            if existing:
+                continue
+            voyage.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Noon report belum ada dalam 30 jam terakhir — %s') % voyage.name,
+                note=_(
+                    'Voyage %(name)s (status %(state)s) belum ada noon report approved '
+                    'dalam 30 jam terakhir. Cek kondisi kapal/koordinasi dengan Nakhoda.'
+                ) % {'name': voyage.name, 'state': voyage.state},
+                user_id=voyage.user_id.id or self.env.uid,
+            )

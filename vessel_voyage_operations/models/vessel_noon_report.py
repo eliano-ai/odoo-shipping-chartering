@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+import logging
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+
+_logger = logging.getLogger(__name__)
 
 # Odoo 19: `_sql_constraints = [...]` (list attribute) tidak lagi berfungsi (silent
 # no-op, tidak ada error/warning) — diganti `models.Constraint(...)` per-atribut.
@@ -119,6 +123,19 @@ class VesselNoonReport(models.Model):
             if not rec.rejection_reason:
                 raise ValidationError(_('Alasan penolakan wajib diisi.'))
             rec.write({'state': 'rejected'})
+            rec._send_rejected_email()
+
+    def _send_rejected_email(self):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_voyage_operations.email_template_noon_report_rejected',
+            raise_if_not_found=False,
+        )
+        if template and self.create_uid and self.create_uid.email:
+            try:
+                template.send_mail(self.id, force_send=True, raise_exception=False)
+            except Exception as e:
+                _logger.warning('Gagal kirim email noon report rejected untuk %s: %s', self.id, e)
 
     def _check_gap_warning(self):
         """Warning (bukan blokir) kalau gap dengan noon report approved sebelumnya > 30 jam."""

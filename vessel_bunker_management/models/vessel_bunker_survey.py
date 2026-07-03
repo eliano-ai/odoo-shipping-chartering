@@ -37,6 +37,10 @@ class VesselBunkerSurvey(models.Model):
         string='Dispute?', compute='_compute_variance', store=True,
     )
     dispute_state = fields.Selection(DISPUTE_STATE, default='open', copy=False)
+    supplier_id = fields.Many2one(
+        'res.partner', string='Supplier',
+        related='delivery_id.inquiry_id.purchase_order_id.partner_id', store=True,
+    )
     resolution_notes = fields.Html()
     attachment_ids = fields.Many2many('ir.attachment', string='Laporan Survey')
 

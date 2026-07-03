@@ -1188,3 +1188,73 @@ Tidak ada blocker signifikan. Satu keputusan desain yang perlu didokumentasikan:
 Semua 4 email pakai `force_send=False` (masuk antrian outgoing mail, bukan langsung SMTP) — konsisten pola `vessel_voyage_pnl`, aman dijalankan di demo/install context tanpa mail server dikonfigurasi.
 
 ---
+
+## Sprint 28 — vessel_bunker_management: Views Polish, Laporan & Acceptance Final — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Laporan "Price Analysis" (pivot+graph, `vessel.bunker.quote`) — group supplier/bulan, measure harga FO/DO/`price_vs_market_pct`/total estimasi
+- [x] Laporan "Dispute & Variance Summary" (pivot+graph, `vessel.bunker.survey`) — group surveyor/supplier (tambah field `supplier_id` related `delivery_id.inquiry_id.purchase_order_id.partner_id` supaya bisa di-groupby), measure variance_pct/variance_qty/count dispute
+- [x] Smart button box form Inquiry: Quotes (count), Purchase Order (link langsung), Deliveries (count) — field plain `purchase_order_id` yang redundant dihapus dari group
+- [x] Smart button `rob_anomaly_count` di form `vessel.voyage` — ternyata method-nya sudah ada sejak Sprint 25 tapi belum pernah di-wire ke view manapun (file `views/vessel_voyage_views.xml` belum ada), dibuat baru
+- [x] Smart button `bunker_delivery_count` di form `fleet.vehicle` — field compute baru (`bunker_delivery_ids`/`bunker_delivery_count` via `bunker_inquiry_ids.delivery_ids`) + `action_view_bunker_deliveries`
+- [x] Menu "Laporan" ditambahkan ke struktur (Procurement/Delivery & Survey/Rekonsiliasi/Time Charter/**Laporan**/Konfigurasi) — cross-check psql konfirmasi semua 6 submenu ter-parent benar ke `menu_bunker_management_root`
+- [x] **11/11 Kriteria Penerimaan §10 dijalankan & diverifikasi** (detail di bawah)
+- [x] **Audit checklist §12.2 poin 13** — semua bersih (detail di bawah)
+
+### Hasil Kriteria Penerimaan §10 (verifikasi `odoo shell`, nilai eksak dari demo data)
+| # | Kriteria | Hasil |
+|---|---|---|
+| 10.1 | Install bersih tanpa error/konflik | ✅ Fresh install 10 modul (5 fleet + chartering + voyage_ops + maritime + voyage_pnl + bunker_management) di database kosong `bunker_fresh_test` — 0 ERROR/CRITICAL, semua `state=installed` |
+| 10.2 | Inquiry 3 quote → nominasi → PO | ✅ `state=delivered`, 3 quotes, PO `P00002` ter-generate |
+| 10.3 | BDN 500 MT vs survey 495 MT, tolerance 0.5% → dispute | ✅ `dispute_state` awal `open` (resolved setelah demo lanjut ke resolve) |
+| 10.4 | Resolved → confirm → stock.picking qty 495 | ✅ `delivery_state=confirmed`, picking move qty **495.0** (bukan 500) |
+| 10.5 | ROB: previous 200 + supply 495 − consumption 150 = expected 545, actual 500, variance −45, anomaly (threshold 8%) | ✅ persis: expected 545.0, actual 500.0, variance −45.0 (−8.26%), `is_anomaly=True` |
+| 10.6 | Time charter delivery event → draft BOD/BOR otomatis (ROB dari noon report terdekat) | ✅ diverifikasi via unit test `test_write_hook_creates_draft_bod_bor` (kontrak baru, `write()` delivery_date → 1 draft BOD/BOR) |
+| 10.7 | Settle → bunker_adjustment terisi benar nilai & tanda | ✅ `settlement_amount=63250.00` (85×550+22×750), `hire_statement_line.bunker_adjustment=63250.00`, direction `delivery` (positif) |
+| 10.8 | `group_bunker_user` tidak bisa resolve dispute / approve BOD/BOR | ✅ diverifikasi unit test `test_group_bunker_user_cannot_settle` — `UserError` |
+| 10.9 | Quote jauh di atas referensi → `price_vs_market_pct` signifikan | ✅ quote mark-up (`demo_bunker_quote_1c`) → `price_vs_market_pct=23.5%` |
+| 10.10 | Semua unit test TransactionCase lulus | ✅ **19/19 pass** |
+| 10.11 | Audit bersih | ✅ lihat tabel checklist di bawah |
+
+### Audit Checklist §12.2 Poin 13
+| Cek | Hasil |
+|---|---|
+| `display_name` sebagai field custom | Nihil |
+| `fields.Datetime.from_string`/`fields.Date.from_string` | Nihil |
+| `@api.depends()` kosong | Nihil |
+| `_sql_constraints=`/`decoration-secondary`/`expand="0"`/`.groups_id` | Nihil |
+| Model pakai `message_post`/`activity_schedule` — mixin benar? | Ya — `vessel.bunker.inquiry`, `vessel.bunker.rob.reconciliation`, `vessel.bunker.survey` semua `mail.thread`+`mail.activity.mixin` |
+| `ir.model.access.csv` prefix `vessel_bunker_management_`/`access_vessel_bunker_` | 16/16 baris konsisten |
+| `vessel_chartering/__manifest__.py` TIDAK depend ke modul ini | Konfirmasi — depends chartering tetap `fleet, fleet_document_id, account, analytic, mail` saja (dependency satu arah terjaga) |
+| Fresh install dari database kosong, 10 modul, tanpa `--test-enable` | ✅ selesai penuh — Registry loaded 231s (jauh lebih cepat dari estimasi `vessel_voyage_pnl` Sprint 21 karena TANPA `--test-enable`), 0 ERROR/CRITICAL, demo data terverifikasi benar (`vessel_bunker_bod_bor` count=1 state=settled, 1 ROB anomaly) |
+
+### Blocker & Resolusi
+Tidak ada blocker. Satu catatan transparansi: fresh-install acceptance (§12.2 poin 13 butir terakhir) dijalankan **tanpa** `--test-enable` (bukti sekunder "tidak ada circular dependency/error struktural", ~4 menit) alih-alih dengan `--test-enable` penuh dari database kosong (berpotensi 15+ menit berdasarkan pengalaman `vessel_voyage_pnl` Sprint 21) — **bukti utama** kelulusan §10.10 (19/19 unit test) tetap datang dari `-u` idempotent di database dev (`shipping_dev`) yang sudah teruji berkali-kali sepanjang Sprint 22-28, sesuai catatan proaktif yang sudah ditulis di `sprint_28.md` sejak awal.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL
+- **19/19 unit test pass**
+- Fresh install 10 modul dari database kosong: 0 ERROR/CRITICAL, demo data benar
+- Semua 11 acceptance criteria §10 **lulus**
+
+---
+
+### 🎉 MVP `vessel_bunker_management` Selesai — Ringkasan 7 Sprint
+
+| Sprint | Fokus | Status |
+|---|---|---|
+| 22 | Foundation & Master Data | ✅ |
+| 23 | Procurement (Inquiry, Quote, PO Integration) | ✅ |
+| 24 | BDN, Survey, Dispute & Stock Integration | ✅ |
+| 25 | ROB Reconciliation (Inti Anti-Fraud) | ✅ |
+| 26 | BOD/BOR Settlement (Time Charter) | ✅ |
+| 27 | Cron Lengkap & Email | ✅ |
+| 28 | Views Polish, Laporan & Acceptance Final | ✅ |
+
+**19/19 unit test pass. 11/11 acceptance criteria terpenuhi**, semua terverifikasi otomatis + data real (bukan simulasi/placeholder).
+
+Dengan ini, roadmap 4 modul (`vessel_chartering` → `vessel_voyage_operations` → `vessel_voyage_pnl` → `vessel_bunker_management`) yang direncanakan sejak awal proyek **tuntas seluruhnya**. Push ke `github` remote dilakukan sekali di akhir sprint ini (bukan per-sprint), sesuai instruksi user 2026-07-03.
+
+---

@@ -42,6 +42,8 @@ class VesselBunkerInquiry(models.Model):
     )
     purchase_order_id = fields.Many2one('purchase.order', string='Purchase Order', readonly=True, copy=False)
     delivery_ids = fields.One2many('vessel.bunker.delivery', 'inquiry_id', string='Deliveries')
+    quote_count = fields.Integer(string='Quote Count', compute='_compute_quote_count')
+    delivery_count = fields.Integer(string='Delivery Count', compute='_compute_delivery_count')
     state = fields.Selection(STATE, default='draft', required=True, tracking=True, copy=False)
     analytic_account_id = fields.Many2one(
         'account.analytic.account', string='Analytic Account', compute='_compute_analytic_account_id', store=True,
@@ -64,6 +66,47 @@ class VesselBunkerInquiry(models.Model):
             rec.analytic_account_id = (
                 rec.voyage_id.analytic_account_id or rec.vessel_id.analytic_account_id
             )
+
+    @api.depends('quote_ids')
+    def _compute_quote_count(self):
+        for rec in self:
+            rec.quote_count = len(rec.quote_ids)
+
+    @api.depends('delivery_ids')
+    def _compute_delivery_count(self):
+        for rec in self:
+            rec.delivery_count = len(rec.delivery_ids)
+
+    def action_view_quotes(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Quotes',
+            'res_model': 'vessel.bunker.quote',
+            'view_mode': 'list,form',
+            'domain': [('inquiry_id', '=', self.id)],
+            'context': {'default_inquiry_id': self.id},
+        }
+
+    def action_view_purchase_order(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Purchase Order',
+            'res_model': 'purchase.order',
+            'view_mode': 'form',
+            'res_id': self.purchase_order_id.id,
+        }
+
+    def action_view_deliveries(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Deliveries',
+            'res_model': 'vessel.bunker.delivery',
+            'view_mode': 'list,form',
+            'domain': [('inquiry_id', '=', self.id)],
+        }
 
     @api.constrains('selected_quote_id', 'quote_ids')
     def _check_selected_quote_belongs_to_inquiry(self):

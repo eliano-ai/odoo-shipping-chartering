@@ -51,6 +51,17 @@
               parent="menu_bunker_time_charter_root" action="action_vessel_bunker_bod_bor"
               sequence="10"/>
 
+    <menuitem id="menu_bunker_reports_root" name="Laporan"
+              parent="menu_bunker_management_root" sequence="50"/>
+
+    <menuitem id="menu_vessel_bunker_price_analysis" name="Price Analysis"
+              parent="menu_bunker_reports_root" action="action_vessel_bunker_price_analysis"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_bunker_dispute_variance_summary" name="Dispute &amp; Variance Summary"
+              parent="menu_bunker_reports_root" action="action_vessel_bunker_dispute_variance_summary"
+              sequence="20"/>
+
     <menuitem id="menu_bunker_config" name="Konfigurasi"
               parent="menu_bunker_management_root" sequence="90"
               groups="vessel_bunker_management.group_bunker_manager"/>

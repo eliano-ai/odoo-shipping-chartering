@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- §5 Laporan — Price Analysis: quote/PO vs vessel.bunker.price.reference,
+         group by supplier/fuel_type/bulan (price_vs_market_pct sudah dihitung per
+         quote sejak Sprint 23, di sini cuma agregasi view-nya). -->
+    <record id="view_vessel_bunker_quote_pivot_price_analysis" model="ir.ui.view">
+        <field name="name">vessel.bunker.quote.pivot.price.analysis</field>
+        <field name="model">vessel.bunker.quote</field>
+        <field name="arch" type="xml">
+            <pivot string="Price Analysis">
+                <field name="supplier_id" type="row"/>
+                <field name="create_date" interval="month" type="col"/>
+                <field name="price_fo_usd_mt" type="measure"/>
+                <field name="price_do_usd_mt" type="measure"/>
+                <field name="price_vs_market_pct" type="measure"/>
+                <field name="total_estimated_usd" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_quote_graph_price_analysis" model="ir.ui.view">
+        <field name="name">vessel.bunker.quote.graph.price.analysis</field>
+        <field name="model">vessel.bunker.quote</field>
+        <field name="arch" type="xml">
+            <graph string="Price Analysis" type="bar">
+                <field name="supplier_id" type="row"/>
+                <field name="price_vs_market_pct" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_price_analysis" model="ir.actions.act_window">
+        <field name="name">Price Analysis</field>
+        <field name="res_model">vessel.bunker.quote</field>
+        <field name="view_mode">pivot,graph</field>
+    </record>
+
+    <!-- §5 Laporan — Dispute &amp; Variance Summary: pivot per supplier/surveyor,
+         jumlah dispute &amp; rata-rata variance_pct. -->
+    <record id="view_vessel_bunker_survey_pivot_dispute_summary" model="ir.ui.view">
+        <field name="name">vessel.bunker.survey.pivot.dispute.summary</field>
+        <field name="model">vessel.bunker.survey</field>
+        <field name="arch" type="xml">
+            <pivot string="Dispute &amp; Variance Summary">
+                <field name="surveyor_id" type="row"/>
+                <field name="supplier_id" type="row"/>
+                <field name="dispute_state" type="col"/>
+                <field name="variance_pct" type="measure"/>
+                <field name="variance_qty_mt" type="measure"/>
+                <field name="is_dispute" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_survey_graph_dispute_summary" model="ir.ui.view">
+        <field name="name">vessel.bunker.survey.graph.dispute.summary</field>
+        <field name="model">vessel.bunker.survey</field>
+        <field name="arch" type="xml">
+            <graph string="Dispute &amp; Variance Summary" type="bar">
+                <field name="surveyor_id" type="row"/>
+                <field name="variance_pct" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_dispute_variance_summary" model="ir.actions.act_window">
+        <field name="name">Dispute &amp; Variance Summary</field>
+        <field name="res_model">vessel.bunker.survey</field>
+        <field name="view_mode">pivot,graph</field>
+    </record>
+
+</odoo>

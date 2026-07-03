@@ -13,15 +13,37 @@ class FleetVehicleBunkerManagement(models.Model):
     bunker_inquiry_ids = fields.One2many(
         'vessel.bunker.inquiry', 'vessel_id', string='Bunker Inquiries',
     )
+    bunker_delivery_ids = fields.One2many(
+        'vessel.bunker.delivery', compute='_compute_bunker_delivery_ids', string='Bunker Deliveries',
+    )
+    bunker_delivery_count = fields.Integer(
+        string='Bunker Delivery Count', compute='_compute_bunker_delivery_ids',
+    )
     rob_reconciliation_ids = fields.One2many(
         'vessel.bunker.rob.reconciliation', compute='_compute_rob_reconciliation_ids',
         string='ROB Reconciliations',
     )
 
+    @api.depends('bunker_inquiry_ids.delivery_ids')
+    def _compute_bunker_delivery_ids(self):
+        for vehicle in self:
+            vehicle.bunker_delivery_ids = vehicle.bunker_inquiry_ids.delivery_ids
+            vehicle.bunker_delivery_count = len(vehicle.bunker_delivery_ids)
+
     @api.depends('voyage_ids.rob_reconciliation_ids')
     def _compute_rob_reconciliation_ids(self):
         for vehicle in self:
             vehicle.rob_reconciliation_ids = vehicle.voyage_ids.rob_reconciliation_ids
+
+    def action_view_bunker_deliveries(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Bunker Deliveries',
+            'res_model': 'vessel.bunker.delivery',
+            'view_mode': 'list,form',
+            'domain': [('vessel_id', '=', self.id)],
+        }
 
     bunker_stock_location_id = fields.Many2one(
         'stock.location', string='Lokasi Stok Bunker', readonly=True, copy=False,

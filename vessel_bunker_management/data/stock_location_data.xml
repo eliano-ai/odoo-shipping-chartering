@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Parent lokasi untuk semua kapal — 1 stock.location per kapal dibuat lazy
+         (on-demand) sebagai child dari sini, lihat fleet.vehicle._get_bunker_stock_location().
+         Keputusan teknis Sprint 22: tidak ada konsep stock.location per kapal di modul
+         fleet existing manapun, jadi dibuat baru di modul ini. -->
+    <record id="stock_location_vessels" model="stock.location">
+        <field name="name">Vessels</field>
+        <field name="usage">internal</field>
+    </record>
+
+</odoo>

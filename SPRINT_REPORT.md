@@ -1066,3 +1066,36 @@ Pre-flight grep (checklist Odoo 19 gotcha CLAUDE.md) bersih di percobaan pertama
 Desain "Kirim Inquiry" (`action_send_inquiry`) di-dokumentasikan ulang: transisi ini menandai inquiry resmi dikirim ke pasar secara umum (bukan email otomatis per-quote, karena quote belum ada saat transisi ini terjadi) — supplier lalu balas dengan harga yang diinput staff sebagai quote. Email ke supplier individual (kalau memang dibutuhkan) lebih tepat jadi fitur Fase 2 setelah pola quote-request eksternal jelas, dicatat untuk Sprint 27 (cron & email) — evaluasi ulang di sana apakah masih relevan atau sudah cukup dengan proses saat ini.
 
 ---
+
+## Sprint 24 — vessel_bunker_management: BDN, Survey, Dispute & Stock Integration — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.bunker.delivery` (§3.4, BDN) — `qty_confirmed_mt` compute (survey kalau ada, else BDN qty), `account_move_id` compute (diganti dari `related` yang type-mismatch — lihat Blocker), state machine draft→delivered→surveyed/disputed→confirmed
+- [x] Model `vessel.bunker.survey` (§3.5) — `variance_qty_mt`/`variance_pct`/`is_dispute` compute store, `tolerance_pct` default dari `res.company.default_bdn_survey_tolerance_pct`
+- [x] **State machine dispute** — survey `is_dispute=True` → delivery otomatis `disputed`; constraint tolak `action_confirm_delivery()` selama dispute belum `resolved`. Test variance DI ATAS dan DI BAWAH tolerance, dua-duanya lulus
+- [x] `action_resolve_dispute` — guard `has_group('group_bunker_manager')` eksplisit di method (bukan cuma andalkan access CSV)
+- [x] `action_confirm_delivery` — auto-create `stock.location` per kapal (lazy get-or-create, `fleet.vehicle._get_bunker_stock_location()`) + `stock.picking` incoming qty `qty_confirmed_mt`
+- [x] Extend `fleet.vehicle.bunker_stock_location_id`
+- [x] Security access `vessel.bunker.delivery`/`vessel.bunker.survey`
+- [x] Views: form delivery (alert banner saat dispute), form survey (tombol Resolve Dispute manager-only), list "Dispute Terbuka"
+- [x] Dummy data: replikasi **persis** §10.3/§10.4 — BDN 500 MT, survey 495 MT, tolerance 0.5% → dispute, resolve, confirm → `stock.picking` qty 495 MT (bukan 500)
+
+### Blocker & Resolusi
+1. **`account_move_id` related field type mismatch** — `purchase.order.invoice_ids` adalah One2many/Many2many (banyak invoice), sementara field saya `Many2one` — `TypeError: Type of related field ... is inconsistent`. Fix: ganti jadi compute biasa (`invoice_ids[:1]`), bukan `related=`.
+2. **`<record>` XML re-declare field `fleet.fuel.type.product_id` (milik modul lain, `fleet_fuel_log`) tidak pernah ter-apply** — noupdate yang berlaku adalah noupdate ir_model_data ASLI (punya `fleet_fuel_log`), bukan noupdate block di file modul saya. **Ditambahkan ke checklist gotcha CLAUDE.md.** Fix: method Python idempoten (`write()` eksplisit) di luar scope noupdate, bukan `<record>` re-declare.
+3. **`stock.move.name` tidak ada lagi di Odoo 19** (`ValueError: Invalid field 'name' on model 'stock.move'`) — pakai `description_picking`. **Temuan penting**: `fleet_fuel_log._create_stock_move()` (modul existing, bukan scope sprint ini) punya bug laten IDENTIK yang belum pernah ketahuan karena `fuel_type.product_id` juga tidak pernah diisi di modul itu (guard "if not product: return" selalu kena duluan). **Ditambahkan ke checklist gotcha CLAUDE.md** dengan catatan eksplisit soal bug laten `fleet_fuel_log` (di luar scope perbaikan, cuma dicatat untuk kalau modul itu suatu saat diaktifkan penuh).
+4. Demo setup butuh "self-healing" tambahan — `-u` pertama sempat confirm delivery TANPA stock.picking (karena fuel_type.product_id belum ke-link saat itu di urutan eksekusi function), `-u` kedua baru berhasil generate picking setelah ditambah fallback re-attempt di method demo.
+5. 2 unit test regresi ter-deteksi setelah demo data Sprint 24 memperpanjang lifecycle inquiry (nominated→delivered): test `assertRaises((UserError, AccessError))` tuple form tidak didukung Odoo test framework (`TypeError: issubclass() arg 1 must be a class` — beda dari standard unittest), dan test Sprint 23 yang hardcode assert `state == 'nominated'` (sudah tidak valid karena state lanjut ke `delivered`). Keduanya diperbaiki.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL, 1 delivery + 1 stock.picking (qty 495) stabil setelah berkali-kali `-u`
+- **9/9 unit test pass** (4 dari Sprint 23 + 5 baru: dispute terdeteksi, variance dalam toleransi bukan dispute, confirm diblokir saat masih dispute, stock.picking pakai qty_confirmed bukan qty_bdn, `group_bunker_user` diverifikasi eksplisit `UserError` saat resolve dispute)
+- §10.3 acceptance criteria **persis**: 500 MT BDN, survey 495 MT → `variance_pct` -1%, `is_dispute=True` (tolerance 0.5%)
+- §10.4 acceptance criteria **persis**: setelah resolved → confirm → `stock.picking` move qty 495.00 (dikonfirmasi via psql & unit test `assertNotAlmostEqual` vs 500)
+
+### Catatan
+2 gotcha Odoo 19 baru ditemukan sprint ini (noupdate cross-module record update, `stock.move.name` dihapus) — keduanya ditambahkan ke checklist CLAUDE.md meski masing-masing baru sekali kejadian, karena risiko tinggi terulang di Sprint 25-28 yang juga akan banyak berinteraksi dengan `stock`/`fleet_fuel_log`.
+
+---

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_bunker_survey_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.survey.list</field>
+        <field name="model">vessel.bunker.survey</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="is_dispute and dispute_state == 'open'"
+                  decoration-success="is_dispute and dispute_state == 'resolved'">
+                <field name="delivery_id"/>
+                <field name="surveyor_id"/>
+                <field name="survey_qty_mt"/>
+                <field name="variance_qty_mt"/>
+                <field name="variance_pct" widget="percentage"/>
+                <field name="is_dispute"/>
+                <field name="dispute_state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_survey_form" model="ir.ui.view">
+        <field name="name">vessel.bunker.survey.form</field>
+        <field name="model">vessel.bunker.survey</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_resolve_dispute" type="object" string="Resolve Dispute"
+                            class="oe_highlight"
+                            invisible="not is_dispute or dispute_state == 'resolved'"
+                            groups="vessel_bunker_management.group_bunker_manager"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="delivery_id"/>
+                            <field name="surveyor_id"/>
+                            <field name="survey_date"/>
+                            <field name="survey_qty_mt"/>
+                            <field name="survey_density"/>
+                        </group>
+                        <group>
+                            <field name="variance_qty_mt" readonly="1"/>
+                            <field name="variance_pct" readonly="1" widget="percentage"/>
+                            <field name="tolerance_pct"/>
+                            <field name="is_dispute" readonly="1"/>
+                            <field name="dispute_state" readonly="1" invisible="not is_dispute"/>
+                        </group>
+                    </group>
+                    <group invisible="not is_dispute">
+                        <field name="resolution_notes"
+                               readonly="dispute_state == 'resolved'"/>
+                    </group>
+                    <field name="attachment_ids" widget="many2many_binary"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_survey" model="ir.actions.act_window">
+        <field name="name">Independent Survey</field>
+        <field name="res_model">vessel.bunker.survey</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

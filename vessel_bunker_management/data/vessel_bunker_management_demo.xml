@@ -65,6 +65,8 @@
        (default noupdate=0) selalu re-run tiap -u, idempotency-nya dijamin oleh guard
        di method Python itu sendiri (_demo_nominate_if_needed cek state sebelum jalan). -->
   <data>
+    <function model="vessel.bunker.delivery" name="_demo_link_fuel_type_products"/>
+
     <!-- Nominasi quote termurah (supplier B) -> PO otomatis ter-generate (§10.2).
          selected_quote_id di-set DI DALAM method Python (bukan via <record> block
          terpisah di XML — forward-reference 2-block pattern untuk M2O yang target-nya
@@ -73,5 +75,9 @@
         <value eval="[ref('demo_bunker_inquiry_1')]"/>
         <value eval="'vessel_bunker_management.demo_bunker_quote_1b'"/>
     </function>
+
+    <!-- §10.3/§10.4 acceptance criteria — BDN 500 MT, survey 495 MT, dispute,
+         resolve, confirm -> stock.picking qty 495 MT. -->
+    <function model="vessel.bunker.delivery" name="_demo_setup_dispute_scenario"/>
   </data>
 </odoo>

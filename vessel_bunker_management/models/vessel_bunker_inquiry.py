@@ -39,8 +39,7 @@ class VesselBunkerInquiry(models.Model):
         domain="[('inquiry_id', '=', id)]",
     )
     purchase_order_id = fields.Many2one('purchase.order', string='Purchase Order', readonly=True, copy=False)
-    # delivery_ids (One2many vessel.bunker.delivery) ditambahkan Sprint 24 — model
-    # delivery belum ada di sprint ini, pola inkremental sama seperti vessel_voyage_pnl.
+    delivery_ids = fields.One2many('vessel.bunker.delivery', 'inquiry_id', string='Deliveries')
     state = fields.Selection(STATE, default='draft', required=True, tracking=True, copy=False)
     analytic_account_id = fields.Many2one(
         'account.analytic.account', string='Analytic Account', compute='_compute_analytic_account_id', store=True,

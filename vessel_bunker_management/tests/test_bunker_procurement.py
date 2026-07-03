@@ -29,8 +29,10 @@ class TestBunkerProcurement(TransactionCase):
 
     def test_nomination_creates_purchase_order(self):
         """§10.2 acceptance criteria — nominasi -> PO ter-generate dengan line & harga
-        sesuai quote terpilih."""
-        self.assertEqual(self.inquiry.state, 'nominated')
+        sesuai quote terpilih. State inquiry sudah lanjut ke 'delivered' di demo data
+        Sprint 24 (BDN confirmed) — cukup pastikan sudah melewati 'nominated', bukan
+        stuck di draft/inquiry_sent/quotes_received."""
+        self.assertIn(self.inquiry.state, ('nominated', 'delivered'))
         po = self.inquiry.purchase_order_id
         self.assertTrue(po)
         quote = self.inquiry.selected_quote_id

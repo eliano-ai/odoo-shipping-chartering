@@ -4,3 +4,5 @@ from . import res_company
 from . import fleet_vehicle
 from . import vessel_bunker_quote
 from . import vessel_bunker_inquiry
+from . import vessel_bunker_survey
+from . import vessel_bunker_delivery

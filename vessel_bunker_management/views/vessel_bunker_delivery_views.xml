@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_bunker_delivery_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.delivery.list</field>
+        <field name="model">vessel.bunker.delivery</field>
+        <field name="arch" type="xml">
+            <list decoration-danger="state == 'disputed'">
+                <field name="bdn_number"/>
+                <field name="vessel_id"/>
+                <field name="delivery_datetime"/>
+                <field name="fuel_type_id"/>
+                <field name="qty_bdn_mt"/>
+                <field name="qty_confirmed_mt"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_delivery_form" model="ir.ui.view">
+        <field name="name">vessel.bunker.delivery.form</field>
+        <field name="model">vessel.bunker.delivery</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_mark_delivered" type="object" string="Tandai Delivered"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_confirm_delivery" type="object" string="Konfirmasi Penerimaan"
+                            class="oe_highlight"
+                            invisible="state not in ('delivered', 'surveyed', 'disputed')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,delivered,surveyed,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-danger" role="alert" invisible="state != 'disputed'">
+                        Delivery ini dalam status DISPUTE — tidak bisa dikonfirmasi sampai
+                        dispute di-resolve dari form Survey.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="inquiry_id"/>
+                            <field name="vessel_id" readonly="1"/>
+                            <field name="port_id" readonly="1"/>
+                            <field name="bdn_number"/>
+                            <field name="bdn_date"/>
+                            <field name="delivery_datetime"/>
+                        </group>
+                        <group>
+                            <field name="fuel_type_id"/>
+                            <field name="qty_bdn_mt"/>
+                            <field name="density"/>
+                            <field name="temperature_c"/>
+                            <field name="sulfur_content_pct"/>
+                            <field name="qty_confirmed_mt" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="survey_id" readonly="1"/>
+                        <field name="stock_picking_id" readonly="1"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_delivery_dispute_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.delivery.dispute.list</field>
+        <field name="model">vessel.bunker.delivery</field>
+        <field name="arch" type="xml">
+            <list create="0">
+                <field name="bdn_number"/>
+                <field name="vessel_id"/>
+                <field name="qty_bdn_mt"/>
+                <field name="survey_id"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_delivery" model="ir.actions.act_window">
+        <field name="name">BDN / Delivery</field>
+        <field name="res_model">vessel.bunker.delivery</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <record id="action_vessel_bunker_delivery_dispute" model="ir.actions.act_window">
+        <field name="name">Dispute Terbuka</field>
+        <field name="res_model">vessel.bunker.delivery</field>
+        <field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'disputed')]</field>
+    </record>
+
+</odoo>

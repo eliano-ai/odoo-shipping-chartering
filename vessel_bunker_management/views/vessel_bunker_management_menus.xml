@@ -18,6 +18,21 @@
               parent="menu_bunker_procurement_root" action="action_vessel_bunker_quote_comparison"
               sequence="20"/>
 
+    <menuitem id="menu_bunker_delivery_root" name="Delivery &amp; Survey"
+              parent="menu_bunker_management_root" sequence="20"/>
+
+    <menuitem id="menu_vessel_bunker_delivery" name="BDN / Delivery"
+              parent="menu_bunker_delivery_root" action="action_vessel_bunker_delivery"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_bunker_survey" name="Independent Survey"
+              parent="menu_bunker_delivery_root" action="action_vessel_bunker_survey"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_bunker_delivery_dispute" name="Dispute Terbuka"
+              parent="menu_bunker_delivery_root" action="action_vessel_bunker_delivery_dispute"
+              sequence="30"/>
+
     <menuitem id="menu_bunker_config" name="Konfigurasi"
               parent="menu_bunker_management_root" sequence="90"
               groups="vessel_bunker_management.group_bunker_manager"/>

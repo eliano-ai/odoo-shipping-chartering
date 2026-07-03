@@ -1034,3 +1034,35 @@ Tidak ada blocker baru. Fakta environment (tidak ada `stock.location` per kapal 
 Pre-flight grep (checklist Odoo 19 gotcha CLAUDE.md) bersih di percobaan pertama — termasuk gotcha `<group expand="0">` yang sempat kena di Sprint 21 `vessel_voyage_pnl`, kali ini di-grep dulu sebelum menulis view baru manapun.
 
 ---
+
+## Sprint 23 — vessel_bunker_management: Procurement (Inquiry, Quote, PO Integration) — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.bunker.inquiry` (§3.2) — sequence `BINQ/2026/%05d`, `analytic_account_id` compute (voyage kalau ada, else vessel), state machine draft→inquiry_sent→quotes_received→nominated→delivered→cancelled
+- [x] Model `vessel.bunker.quote` (§3.3) — `total_estimated_usd` compute, `price_vs_market_pct` compute (bandingkan terhadap `vessel.bunker.price.reference` per fuel type FO=mfo/DO=hsd, weighted by qty diminta)
+- [x] Constraint `selected_quote_id` harus salah satu dari `quote_ids` milik inquiry yang sama
+- [x] Transisi otomatis `quotes_received` saat quote pertama dibuat (override `create()`)
+- [x] `action_nominate` — auto-create `purchase.order` dengan line FO/DO/barging fee sesuai quote terpilih, analytic distribution benar. **Produk generik baru** `product_bunker_fo`/`product_bunker_do`/`product_bunker_barging_fee` (type consu/service) — tahap inquiry/quote pakai kategori FO/DO tetap sesuai desain tech spec, beda dari tahap BDN/delivery (Sprint 24) yang akan pakai `fleet.fuel.type` fleksibel
+- [x] `action_cancel` dengan alasan wajib (tercatat di chatter)
+- [x] Security access `vessel.bunker.inquiry`/`vessel.bunker.quote`
+- [x] Views: form inquiry (notebook Quote Comparison dengan highlight harga & `price_vs_market_pct`), list, kanban by state; list "Perbandingan Quote" grouped by inquiry
+- [x] Dummy data: 1 inquiry, 3 quote supplier berbeda (salah satu +23.5% di atas referensi harga), nominasi quote termurah → PO ter-generate — replikasi §10.2 & §10.9
+
+### Blocker & Resolusi
+1. **`purchase.order.line` butuh `product_id`** (tidak eksplisit `required=True` di field level tapi `create()` gagal tanpa itu dalam praktik) — dibuat 3 produk generik baru (`product_bunker_fo`/`_do`/`_barging_fee`) alih-alih meninggalkan `product_id` kosong.
+2. **`uom_po_id` tidak ada lagi di `product.product` Odoo 19** (field lama, sudah dihapus/direname) — `ValueError: Invalid field 'uom_po_id'`. Fix: hapus field itu dari data seed produk, cukup `uom_id`.
+3. **`<function>` tag di dalam `<odoo noupdate="1">` ternyata TIDAK selalu re-run tiap `-u`** — asumsi dari pola `vessel_voyage_pnl` (yang tidak pernah pakai `noupdate="1"` di file berisi `<function>`) ternyata salah kalau di-generalisasi. Nomination demo tidak pernah jalan sampai file dipecah jadi 2 `<data>` block terpisah (`<data noupdate="1">` untuk record supplier/inquiry/quote, `<data>` polos untuk `<function>` nominasi). **Ditambahkan ke checklist gotcha CLAUDE.md** — risiko tinggi terulang di Sprint 24-28 yang juga banyak pakai pola demo function serupa.
+4. Forward-reference 2-block `<record>` XML (set M2O field yang target-nya baru dibuat di block SETELAHNYA pada file yang sama) terbukti tidak reliable dalam kombinasi dengan masalah #3 — diganti jadi set field itu DI DALAM method Python (`_demo_nominate_if_needed` menerima xmlid quote sebagai parameter, bukan mengandalkan field sudah ke-set dari XML).
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL (setelah fix Blocker #3, `-u` berulang stabil 1 inquiry, 1 PO — tidak dobel)
+- **4/4 unit test pass**: `total_estimated_usd`, `price_vs_market_pct` signifikan (>10%) untuk quote mark-up, `price_vs_market_pct` wajar (<5%) untuk quote normal, PO line/harga/qty sesuai quote terpilih
+- §10.2 acceptance criteria **persis**: 3 quote → nominasi termurah (supplier B) → PO line FO 500 MT @548, DO 50 MT @748, barging 1800 — sesuai quote terpilih
+- §10.9 acceptance criteria **persis**: quote supplier C (mark-up) → `price_vs_market_pct` ≈23.5% (signifikan, jauh di atas quote wajar ≈0.5-1.7%)
+
+### Catatan
+Desain "Kirim Inquiry" (`action_send_inquiry`) di-dokumentasikan ulang: transisi ini menandai inquiry resmi dikirim ke pasar secara umum (bukan email otomatis per-quote, karena quote belum ada saat transisi ini terjadi) — supplier lalu balas dengan harga yang diinput staff sebagai quote. Email ke supplier individual (kalau memang dibutuhkan) lebih tepat jadi fitur Fase 2 setelah pola quote-request eksternal jelas, dicatat untuk Sprint 27 (cron & email) — evaluasi ulang di sana apakah masih relevan atau sudah cukup dengan proses saat ini.
+
+---

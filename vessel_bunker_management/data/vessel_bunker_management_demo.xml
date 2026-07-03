@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="demo_supplier_bunker_a" model="res.partner">
+        <field name="name">PT Bunker Supplier A</field>
+        <field name="is_company">True</field>
+        <field name="supplier_rank">1</field>
+    </record>
+
+    <record id="demo_supplier_bunker_b" model="res.partner">
+        <field name="name">PT Bunker Supplier B</field>
+        <field name="is_company">True</field>
+        <field name="supplier_rank">1</field>
+    </record>
+
+    <record id="demo_supplier_bunker_c" model="res.partner">
+        <field name="name">PT Bunker Supplier C (Mark-up)</field>
+        <field name="is_company">True</field>
+        <field name="supplier_rank">1</field>
+    </record>
+
+    <record id="demo_bunker_inquiry_1" model="vessel.bunker.inquiry">
+        <field name="vessel_id" ref="vessel_chartering.demo_vessel_barge_01"/>
+        <field name="date_needed" eval="(datetime.today() + timedelta(days=3)).strftime('%Y-%m-%d')"/>
+        <field name="requested_qty_fo">500</field>
+        <field name="requested_qty_do">50</field>
+        <field name="state">inquiry_sent</field>
+    </record>
+
+    <record id="demo_bunker_quote_1a" model="vessel.bunker.quote">
+        <field name="inquiry_id" ref="demo_bunker_inquiry_1"/>
+        <field name="supplier_id" ref="demo_supplier_bunker_a"/>
+        <field name="price_fo_usd_mt">555</field>
+        <field name="price_do_usd_mt">755</field>
+        <field name="barging_fee_usd">2000</field>
+        <field name="validity_date" eval="(datetime.today() + timedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <record id="demo_bunker_quote_1b" model="vessel.bunker.quote">
+        <field name="inquiry_id" ref="demo_bunker_inquiry_1"/>
+        <field name="supplier_id" ref="demo_supplier_bunker_b"/>
+        <field name="price_fo_usd_mt">548</field>
+        <field name="price_do_usd_mt">748</field>
+        <field name="barging_fee_usd">1800</field>
+        <field name="validity_date" eval="(datetime.today() + timedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
+    <!-- Sengaja jauh di atas harga referensi (§10.9 acceptance criteria — sinyal
+         mark-up/kick-back). Referensi FO 550, DO(hsd) 700 -> quote ini +25% FO. -->
+    <record id="demo_bunker_quote_1c" model="vessel.bunker.quote">
+        <field name="inquiry_id" ref="demo_bunker_inquiry_1"/>
+        <field name="supplier_id" ref="demo_supplier_bunker_c"/>
+        <field name="price_fo_usd_mt">690</field>
+        <field name="price_do_usd_mt">760</field>
+        <field name="barging_fee_usd">1500</field>
+        <field name="validity_date" eval="(datetime.today() + timedelta(days=10)).strftime('%Y-%m-%d')"/>
+    </record>
+
+  </data>
+
+  <!-- Function tag SENGAJA di luar <data noupdate="1"> di atas — noupdate menekan
+       eksekusi ulang <function> juga (bukan cuma <record>), beda dari asumsi awal.
+       Record di atas (noupdate=1) tetap aman tidak ter-reset; function di sini
+       (default noupdate=0) selalu re-run tiap -u, idempotency-nya dijamin oleh guard
+       di method Python itu sendiri (_demo_nominate_if_needed cek state sebelum jalan). -->
+  <data>
+    <!-- Nominasi quote termurah (supplier B) -> PO otomatis ter-generate (§10.2).
+         selected_quote_id di-set DI DALAM method Python (bukan via <record> block
+         terpisah di XML — forward-reference 2-block pattern untuk M2O yang target-nya
+         baru dibuat di block setelahnya pada file yang sama terbukti tidak reliable). -->
+    <function model="vessel.bunker.inquiry" name="_demo_nominate_if_needed">
+        <value eval="[ref('demo_bunker_inquiry_1')]"/>
+        <value eval="'vessel_bunker_management.demo_bunker_quote_1b'"/>
+    </function>
+  </data>
+</odoo>

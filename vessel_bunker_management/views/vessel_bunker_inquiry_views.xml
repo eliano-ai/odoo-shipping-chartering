@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_bunker_inquiry_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.inquiry.list</field>
+        <field name="model">vessel.bunker.inquiry</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="vessel_id"/>
+                <field name="voyage_id"/>
+                <field name="port_id"/>
+                <field name="date_needed"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_inquiry_kanban" model="ir.ui.view">
+        <field name="name">vessel.bunker.inquiry.kanban</field>
+        <field name="model">vessel.bunker.inquiry</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state">
+                <templates>
+                    <t t-name="card">
+                        <field name="name"/>
+                        <div><field name="vessel_id"/></div>
+                        <div><field name="date_needed"/></div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_inquiry_form" model="ir.ui.view">
+        <field name="name">vessel.bunker.inquiry.form</field>
+        <field name="model">vessel.bunker.inquiry</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_send_inquiry" type="object" string="Kirim Inquiry"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_nominate" type="object" string="Nominasi Supplier"
+                            class="oe_highlight"
+                            invisible="state not in ('inquiry_sent', 'quotes_received')"/>
+                    <button name="action_cancel" type="object" string="Batalkan"
+                            invisible="state not in ('draft', 'inquiry_sent', 'quotes_received')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,inquiry_sent,quotes_received,nominated,delivered"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="vessel_id"/>
+                            <field name="voyage_id"/>
+                            <field name="port_id"/>
+                            <field name="date_needed"/>
+                        </group>
+                        <group>
+                            <field name="requested_qty_fo"/>
+                            <field name="requested_qty_do"/>
+                            <field name="analytic_account_id" readonly="1"/>
+                            <field name="purchase_order_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Quote Comparison" name="quotes">
+                            <field name="selected_quote_id" readonly="state not in ('inquiry_sent', 'quotes_received')"/>
+                            <field name="quote_ids" context="{'default_inquiry_id': id}">
+                                <list editable="bottom"
+                                      decoration-success="price_vs_market_pct &lt;= 0"
+                                      decoration-danger="price_vs_market_pct &gt; 10">
+                                    <field name="supplier_id"/>
+                                    <field name="price_fo_usd_mt"/>
+                                    <field name="price_do_usd_mt"/>
+                                    <field name="barging_fee_usd"/>
+                                    <field name="validity_date"/>
+                                    <field name="total_estimated_usd"/>
+                                    <field name="price_vs_market_pct" widget="percentage"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_inquiry" model="ir.actions.act_window">
+        <field name="name">Bunker Inquiry</field>
+        <field name="res_model">vessel.bunker.inquiry</field>
+        <field name="view_mode">kanban,list,form</field>
+    </record>
+
+</odoo>

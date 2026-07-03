@@ -7,6 +7,17 @@
     <menuitem id="menu_bunker_management_root" name="Bunker Management"
               parent="maritime.menu_maritime_root" sequence="40"/>
 
+    <menuitem id="menu_bunker_procurement_root" name="Procurement"
+              parent="menu_bunker_management_root" sequence="10"/>
+
+    <menuitem id="menu_vessel_bunker_inquiry" name="Bunker Inquiry"
+              parent="menu_bunker_procurement_root" action="action_vessel_bunker_inquiry"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_bunker_quote_comparison" name="Perbandingan Quote"
+              parent="menu_bunker_procurement_root" action="action_vessel_bunker_quote_comparison"
+              sequence="20"/>
+
     <menuitem id="menu_bunker_config" name="Konfigurasi"
               parent="menu_bunker_management_root" sequence="90"
               groups="vessel_bunker_management.group_bunker_manager"/>

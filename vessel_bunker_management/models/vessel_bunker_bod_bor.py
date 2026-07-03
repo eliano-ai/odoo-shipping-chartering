@@ -142,6 +142,16 @@ class VesselBunkerBodBor(models.Model):
             if rec.price_source != 'manual':
                 rec.price_fo_usd_mt, rec.price_do_usd_mt = rec._get_price_for_source()
             rec.state = 'confirmed'
+            rec._send_ready_to_settle_email()
+
+    def _send_ready_to_settle_email(self):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_bunker_management.email_template_bunker_bod_bor_ready_to_settle',
+            raise_if_not_found=False,
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
 
     def action_settle(self):
         """§4.4 — group_bunker_manager only (approval eksplisit sebelum masuk hire

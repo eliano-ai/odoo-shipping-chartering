@@ -1163,3 +1163,28 @@ Konversi liter→MT (`/1000`, asumsi densitas ~1) adalah simplifikasi MVP yang p
 Blocker #3 adalah pengingat: error transient (lock/concurrency) dan bug aplikasi asli bisa muncul berurutan di command yang sama — jangan langsung simpulkan "pasti transient, retry saja" tanpa membaca traceback penuh setelah retry gagal lagi.
 
 ---
+
+## Sprint 27 — vessel_bunker_management: Cron Lengkap & Email — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] `_cron_quote_validity_reminder` (harian, `vessel.bunker.inquiry`) — quote `validity_date` H-1 pada inquiry yang belum nominasi (state `inquiry_sent`/`quotes_received`) → activity ke `create_uid` inquiry (staff yang menangani, paling langsung actionable — bukan broadcast ke seluruh `group_bunker_user`)
+- [x] `_cron_rob_anomaly_alert` (harian, `vessel.bunker.rob.reconciliation`) — **eskalasi**, beda dari activity langsung saat create di `_cron_generate_rob_reconciliation` (Sprint 25, notify Operations): anomaly yang masih `draft` >2 hari → activity ke Fleet Manager + email template
+- [x] `_cron_dispute_followup` (mingguan, `vessel.bunker.survey`) — dispute `open` >7 hari → activity ke Bunker Manager. **Ditambahkan mixin `mail.thread`/`mail.activity.mixin` ke `vessel.bunker.survey`** (belum ada sejak Sprint 24, dicek dulu sesuai instruksi sprint sebelum dipakai)
+- [x] 4 mail template (`noupdate="1"`): quote pertama diterima (internal, ke Bunker Manager — **keputusan desain final**: BUKAN email ke supplier saat `action_send_inquiry` seperti draft awal Sprint 23, karena quote belum ada saat itu; trigger sebenarnya di `vessel.bunker.quote.create()` saat transisi state pertama kali ke `quotes_received`), dispute terbuka (Bunker Manager & Finance, trigger `vessel.bunker.survey.create()` saat `is_dispute=True`), ROB anomaly (Fleet Manager, trigger dari cron eskalasi), BOD/BOR siap settle (Chartering Manager, trigger `action_confirm()`)
+- [x] Wire email di titik action langsung (bukan cuma cron) — pola sama `vessel_voyage_pnl` Sprint 20: `template.send_mail(id, force_send=False)`
+- [x] Cross-check access CSV — semua model yang dipakai cron sudah punya baris lengkap sejak sprint sebelumnya, tidak ada tambahan diperlukan
+
+### Blocker & Resolusi
+Tidak ada blocker signifikan. Satu keputusan desain yang perlu didokumentasikan: mail template "quote diterima" awalnya didesain trigger di `action_send_inquiry` (§4.1, dikira email ke supplier) — dievaluasi ulang sesuai instruksi task, ternyata tidak masuk akal karena di titik itu quote belum ada. Dipindah ke trigger saat quote PERTAMA masuk (`quote.create()`, transisi `inquiry_sent`→`quotes_received`), sebagai notifikasi INTERNAL ke Bunker Manager (bukan ke supplier — supplier balas quote di luar sistem/manual input staff, konsisten dengan desain Sprint 23).
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL
+- **19/19 unit test pass** (tidak ada regresi dari Sprint 22-26)
+- Verifikasi manual via `odoo shell` (skenario terisolasi, tidak masuk demo data permanen): quote reminder → 1 activity muncul utk quote H-1 tanpa nominasi; quotes-received → 1 mail.mail; ROB anomaly eskalasi → 1 activity + 1 mail utk record draft >2 hari; dispute followup → 1 activity utk dispute open >7 hari; dispute-open email → 1 mail saat survey baru is_dispute=True; BOD/BOR ready-to-settle → 1 mail saat `action_confirm()`
+
+### Catatan
+Semua 4 email pakai `force_send=False` (masuk antrian outgoing mail, bukan langsung SMTP) — konsisten pola `vessel_voyage_pnl`, aman dijalankan di demo/install context tanpa mail server dikonfigurasi.
+
+---

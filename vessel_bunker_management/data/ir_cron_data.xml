@@ -16,4 +16,49 @@
         <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=0, second=0)"/>
     </record>
 
+    <record id="ir_actions_server_quote_validity_reminder" model="ir.actions.server">
+        <field name="name">Bunker Management: Quote Validity Reminder</field>
+        <field name="model_id" ref="model_vessel_bunker_inquiry"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_quote_validity_reminder()</field>
+    </record>
+    <record id="cron_vessel_bunker_quote_validity_reminder" model="ir.cron">
+        <field name="name">Bunker Management: Quote Validity Reminder (Harian)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_quote_validity_reminder"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=6, minute=30, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_rob_anomaly_alert" model="ir.actions.server">
+        <field name="name">Bunker Management: ROB Anomaly Escalation</field>
+        <field name="model_id" ref="model_vessel_bunker_rob_reconciliation"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_rob_anomaly_alert()</field>
+    </record>
+    <record id="cron_vessel_bunker_rob_anomaly_alert" model="ir.cron">
+        <field name="name">Bunker Management: ROB Anomaly Escalation (Harian)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_rob_anomaly_alert"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=0, second=0)"/>
+    </record>
+
+    <record id="ir_actions_server_dispute_followup" model="ir.actions.server">
+        <field name="name">Bunker Management: Dispute Followup</field>
+        <field name="model_id" ref="model_vessel_bunker_survey"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_dispute_followup()</field>
+    </record>
+    <record id="cron_vessel_bunker_dispute_followup" model="ir.cron">
+        <field name="name">Bunker Management: Dispute Followup (Mingguan)</field>
+        <field name="ir_actions_server_id" ref="ir_actions_server_dispute_followup"/>
+        <field name="interval_number">1</field>
+        <field name="interval_type">weeks</field>
+        <field name="active" eval="True"/>
+        <field name="nextcall" eval="(datetime.now()).replace(hour=7, minute=30, second=0)"/>
+    </record>
+
 </odoo>

@@ -197,6 +197,35 @@ class VesselBunkerRobReconciliation(models.Model):
                             )
 
     @api.model
+    def _cron_rob_anomaly_alert(self):
+        """§4.5 — harian, ESKALASI (beda dari activity langsung di
+        _cron_generate_rob_reconciliation yang notify Operations saat create) —
+        reconciliation anomaly yang masih Draft (belum direview/flagged) > 2 hari
+        -> escalate ke Fleet Manager + kirim email template."""
+        cutoff = fields.Datetime.now() - timedelta(days=2)
+        stale_anomalies = self.search([
+            ('is_anomaly', '=', True), ('state', '=', 'draft'),
+            ('create_date', '<=', cutoff),
+        ])
+        manager_group = self.env.ref('fleet.fleet_group_manager', raise_if_not_found=False)
+        template = self.env.ref(
+            'vessel_bunker_management.email_template_bunker_rob_anomaly', raise_if_not_found=False,
+        )
+        for rec in stale_anomalies:
+            if manager_group:
+                for user in manager_group.user_ids:
+                    rec.activity_schedule(
+                        'mail.mail_activity_data_todo',
+                        summary=_('ESKALASI: ROB Anomaly Belum Direview > 2 Hari — %s') % rec.vessel_id.name,
+                        note=_(
+                            'Variance %(pct).1f%% terdeteksi sejak %(date)s, masih Draft.'
+                        ) % {'pct': rec.variance_pct, 'date': rec.create_date.date()},
+                        user_id=user.id,
+                    )
+            if template:
+                template.send_mail(rec.id, force_send=False)
+
+    @api.model
     def _demo_setup_rob_scenario(self):
         """§10.5 acceptance criteria persis — previous ROB 200, supply 495 (delivery
         Sprint 24), consumption 150 -> expected 545, actual 500 -> variance -45,

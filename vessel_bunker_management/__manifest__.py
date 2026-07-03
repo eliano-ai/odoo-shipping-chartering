@@ -57,6 +57,7 @@ Referensi: TECH_SPEC_vessel_bunker_management.md
         'views/fleet_vehicle_views.xml',
         'views/vessel_bunker_management_menus.xml',
         'data/ir_cron_data.xml',
+        'data/vessel_bunker_management_mail_template_data.xml',
         'data/vessel_bunker_management_demo.xml',
     ],
     'installable': True,

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
@@ -11,6 +13,7 @@ DISPUTE_STATE = [
 class VesselBunkerSurvey(models.Model):
     _name = 'vessel.bunker.survey'
     _description = 'Independent Bunker Survey'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'survey_date desc'
 
     delivery_id = fields.Many2one(
@@ -50,7 +53,17 @@ class VesselBunkerSurvey(models.Model):
         records = super().create(vals_list)
         for rec in records:
             rec.delivery_id.action_link_survey(rec)
+            if rec.is_dispute:
+                rec._send_dispute_open_email()
         return records
+
+    def _send_dispute_open_email(self):
+        self.ensure_one()
+        template = self.env.ref(
+            'vessel_bunker_management.email_template_bunker_dispute_open', raise_if_not_found=False,
+        )
+        if template:
+            template.send_mail(self.id, force_send=False)
 
     def action_resolve_dispute(self):
         if not self.env.user.has_group('vessel_bunker_management.group_bunker_manager'):
@@ -61,3 +74,31 @@ class VesselBunkerSurvey(models.Model):
             rec.dispute_state = 'resolved'
             if rec.delivery_id.state == 'disputed':
                 rec.delivery_id.state = 'surveyed'
+
+    @api.model
+    def _cron_dispute_followup(self):
+        """§4.6 — mingguan, reminder ke Bunker Manager untuk dispute yang masih
+        open > 7 hari (belum di-resolve)."""
+        cutoff = fields.Date.context_today(self) - timedelta(days=7)
+        surveys = self.search([
+            ('dispute_state', '=', 'open'),
+            ('survey_date', '<=', cutoff),
+        ])
+        manager_group = self.env.ref(
+            'vessel_bunker_management.group_bunker_manager', raise_if_not_found=False,
+        )
+        if not manager_group:
+            return
+        for survey in surveys:
+            for user in manager_group.user_ids:
+                survey.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    summary=_('Dispute Bunker Belum Resolve > 7 Hari: %s') % survey.delivery_id.bdn_number,
+                    note=_(
+                        'Survey %(surveyor)s vs BDN %(bdn)s masih open sejak %(date)s.'
+                    ) % {
+                        'surveyor': survey.surveyor_id.name, 'bdn': survey.delivery_id.bdn_number,
+                        'date': survey.survey_date,
+                    },
+                    user_id=user.id,
+                )

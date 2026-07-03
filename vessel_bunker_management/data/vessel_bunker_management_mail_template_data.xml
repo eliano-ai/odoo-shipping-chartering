@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <record id="email_template_bunker_quotes_received" model="mail.template">
+        <field name="name">Bunker: Quote Pertama Diterima (Internal)</field>
+        <field name="model_id" ref="model_vessel_bunker_inquiry"/>
+        <field name="subject">📥 Quote Bunker Diterima: {{ object.name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('vessel_bunker_management.group_bunker_manager').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0F6E56; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Quote Bunker Diterima</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Inquiry <b><t t-out="object.name"/></b> (kapal <t t-out="object.vessel_id.display_name or '-'"/>)
+           sudah menerima quote pertama — siap dibandingkan &amp; dinominasi.</p>
+        <p>Jumlah Quote: <b><t t-out="len(object.quote_ids)"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_bunker_dispute_open" model="mail.template">
+        <field name="name">Bunker: Dispute Terbuka (Bunker Manager &amp; Finance)</field>
+        <field name="model_id" ref="model_vessel_bunker_survey"/>
+        <field name="subject">⚠️ Dispute BDN vs Survey: {{ object.delivery_id.bdn_number }}</field>
+        <field name="email_to">{{ ','.join(filter(None, (object.env.ref('vessel_bunker_management.group_bunker_manager').user_ids | object.env.ref('account.group_account_invoice').user_ids).mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #854F0B; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Dispute BDN vs Independent Survey</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>BDN <b><t t-out="object.delivery_id.bdn_number"/></b> (kapal
+           <t t-out="object.delivery_id.vessel_id.display_name or '-'"/>) punya selisih
+           di atas toleransi vs independent survey.</p>
+        <p>Qty BDN: <b><t t-out="object.delivery_id.qty_bdn_mt"/> MT</b><br/>
+           Qty Survey: <b><t t-out="object.survey_qty_mt"/> MT</b><br/>
+           Variance: <b><t t-out="'%.2f' % object.variance_pct"/>%</b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_bunker_rob_anomaly" model="mail.template">
+        <field name="name">Bunker: ROB Anomaly Belum Direview (Fleet Manager)</field>
+        <field name="model_id" ref="model_vessel_bunker_rob_reconciliation"/>
+        <field name="subject">🚨 ROB Anomaly Belum Direview: {{ object.vessel_id.display_name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('fleet.fleet_group_manager').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #A21A1A; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">ROB Anomaly Belum Direview &gt; 2 Hari</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>Kapal <b><t t-out="object.vessel_id.display_name"/></b> punya rekonsiliasi ROB
+           anomaly yang masih Draft (belum direview/flagged) sejak
+           <t t-out="object.create_date.date()"/>.</p>
+        <p>Expected ROB: <b><t t-out="object.expected_rob"/> MT</b><br/>
+           Actual ROB: <b><t t-out="object.actual_rob"/> MT</b><br/>
+           Variance: <b><t t-out="'%.2f' % object.variance_pct"/>%</b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+    <record id="email_template_bunker_bod_bor_ready_to_settle" model="mail.template">
+        <field name="name">Bunker: BOD/BOR Siap Settle (Chartering Manager)</field>
+        <field name="model_id" ref="model_vessel_bunker_bod_bor"/>
+        <field name="subject">✅ BOD/BOR Siap Settle: {{ object.contract_id.name }}</field>
+        <field name="email_to">{{ ','.join(filter(None, object.env.ref('vessel_chartering.group_chartering_manager').user_ids.mapped('email'))) }}</field>
+        <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #0F6E56; color: white; padding: 16px 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">BOD/BOR Siap Settle</h2>
+    </div>
+    <div style="background: #f8f9fa; padding: 16px 20px; border: 1px solid #dee2e6; border-radius: 0 0 8px 8px;">
+        <p>BOD/BOR <b><t t-out="'Delivery' if object.event_type == 'delivery' else 'Redelivery'"/></b>
+           untuk kontrak <b><t t-out="object.contract_id.name"/></b> sudah dikonfirmasi
+           (ROB &amp; harga terisi), siap di-settle ke hire statement.</p>
+        <p>ROB FO: <b><t t-out="object.rob_fo"/> MT</b> &#183;
+           ROB DO: <b><t t-out="object.rob_do"/> MT</b><br/>
+           Settlement Amount: <b><t t-out="object.settlement_amount"/></b></p>
+    </div>
+</div>
+        ]]></field>
+    </record>
+
+</odoo>

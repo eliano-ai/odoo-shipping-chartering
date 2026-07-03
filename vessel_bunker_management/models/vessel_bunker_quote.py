@@ -34,6 +34,16 @@ class VesselBunkerQuote(models.Model):
         inquiries = records.inquiry_id.filtered(lambda i: i.state == 'inquiry_sent')
         if inquiries:
             inquiries.write({'state': 'quotes_received'})
+            # §Sprint 27 — notifikasi INTERNAL (bukan email ke supplier, lihat catatan
+            # desain action_send_inquiry) saat quote PERTAMA masuk untuk inquiry ini,
+            # mengonfirmasi harga sudah bisa dibandingkan/dinominasi.
+            template = self.env.ref(
+                'vessel_bunker_management.email_template_bunker_quotes_received',
+                raise_if_not_found=False,
+            )
+            if template:
+                for inquiry in inquiries:
+                    template.send_mail(inquiry.id, force_send=False)
         return records
 
     @api.depends('price_fo_usd_mt', 'price_do_usd_mt', 'barging_fee_usd',

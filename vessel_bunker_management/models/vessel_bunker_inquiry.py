@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 
@@ -139,6 +141,30 @@ class VesselBunkerInquiry(models.Model):
             'origin': self.name,
             'order_line': lines,
         })
+
+    @api.model
+    def _cron_quote_validity_reminder(self):
+        """§4.5 — harian, reminder quote yang validity_date-nya besok tapi inquiry
+        belum nominasi (masih inquiry_sent/quotes_received) — resiko quote expired
+        sebelum sempat dipakai. Activity ke create_uid inquiry (staff yang menangani
+        procurement ini, paling langsung actionable)."""
+        tomorrow = fields.Date.context_today(self) + timedelta(days=1)
+        inquiries = self.search([('state', 'in', ('inquiry_sent', 'quotes_received'))])
+        for inquiry in inquiries:
+            expiring_quotes = inquiry.quote_ids.filtered(lambda q: q.validity_date == tomorrow)
+            if not expiring_quotes:
+                continue
+            inquiry.activity_schedule(
+                'mail.mail_activity_data_todo',
+                summary=_('Quote Bunker Akan Kedaluwarsa Besok: %s') % inquiry.name,
+                note=_(
+                    '%(count)d quote untuk inquiry %(name)s berlaku sampai besok '
+                    '(%(date)s) dan belum dinominasi.'
+                ) % {
+                    'count': len(expiring_quotes), 'name': inquiry.name, 'date': tomorrow,
+                },
+                user_id=inquiry.create_uid.id,
+            )
 
     def action_cancel(self, reason=False):
         for rec in self:

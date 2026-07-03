@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- hr_payroll tidak tersedia di environment ini (Enterprise-only) -->
+    <record id="allocation_rule_crew_cost" model="vessel.cost.allocation.rule">
+        <field name="cost_category_id" ref="cost_category_crew_cost"/>
+        <field name="allocation_method">manual</field>
+    </record>
+
+    <record id="allocation_rule_maintenance" model="vessel.cost.allocation.rule">
+        <field name="cost_category_id" ref="cost_category_maintenance"/>
+        <field name="allocation_method">per_voyage_day</field>
+    </record>
+
+    <!-- account_asset tidak tersedia di environment ini (Enterprise-only) -->
+    <record id="allocation_rule_depreciation" model="vessel.cost.allocation.rule">
+        <field name="cost_category_id" ref="cost_category_depreciation"/>
+        <field name="allocation_method">manual</field>
+    </record>
+
+    <record id="allocation_rule_overhead" model="vessel.cost.allocation.rule">
+        <field name="cost_category_id" ref="cost_category_overhead"/>
+        <field name="allocation_method">fixed_percentage</field>
+        <field name="fixed_percentage_value">5.0</field>
+    </record>
+
+</odoo>

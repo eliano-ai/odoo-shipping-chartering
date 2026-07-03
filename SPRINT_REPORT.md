@@ -740,3 +740,30 @@ Detail lengkap tiap sprint di `sprints/sprint_15.md` s.d. `sprint_21.md`.
 - Pelajaran retro Sprint 8-14 (sinkronisasi CLAUDE.md↔sprint.md, mail.thread/mail.activity.mixin check, dll — sudah diterapkan via `/improve` sebelum sprint ini) otomatis berlaku untuk semua sprint 15-21 karena sudah masuk skill file `sprint.md`, tidak perlu diulang manual di tiap sprint file
 
 ---
+
+## Sprint 15 — vessel_voyage_pnl: Foundation & Master Data — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Skeleton modul `vessel_voyage_pnl` — `depends: ['fleet', 'mail', 'account', 'vessel_chartering', 'vessel_voyage_operations', 'maritime']`, tidak ada hard depend ke `hr_payroll`/`account_asset` (diverifikasi grep)
+- [x] Security: 4 groups (`group_voyage_pnl_user`, `group_voyage_pnl_finance` implied dari user, `group_voyage_pnl_manager` implied dari finance + `fleet.fleet_group_manager`, `group_voyage_pnl_director` read-only standalone)
+- [x] Master data `vessel.pnl.cost.category` — 15 kategori seed (`noupdate="1"`): 5 revenue (termasuk "Other (Revenue)"), 5 direct_cost, 5 allocated_cost — "Other" dipecah per grup karena `category_group` wajib diisi single-value per record, bukan multi-grup seperti disebut sekilas di tech spec
+- [x] Master data `vessel.cost.allocation.rule` — 4 rule seed: Crew Cost & Depreciation → `manual` (karena `hr_payroll`/`account_asset` tidak ada), Maintenance → `per_voyage_day`, Overhead → `fixed_percentage` 5%
+- [x] Constraint 1 rule aktif per `cost_category_id` via `@api.constrains` (bukan SQL unique — perlu izinkan riwayat rule nonaktif untuk kategori yang sama), diverifikasi via `odoo shell`: create duplikat aktif → `ValidationError`
+- [x] Extend `fleet.vehicle.budget_variance_threshold_pct`, `res.company`/`res.config.settings.default_budget_variance_threshold_pct` (default 20.0) — pola identik `disbursement_variance_threshold_pct`
+- [x] **Keputusan menu root**: masuk app **Maritime** (bukan Fleet) — diputuskan sekarang (bukan ditunda ke Sprint 21) karena alasannya jelas/konsisten dengan restrukturisasi Maritime kemarin (chartering & voyage ops sudah di sana; P&L adalah lapisan finansial komersial yang sama, bukan asset fisik seperti Fleet). Sprint 21 tinggal cross-check, bukan re-decide dari nol.
+
+### Blocker & Resolusi
+Tidak ada blocker baru. Pre-flight grep (checklist Odoo 19 gotcha CLAUDE.md) bersih di percobaan pertama.
+
+### Verifikasi
+- Install bersih (`-i vessel_voyage_pnl`): 0 ERROR/CRITICAL, "Module vessel_voyage_pnl loaded in 1.15s"
+- Update idempotent (`-u vessel_voyage_pnl`): 0 ERROR/CRITICAL
+- psql: 15 cost category, 4 allocation rule, menu "Voyage P&L" terverifikasi parent = Maritime (bukan Fleet)
+- `odoo shell`: constraint 1-rule-aktif-per-kategori terverifikasi (`ValidationError` saat duplikat)
+
+### Catatan
+Warning `vessel.seafarer: inconsistent 'store' for computed fields` muncul di log — pre-existing dari `vessel_crew_management` (modul lain, bukan hasil kerja sprint ini), tidak relevan untuk `vessel_voyage_pnl`.
+
+---

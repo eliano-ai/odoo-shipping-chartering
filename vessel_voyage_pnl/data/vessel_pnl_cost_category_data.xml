@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Revenue -->
+    <record id="cost_category_freight_revenue" model="vessel.pnl.cost.category">
+        <field name="name">Freight Revenue</field>
+        <field name="category_group">revenue</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cost_category_demurrage" model="vessel.pnl.cost.category">
+        <field name="name">Demurrage</field>
+        <field name="category_group">revenue</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cost_category_despatch" model="vessel.pnl.cost.category">
+        <field name="name">Despatch</field>
+        <field name="category_group">revenue</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cost_category_brokerage" model="vessel.pnl.cost.category">
+        <field name="name">Brokerage</field>
+        <field name="category_group">revenue</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cost_category_other_revenue" model="vessel.pnl.cost.category">
+        <field name="name">Other (Revenue)</field>
+        <field name="category_group">revenue</field>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- Direct Cost -->
+    <record id="cost_category_bunker" model="vessel.pnl.cost.category">
+        <field name="name">Bunker</field>
+        <field name="category_group">direct_cost</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cost_category_port_cost" model="vessel.pnl.cost.category">
+        <field name="name">Port Cost</field>
+        <field name="category_group">direct_cost</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cost_category_cargo_handling" model="vessel.pnl.cost.category">
+        <field name="name">Cargo Handling</field>
+        <field name="category_group">direct_cost</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cost_category_insurance_voyage" model="vessel.pnl.cost.category">
+        <field name="name">Insurance Voyage</field>
+        <field name="category_group">direct_cost</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cost_category_other_direct_cost" model="vessel.pnl.cost.category">
+        <field name="name">Other (Direct Cost)</field>
+        <field name="category_group">direct_cost</field>
+        <field name="sequence">90</field>
+    </record>
+
+    <!-- Allocated Cost -->
+    <record id="cost_category_crew_cost" model="vessel.pnl.cost.category">
+        <field name="name">Crew Cost</field>
+        <field name="category_group">allocated_cost</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cost_category_maintenance" model="vessel.pnl.cost.category">
+        <field name="name">Maintenance</field>
+        <field name="category_group">allocated_cost</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cost_category_depreciation" model="vessel.pnl.cost.category">
+        <field name="name">Depreciation</field>
+        <field name="category_group">allocated_cost</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cost_category_overhead" model="vessel.pnl.cost.category">
+        <field name="name">Overhead</field>
+        <field name="category_group">allocated_cost</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cost_category_other_allocated_cost" model="vessel.pnl.cost.category">
+        <field name="name">Other (Allocated Cost)</field>
+        <field name="category_group">allocated_cost</field>
+        <field name="sequence">90</field>
+    </record>
+
+</odoo>

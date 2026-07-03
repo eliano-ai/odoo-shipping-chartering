@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_voyage_pnl" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.vessel.voyage.pnl</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="account.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@id='invoicing_settings']" position="after">
+                <block title="Voyage P&amp;L" id="vessel_voyage_pnl_setting">
+                    <setting id="default_budget_variance_threshold_pct_setting"
+                             string="Default Threshold Variance Budget"
+                             help="Ambang batas variance budget vs actual global (persen), dipakai untuk kapal yang tidak punya override sendiri.">
+                        <field name="default_budget_variance_threshold_pct"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

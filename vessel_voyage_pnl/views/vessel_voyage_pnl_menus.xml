@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Keputusan Sprint 15 (final-check Sprint 21): Voyage P&L masuk app Maritime,
+         sejajar Chartering & Voyage Operations — bukan Fleet, karena secara IA modul
+         ini adalah lapisan finansial komersial (payoff analytic plans), bukan asset
+         management fisik. Konsisten dengan restrukturisasi Maritime sebelumnya. -->
+    <menuitem id="menu_voyage_pnl_root" name="Voyage P&amp;L"
+              parent="maritime.menu_maritime_root" sequence="30"/>
+
+    <menuitem id="menu_voyage_pnl_config" name="Konfigurasi"
+              parent="menu_voyage_pnl_root" sequence="90"
+              groups="vessel_voyage_pnl.group_voyage_pnl_manager"/>
+
+    <menuitem id="menu_vessel_pnl_cost_category" name="Kategori Biaya P&amp;L"
+              parent="menu_voyage_pnl_config" action="action_vessel_pnl_cost_category"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_cost_allocation_rule" name="Aturan Alokasi Biaya"
+              parent="menu_voyage_pnl_config" action="action_vessel_cost_allocation_rule"
+              sequence="20"/>
+
+</odoo>

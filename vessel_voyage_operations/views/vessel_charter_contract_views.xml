@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="vessel_charter_contract_view_form_voyage_inherit" model="ir.ui.view">
+        <field name="name">vessel.charter.contract.form.voyage.inherit</field>
+        <field name="model">vessel.charter.contract</field>
+        <field name="inherit_id" ref="vessel_chartering.vessel_charter_contract_view_form"/>
+        <field name="arch" type="xml">
+            <button name="action_view_invoices" position="after">
+                <button name="action_view_voyages" type="object"
+                        class="oe_stat_button" icon="fa-ship"
+                        invisible="voyage_count == 0">
+                    <field name="voyage_count" widget="statinfo" string="Voyages"/>
+                </button>
+            </button>
+        </field>
+    </record>
+</odoo>

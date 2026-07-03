@@ -4,3 +4,6 @@ from . import vessel_clearance_document_type
 from . import vessel_disbursement_item_type
 from . import res_partner
 from . import res_company
+from . import vessel_voyage
+from . import fleet_vehicle
+from . import vessel_charter_contract

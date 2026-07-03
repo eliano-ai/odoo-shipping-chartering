@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Voyage #1 — dari kontrak voyage charter out confirmed, belum berangkat -->
+    <record id="demo_voyage_1" model="vessel.voyage">
+        <field name="charter_contract_id" ref="vessel_chartering.demo_contract_voyage_out_2"/>
+        <field name="origin_port_id" ref="vessel_chartering.demo_port_balikpapan"/>
+        <field name="final_port_id" ref="vessel_chartering.demo_port_tarahan"/>
+        <field name="state">fixed</field>
+    </record>
+
+    <!-- Voyage #2 — dari kontrak time charter in_progress, sedang berlayar -->
+    <record id="demo_voyage_2" model="vessel.voyage">
+        <field name="charter_contract_id" ref="vessel_chartering.demo_contract_time_out_1"/>
+        <field name="origin_port_id" ref="vessel_chartering.demo_port_tanjung_priok"/>
+        <field name="date_departure" eval="(datetime.today() - timedelta(days=5)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="state">sailing</field>
+    </record>
+
+    <!-- Voyage #3 — dari shipment COA yang sudah completed -->
+    <record id="demo_voyage_3" model="vessel.voyage">
+        <field name="charter_contract_id" ref="vessel_chartering.demo_contract_coa_shipment_1"/>
+        <field name="origin_port_id" ref="vessel_chartering.demo_port_balikpapan"/>
+        <field name="final_port_id" ref="vessel_chartering.demo_port_tarahan"/>
+        <field name="date_departure" eval="(datetime.today() - timedelta(days=28)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="date_arrival_final" eval="(datetime.today() - timedelta(days=23)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="state">completed</field>
+    </record>
+
+</odoo>

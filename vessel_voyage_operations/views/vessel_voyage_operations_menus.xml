@@ -6,6 +6,29 @@
               parent="fleet.menu_root"
               sequence="19"/>
 
+    <menuitem id="menu_vessel_voyage_operations_voyages"
+              name="Voyages"
+              parent="menu_vessel_voyage_operations_root"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_voyage_all"
+              name="Semua Voyage"
+              parent="menu_vessel_voyage_operations_voyages"
+              action="action_vessel_voyage_all"
+              sequence="10"/>
+
+    <menuitem id="menu_vessel_voyage_sailing"
+              name="Sedang Berlayar"
+              parent="menu_vessel_voyage_operations_voyages"
+              action="action_vessel_voyage_sailing"
+              sequence="20"/>
+
+    <menuitem id="menu_vessel_voyage_completed"
+              name="Selesai"
+              parent="menu_vessel_voyage_operations_voyages"
+              action="action_vessel_voyage_completed"
+              sequence="30"/>
+
     <menuitem id="menu_vessel_voyage_operations_config"
               name="Konfigurasi"
               parent="menu_vessel_voyage_operations_root"

@@ -439,3 +439,39 @@ Tidak ada blocker — pre-flight check baru dari `/improve` (grep pola Odoo 19 t
 - Sprint 9 (Core Voyage Model & State Machine) akan mulai pakai `ir.sequence` VOY yang sudah di-seed sprint ini
 
 ---
+
+## Sprint 9 — vessel_voyage_operations: Core Voyage Model & State Machine — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.voyage` — field §3.2: `name` (sequence VOY), `charter_contract_id` (domain state confirmed/in_progress), `vessel_id`/`tug_id`/`analytic_account_id` (related dari kontrak, store — 1 sumber kebenaran, bukan duplikasi), `fleet_trip_id` (bridge opsional ke `fleet.vehicle.trip`, lihat Catatan), `date_departure`/`date_arrival_final`, `origin_port_id`/`final_port_id` (domain `is_port=True`), `total_distance_nm`/`total_delay_hours` (compute placeholder 0.0, depends sementara ke `state` — akan diganti dependency riil di Sprint 11/13), `state`
+- [x] Constraint `_check_dates`: `date_arrival_final >= date_departure`
+- [x] Constraint `_check_one_active_voyage_per_contract`: 1 kontrak hanya 1 voyage aktif, **kecuali** time charter yang boleh >1 voyage berurutan asal tidak overlap tanggal — **diverifikasi**: create voyage kedua di kontrak yang sudah punya voyage aktif langsung raise ValidationError
+- [x] State machine lengkap: `action_fix` (draft→fixed, wajib pilih kontrak), `action_depart` (fixed→sailing, wajib origin_port_id), `action_arrive_port`/`action_depart_port` (toggle sailing↔at_port, implementasi dasar — logic penuh terhubung `port_call_ids` di Sprint 10), `action_complete` (validasi cargo document di-skip dengan TODO comment eksplisit, model belum ada sampai Sprint 12), `action_cancel` (wizard) — **diverifikasi end-to-end** via shell: draft→fixed→sailing→at_port→sailing→completed, semua transisi sukses
+- [x] Wizard `vessel.voyage.cancel.wizard` — pola sama seperti `vessel.charter.cancel.wizard`
+- [x] Extend `fleet.vehicle`: `voyage_ids`, `current_voyage_id` (compute, state in sailing/at_port), `current_position_lat`/`current_position_lng` (placeholder 0.0, diisi Sprint 11)
+- [x] Extend `vessel.charter.contract` (cross-module, legitimate extend dari `vessel_chartering`): `voyage_ids`, `voyage_count` (compute) — smart button baru "Voyages" di form kontrak existing (xpath `after` tombol `action_view_invoices`), **diverifikasi tidak merusak apapun yang sudah ada**
+- [x] Security access untuk `vessel.voyage` (manager CRUD penuh, user CRUD tanpa unlink, portal read-only — persiapan Sprint 13) & wizard cancel
+- [x] Views: form (statusbar 5 state + tombol aksi), list (decoration by state), kanban (`t-name="card"`, group by state), search, menu "Voyages" (Semua Voyage, Sedang Berlayar, Selesai)
+- [x] Dummy data: 3 voyage dari kontrak dummy `vessel_chartering` yang sudah ada — voyage #1 dari `demo_contract_voyage_out_2` (confirmed) state `fixed`, voyage #2 dari `demo_contract_time_out_1` (in_progress, time charter) state `sailing`, voyage #3 dari `demo_contract_coa_shipment_1` (completed) state `completed`
+
+### Blocker & Resolusi
+- **Constraint vessel overlap `vessel_chartering` ke-trigger saat verifikasi manual** — kontrak `demo_contract_voyage_in_1` berbagi kapal (`demo_vessel_mv_01`) dengan `demo_contract_time_out_1` yang sudah `in_progress` (periode 90 hari, full overlap). Bukan bug Sprint 9, constraint Sprint 2 bekerja benar (persis pola yang sama seperti blocker Sprint 7). **Resolusi**: pilih kontrak lain (`demo_contract_voyage_out_1`, vessel tug_01, tidak overlap) untuk verifikasi manual end-to-end.
+- **Keputusan desain `fleet_trip_id`** — field Many2one ke `fleet.vehicle.trip` (`fleet_fuel_log`) dideklarasikan sebagai field biasa (bukan hard dependency, sesuai tech spec §8). Secara teknis ini berisiko: Odoo membuat FK constraint ke tabel comodel saat `_auto_init`, yang akan gagal kalau `fleet_fuel_log` benar-benar tidak terinstall di suatu environment. **Keputusan**: diterima sebagai technical debt terdokumentasi (bukan diperbaiki sekarang) — di environment project ini `fleet_fuel_log` adalah modul Layer 1 yang **selalu** terinstall bersama modul fleet lain (bukan skenario nyata yang perlu ditangani untuk MVP ini). Solusi modular penuh (bridge sub-module terpisah) dicatat sebagai item fase depan jika suatu saat dibutuhkan instalasi tanpa `fleet_fuel_log`.
+
+### Verifikasi
+- ✅ Pre-flight grep: `decoration-secondary`, `<group string=/expand=>`, `.groups_id` — 0 hasil
+- ✅ Install/upgrade bersih tanpa ERROR/CRITICAL, dua modul sekaligus (`vessel_voyage_operations,vessel_chartering`) tanpa circular dependency error
+- ✅ Idempotent — re-run `-u` kedua kali, 0 ERROR/CRITICAL
+- ✅ `analytic_account_id`/`vessel_id` di voyage = di kontrak — **diverifikasi via shell**: `action_confirm()` kontrak → analytic account ter-generate → voyage baru otomatis reflect nilai sama (related field, bukan copy manual), assertion `voyage.analytic_account_id == contract.analytic_account_id` pass
+- ✅ Full state machine end-to-end via shell: draft→fixed→sailing→at_port→sailing→completed, semua transisi sukses, di-rollback (tidak ubah demo data permanen)
+- ✅ Constraint 1-voyage-aktif-per-kontrak — diverifikasi: create voyage kedua di kontrak yang sudah punya voyage aktif (`demo_contract_voyage_out_2`) raise ValidationError sesuai desain
+- ✅ Smart button `voyage_count` di form `vessel.charter.contract` — 3 kontrak dengan voyage tampil count benar (1 masing-masing), form existing tidak rusak
+
+### Catatan
+- `total_distance_nm`/`total_delay_hours` masih placeholder 0.0 (depends sementara ke `state`) — akan diisi data riil dan `@api.depends` diupdate ke `noon_report_ids`/`delay_event_ids` setelah model itu ada (Sprint 11/13)
+- `action_arrive_port`/`action_depart_port` masih implementasi dasar toggle state — logic penuh terhubung `atb`/`atd` per `port_call_ids` menyusul Sprint 10
+- Validasi cargo document (`bl` type) di `action_complete` sengaja di-skip dengan komentar TODO eksplisit — model `vessel.cargo.document` baru ada Sprint 12
+
+---

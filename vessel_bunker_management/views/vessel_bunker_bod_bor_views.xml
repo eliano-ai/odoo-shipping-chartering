@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vessel_bunker_bod_bor_list" model="ir.ui.view">
+        <field name="name">vessel.bunker.bod.bor.list</field>
+        <field name="model">vessel.bunker.bod.bor</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="contract_id"/>
+                <field name="event_type"/>
+                <field name="event_date"/>
+                <field name="rob_fo"/>
+                <field name="rob_do"/>
+                <field name="settlement_amount"/>
+                <field name="settlement_direction"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_vessel_bunker_bod_bor_form" model="ir.ui.view">
+        <field name="name">vessel.bunker.bod.bor.form</field>
+        <field name="model">vessel.bunker.bod.bor</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_settle" type="object" string="Settle ke Hire Statement"
+                            class="oe_highlight" invisible="state != 'confirmed'"
+                            groups="vessel_bunker_management.group_bunker_manager"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="contract_id"/>
+                            <field name="event_type"/>
+                            <field name="event_date" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="rob_fo"/>
+                            <field name="rob_do"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="price_source"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="price_fo_usd_mt" readonly="price_source != 'manual'"/>
+                            <field name="price_do_usd_mt" readonly="price_source != 'manual'"/>
+                        </group>
+                        <group>
+                            <field name="settlement_amount" readonly="1"/>
+                            <field name="settlement_direction" readonly="1"/>
+                            <field name="hire_statement_line_id"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vessel_bunker_bod_bor" model="ir.actions.act_window">
+        <field name="name">BOD/BOR Settlement</field>
+        <field name="res_model">vessel.bunker.bod.bor</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+</odoo>

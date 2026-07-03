@@ -1130,3 +1130,36 @@ Desain "Kirim Inquiry" (`action_send_inquiry`) di-dokumentasikan ulang: transisi
 Konversi liter→MT (`/1000`, asumsi densitas ~1) adalah simplifikasi MVP yang perlu diketahui pengguna — untuk BBM laut riil (MFO/HSD/MGO), densitas aktual bervariasi ~0.85-0.99 kg/L tergantung jenis & suhu, jadi hasil `total_consumption` MT-nya presisi ±10-15% dari nilai riil. Cukup untuk sinyal anomaly (order-of-magnitude), tidak cukup presisi untuk akunting resmi — didokumentasikan di `help` field dan di sini sebagai catatan Fase 2.
 
 ---
+
+## Sprint 26 — vessel_bunker_management: BOD/BOR Settlement (Time Charter) — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.bunker.bod.bor` (§3.7) — event_type delivery/redelivery, `_unique_contract_event` constraint (satu BOD/satu BOR per kontrak), state draft→confirmed→settled
+- [x] `_get_nearest_noon_report_rob()` — ambil ROB FO/DO dari `vessel.noon.report` approved terdekat waktu (across semua voyage kontrak) ke `event_date`
+- [x] `_get_price_for_source()` — 3 price source: `manual` (input langsung), `last_purchase` (harga invoice delivery confirmed terakhir sebelum event_date, filter fuel_type FO=MFO/DO=HSD+MGO), `market_reference` (`vessel.bunker.price.reference` terdekat sebelum event_date)
+- [x] `_compute_settlement_amount` = rob_fo×price_fo + rob_do×price_do; `_compute_settlement_direction` — delivery=charterer bayar owner (positif), redelivery=owner bayar charterer (negatif)
+- [x] `action_confirm` — isi ROB (kalau kosong) & harga (kalau bukan manual) otomatis dari sumbernya
+- [x] `action_settle` — guard `has_group('group_bunker_manager')` eksplisit, tulis `settlement_amount` (dengan tanda sesuai direction) ke `hire_statement_line_id.bunker_adjustment`
+- [x] Extend `vessel.charter.contract` (`_inherit`, TIDAK modifikasi modul asal) — `write()` hook: transisi delivery_date/redelivery_date kosong→terisi → auto-create draft BOD/BOR via `_ensure_bod_bor()` idempoten (arah dependency tetap satu arah: bunker_management→chartering, bukan sebaliknya)
+- [x] Extend `vessel.hire.statement.line` — `bod_bor_id` (compute, reverse lookup)
+- [x] Security access 3 baris (manager full, user RWC no-unlink, Finance via `account.group_account_invoice` RW no-create/unlink)
+- [x] Views: form BOD/BOR (tombol Confirm/Settle), menu "Time Charter > BOD/BOR Settlement"
+- [x] Dummy data §10.6/§10.7: `demo_contract_time_out_1` → draft BOD delivery → confirm (ROB dari noon report, harga dari `market_reference`) → settle → `bunker_adjustment` di hire statement line terisi benar
+
+### Blocker & Resolusi
+1. **Harga 0 di demo pertama** — default `price_source='last_purchase'` tidak dapat data karena `demo_contract_time_out_1` pakai `demo_vessel_mv_01`, kapal yang tidak pernah punya bunker delivery di demo manapun (hanya `demo_vessel_barge_01` yang punya). Fix: demo secara eksplisit set `price_source='market_reference'` (tersedia utk semua kapal), bukan andalkan default. Setelah fix, unlink record lama (nilai 0 ter-bake) + `-u` ulang → `rob_fo=85, rob_do=22, price_fo=550, price_do=750, settlement_amount=63250.00` (sesuai formula 85×550+22×750).
+2. **`has_group('group_bunker_manager')` gagal saat demo-load** — pola berulang (sudah 3x di project ini: Sprint 24 `action_resolve_dispute`, Sprint 17 `vessel_voyage_pnl`, sekarang `action_settle`), `env.user` saat install = `__system__` (uid=1) bukan `base.user_admin`. Fix: demo tulis field target langsung (`bod.state = 'settled'` + `hire_statement_line_id.bunker_adjustment` langsung), method asli tetap ada guard grup-nya (diuji `with_user()` di unit test).
+3. **Test regresi `test_redelivery_direction_is_negative`** — hire.statement.line baru yang dibuat test pakai `period_start` yang SAMA dengan hire statement line yang sudah dibuat demo untuk kontrak yang sama, kena constraint `_check_no_duplicate_period` (`vessel_chartering`, unique per contract+period_start) → `ValidationError`. Sempat disangka error `ir_cron` "could not serialize access due to concurrent update" (lock contention dengan dev server persisten port 8069) adalah penyebabnya — ternyata itu transient/tidak berulang setelah retry, bug sebenarnya baru kelihatan di retry berikutnya. Fix: offset `period_start` test +200 hari dari punya demo.
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL, 1 BOD/BOR + 1 hire_statement_line stabil (count=1) setelah berkali-kali `-u`
+- **19/19 unit test pass** (14 dari Sprint 23-25 + 5 baru: write-hook auto-create draft BOD/BOR pada kontrak baru, write-hook idempoten no-duplicate, settlement amount & direction delivery=positif, redelivery=negatif, `group_bunker_user` diblokir `action_settle` dengan `UserError`)
+- §10.6 acceptance criteria **persis**: kontrak time charter baru, `write({'delivery_date': ...})` → 1 draft BOD/BOR otomatis muncul
+- §10.7 acceptance criteria **persis**: settle → `bunker_adjustment` = 85×550 + 22×750 = 63250.00 (persis, verifikasi psql & unit test)
+
+### Catatan
+Blocker #3 adalah pengingat: error transient (lock/concurrency) dan bug aplikasi asli bisa muncul berurutan di command yang sama — jangan langsung simpulkan "pasti transient, retry saja" tanpa membaca traceback penuh setelah retry gagal lagi.
+
+---

@@ -8,3 +8,6 @@ from . import vessel_bunker_survey
 from . import vessel_bunker_delivery
 from . import vessel_bunker_rob_reconciliation
 from . import vessel_voyage
+from . import vessel_bunker_bod_bor
+from . import vessel_charter_contract
+from . import vessel_hire_statement_line

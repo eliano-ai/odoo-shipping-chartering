@@ -44,6 +44,13 @@
               parent="menu_bunker_reconciliation_root" action="action_vessel_bunker_rob_anomaly"
               sequence="20"/>
 
+    <menuitem id="menu_bunker_time_charter_root" name="Time Charter"
+              parent="menu_bunker_management_root" sequence="40"/>
+
+    <menuitem id="menu_vessel_bunker_bod_bor" name="BOD/BOR Settlement"
+              parent="menu_bunker_time_charter_root" action="action_vessel_bunker_bod_bor"
+              sequence="10"/>
+
     <menuitem id="menu_bunker_config" name="Konfigurasi"
               parent="menu_bunker_management_root" sequence="90"
               groups="vessel_bunker_management.group_bunker_manager"/>

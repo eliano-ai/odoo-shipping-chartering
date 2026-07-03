@@ -83,5 +83,9 @@
     <!-- §10.5 acceptance criteria — previous ROB 200, supply 495, consumption 150
          -> expected 545, actual 500 -> variance -45, is_anomaly=True (threshold 8%). -->
     <function model="vessel.bunker.rob.reconciliation" name="_demo_setup_rob_scenario"/>
+
+    <!-- §10.6/§10.7 acceptance criteria — delivery event -> draft BOD/BOR otomatis,
+         settle -> bunker_adjustment di hire statement line terisi benar. -->
+    <function model="vessel.bunker.bod.bor" name="_demo_setup_bod_bor_scenario"/>
   </data>
 </odoo>

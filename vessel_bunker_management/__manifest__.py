@@ -52,6 +52,7 @@ Referensi: TECH_SPEC_vessel_bunker_management.md
         'views/vessel_bunker_delivery_views.xml',
         'views/vessel_bunker_survey_views.xml',
         'views/vessel_bunker_rob_reconciliation_views.xml',
+        'views/vessel_bunker_bod_bor_views.xml',
         'views/res_config_settings_views.xml',
         'views/fleet_vehicle_views.xml',
         'views/vessel_bunker_management_menus.xml',

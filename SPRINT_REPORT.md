@@ -767,3 +767,33 @@ Tidak ada blocker baru. Pre-flight grep (checklist Odoo 19 gotcha CLAUDE.md) ber
 Warning `vessel.seafarer: inconsistent 'store' for computed fields` muncul di log — pre-existing dari `vessel_crew_management` (modul lain, bukan hasil kerja sprint ini), tidak relevan untuk `vessel_voyage_pnl`.
 
 ---
+
+## Sprint 16 — vessel_voyage_pnl: Core P&L Model (Revenue & Direct Cost) — 2026-07-03
+
+**Status**: ✅ Done
+
+### Task Selesai
+- [x] Model `vessel.voyage.pnl` (header) + `vessel.voyage.pnl.line` (traceability) — field Umum + Revenue + Direct Cost sesuai §3.2/§3.3 tech spec
+- [x] Field header revenue/direct-cost (`freight_revenue`, `bunker_cost`, dst) **sengaja bukan** `@api.depends` compute biasa — diisi imperatif oleh `_compute_revenue()`/`_compute_direct_cost()` (dipanggil tombol Generate/Recompute), supaya snapshot locked tidak diam-diam berubah kalau data sumber dikoreksi belakangan (§8 tech spec). `total_revenue`/`total_direct_cost` tetap `@api.depends` asli (murah, aman direcompute tiap saat)
+- [x] `_compute_revenue()`: Freight & Demurrage/Despatch dari `account.move.line` (query raw SQL, operator jsonb `?` untuk `analytic_distribution` — lebih andal daripada domain ORM untuk kolom jsonb), Brokerage dihitung langsung dari `contract.brokerage_pct × freight_amount_final` (tidak pernah diinvoice terpisah di `vessel_chartering`)
+- [x] `_compute_direct_cost()`: Bunker dari `fleet.fuel.log` (via bridge `voyage.fleet_trip_id`), Port Cost dari FDA `confirmed`, Cargo Handling/Insurance dari mapping `default_account_ids` (kosong by default sampai Finance konfigurasi)
+- [x] Tombol Generate P&L / Recompute, smart button `pnl_id` di form `vessel.voyage` (field teknis `pnl_ids` One2many ditambahkan khusus supaya `_compute_pnl_id` punya dependency path yang benar — lihat Blocker)
+- [x] Views: form (notebook Revenue Detail/Direct Cost Detail dengan line_ids inline + tombol "Lihat Sumber"), list, menu "Semua Voyage P&L"
+- [x] Dummy data: `demo_voyage_3` (satu-satunya voyage completed di demo data project) awalnya TIDAK punya sumber transaksi sama sekali (belum pernah ada freight invoice/demurrage/FDA/bunker log dibuat untuknya di sprint manapun sebelumnya) — dibangun lengkap dari nol via method Python idempoten `_demo_setup_voyage3_sources()`: freight invoice posted (69,000 = 11.5 × 6,000 MT), demurrage 8,000 (24 jam over dari allowed 96 jam × rate 8,000/hari), brokerage 1,725 (2.5% × freight), FDA 12,000, bunker 6,000 (5,000L × 1.2). **Total Revenue = 75,275, Total Direct Cost = 18,000** — diverifikasi persis via psql
+
+### Blocker & Resolusi
+1. **`vessel.voyage.pnl_id` (smart button field) tidak ter-update meski P&L sudah dibuat** — root cause: compute awalnya `@api.depends('state')`, padahal pembuatan `vessel.voyage.pnl` baru tidak pernah mengubah `state` voyage, jadi dependency tidak pernah trigger recompute. Fix: tambah field teknis `pnl_ids` (One2many `vessel.voyage.pnl`, `voyage_id`, tidak ditampilkan di view) dan ganti depends jadi `@api.depends('pnl_ids')` — pola standar Odoo untuk compute field yang nilainya berasal dari relasi balik (inverse Many2one → One2many). **Dikonfirmasi hanya masalah upgrade-path** (nilai stale dari saat compute lama sempat jalan di database dev yang sudah ter-upgrade) — fresh install di database baru (`shipping_dev_test16`) langsung benar tanpa perlu perbaikan manual, dikonfirmasi via test install 9 modul.
+2. **`<function>` XML tag dengan `<value eval="[]"/>` untuk method `@api.model` tanpa parameter** menyebabkan `TypeError: takes 1 positional argument but 2 were given` — value pertama pada `<function>` diinterpretasikan sebagai argumen posisi ke method, bukan "ids" implisit seperti asumsi awal (beda dari pola existing project yang selalu pakai method instance dengan `self` non-kosong). Fix: hapus `<value>` sepenuhnya, cukup `<function model="..." name="..."/>` self-closing untuk method `@api.model` tanpa parameter.
+3. Demo data lengkap (freight invoice + demurrage + FDA + bunker) untuk voyage completed **tidak ada sama sekali** di modul manapun sebelumnya (semua demo PDA/FDA existing di `vessel_voyage_operations` terikat ke `demo_voyage_2` yang statusnya `sailing`, bukan `completed`) — harus dibangun dari nol khusus sprint ini via method Python idempoten (bukan `<record>` XML murni, karena `analytic_distribution` butuh ID `account.analytic.account` yang baru dibuat dinamis saat runtime, tidak punya xmlid tetap untuk direferensikan statis).
+
+### Verifikasi
+- Install & update idempotent: 0 ERROR/CRITICAL (dua kali `-u` berturut-turut, jumlah `vessel.voyage.pnl`/`vessel.voyage.pnl.line` tidak bertambah)
+- §10.2 **freight + demurrage → total_revenue benar**: 69,000 + 8,000 − 1,725 = 75,275 ✓ (diverifikasi psql)
+- §10.3 **bunker cost dari fleet_fuel_log dengan traceability**: line `source_model='fleet.fuel.log'` ✓
+- Constraint unique `voyage_id`: `UniqueViolation` terverifikasi via `odoo shell`
+- **Fresh install 9 modul** (`shipping_dev_test16`, temp DB): 0 ERROR/CRITICAL, `pnl_id`/angka P&L langsung benar tanpa perbaikan manual — dibersihkan (`pg_terminate_backend` + `DROP DATABASE`) setelah verifikasi
+
+### Catatan
+Sesuai saran §12.2 poin 3 tech spec, allocated cost (`crew_cost_allocated` dst.), `voyage_result`, `tce_actual_per_day`, dan tombol Lock **sengaja belum diimplementasi** — menyusul Sprint 17 (bagian paling kompleks, dipisah supaya lebih mudah di-test bertahap).
+
+---

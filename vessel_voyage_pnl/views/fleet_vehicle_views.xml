@@ -11,6 +11,14 @@
                     <group>
                         <field name="budget_variance_threshold_pct"/>
                     </group>
+                    <field name="voyage_pnl_ids" readonly="1">
+                        <list>
+                            <field name="voyage_id"/>
+                            <field name="total_revenue" sum="Total Revenue"/>
+                            <field name="total_direct_cost" sum="Total Direct Cost"/>
+                            <field name="state" widget="badge"/>
+                        </list>
+                    </field>
                 </page>
             </xpath>
         </field>

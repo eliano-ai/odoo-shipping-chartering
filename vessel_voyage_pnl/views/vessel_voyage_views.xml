@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="vessel_voyage_form_inherit_voyage_pnl" model="ir.ui.view">
+        <field name="name">vessel.voyage.form.inherit.voyage.pnl</field>
+        <field name="model">vessel.voyage</field>
+        <field name="inherit_id" ref="vessel_voyage_operations.vessel_voyage_view_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="action_generate_pnl" type="object" string="Generate P&amp;L"
+                        class="btn-secondary"
+                        invisible="state != 'completed' or pnl_id"/>
+            </header>
+            <div name="button_box" position="inside">
+                <button name="action_view_pnl" type="object"
+                        class="oe_stat_button" icon="fa-calculator"
+                        invisible="not pnl_id">
+                    <div class="o_stat_info">
+                        <span class="o_stat_text">Voyage P&amp;L</span>
+                    </div>
+                </button>
+            </div>
+            <field name="charter_contract_id" position="after">
+                <field name="pnl_id" invisible="1"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

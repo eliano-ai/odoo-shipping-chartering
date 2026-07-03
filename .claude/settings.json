@@ -27,19 +27,13 @@
       "Bash(mkdir -p *)",
       "Bash(cat *)",
       "Bash(ls *)",
-      "PowerShell(powershell -File \"D:\\Odoo Shipping\\scripts\\*)",
-      "PowerShell(Get-Process *)",
-      "PowerShell(Start-Process outlook.exe*)",
-      "PowerShell(Test-Path *)",
+      "Bash(*)",
+      "PowerShell(*)",
       "Skill(sprint)",
-      "Skill(retro)"
+      "Skill(retro)",
+      "Skill(improve)"
     ],
-    "ask": [
-      "Bash(*dropdb*)",
-      "Bash(*pg_terminate_backend*)",
-      "Bash(docker compose down*)",
-      "Bash(docker compose restart*)"
-    ],
+    "ask": [],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push origin *)",

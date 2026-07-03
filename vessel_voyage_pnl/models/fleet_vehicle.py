@@ -10,3 +10,6 @@ class FleetVehicleVoyagePnl(models.Model):
         help='Ambang batas variance budget vs actual khusus kapal ini. '
              'Kosongkan/0 untuk pakai default global perusahaan.',
     )
+    voyage_pnl_ids = fields.One2many(
+        'vessel.voyage.pnl', 'vessel_id', string='Riwayat Voyage P&L',
+    )

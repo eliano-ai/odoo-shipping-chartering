@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- §10.2/§10.3 acceptance criteria butuh voyage completed dengan sumber data
+         REAL (freight invoice posted, demurrage approved, FDA confirmed, bunker log) —
+         demo_voyage_3 (vessel_voyage_operations) sudah completed tapi belum punya
+         sumber transaksi sama sekali. Setup idempoten via method Python (bukan XML
+         record murni) karena perlu account.move dengan analytic_distribution yang
+         analytic_account_id-nya baru dibuat dinamis saat runtime (tidak ada xmlid tetap
+         untuk dijadikan referensi statis di XML). Function tag selalu re-run tiap -u,
+         tapi method-nya sendiri idempoten (guard cek existing sebelum create tiap
+         langkah) — lihat vessel_voyage_pnl.py::_demo_setup_voyage3_sources. -->
+    <function model="vessel.voyage.pnl" name="_demo_setup_voyage3_sources"/>
+
+</odoo>

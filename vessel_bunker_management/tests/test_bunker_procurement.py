@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from datetime import timedelta
+
+from odoo import fields
 from odoo.tests import TransactionCase, tagged
 
 
@@ -42,3 +45,35 @@ class TestBunkerProcurement(TransactionCase):
         self.assertEqual(len(fo_line), 1)
         self.assertAlmostEqual(fo_line.price_unit, quote.price_fo_usd_mt, places=2)
         self.assertAlmostEqual(fo_line.product_qty, self.inquiry.requested_qty_fo, places=2)
+
+    def test_price_reference_uses_most_recent_before_date(self):
+        """vessel.bunker.price.reference — quote._compute_price_vs_market_pct() harus
+        pakai baris referensi TERDEKAT sebelum validity_date (order='date desc',
+        limit=1), bukan baris pertama/tertua yang match fuel_type. Demo data cuma
+        punya 1 baris per fuel_type, jadi logika 'terdekat' ini belum pernah teruji
+        dengan >1 baris kompetisi (QA audit 2026-07-03)."""
+        mfo_type = self.env.ref('fleet_fuel_log.fuel_type_mfo')
+        today = fields.Date.context_today(self.env['vessel.bunker.price.reference'])
+        self.env['vessel.bunker.price.reference'].create({
+            'date': today - timedelta(days=60), 'index_name': 'mops',
+            'fuel_type_id': mfo_type.id, 'price_usd_mt': 500.0,
+        })
+        self.env['vessel.bunker.price.reference'].create({
+            'date': today - timedelta(days=10), 'index_name': 'mops',
+            'fuel_type_id': mfo_type.id, 'price_usd_mt': 600.0,
+        })
+        inquiry = self.env['vessel.bunker.inquiry'].create({
+            'vessel_id': self.inquiry.vessel_id.id,
+            'date_needed': today,
+            'requested_qty_fo': 100,
+            'requested_qty_do': 0,
+        })
+        quote = self.env['vessel.bunker.quote'].create({
+            'inquiry_id': inquiry.id,
+            'supplier_id': self.env.ref('vessel_bunker_management.demo_supplier_bunker_a').id,
+            'price_fo_usd_mt': 600.0,  # sama persis harga referensi TERDEKAT -> variance 0%
+            'validity_date': today,
+        })
+        # Kalau logika salah pakai baris 500 (lebih lama/pertama ditemukan), hasilnya
+        # akan +20%, bukan 0%.
+        self.assertAlmostEqual(quote.price_vs_market_pct, 0.0, places=2)

@@ -52,8 +52,8 @@ Status sprint saat ini tersimpan di: `sprints/.current_sprint`
 
 Semua command dari `D:\Sunartha Claude Skills\commands\` (`sunartha-claude-skills-dev`) sudah di-install ke `.claude/commands/` project ini. **Mulai sekarang pakai versi lokal ini, jangan lagi rujuk path eksternal.**
 
-- `sprint.md`, `retro.md` — **sudah diadaptasi** untuk konteks Odoo/Windows (lihat isi file, beda dari sumber asli)
-- `devops.md`, `docs.md`, `improve.md`, `pm.md`, `qa.md`, `release.md`, `review.md`, `security.md`, `ux.md` — **masih raw/belum diadaptasi**, di-copy apa adanya dari sumber. Sebelum benar-benar dipakai, cek dulu apakah pre-flight check/asumsi tech stack-nya cocok (kemungkinan besar tidak — sama seperti `sprint.md`/`retro.md` sebelum diadaptasi: asumsi `backend/`+`uv`+pytest, `frontend/`+pnpm, email via AppleScript+Mail.app macOS). `ux.md` kemungkinan besar **tidak relevan sama sekali** untuk project ini (Odoo backend module dev, bukan custom frontend web app).
+- `sprint.md`, `retro.md`, `qa.md` — **sudah diadaptasi** untuk konteks Odoo/Windows (lihat isi file, beda dari sumber asli). `qa.md` diadaptasi 2026-07-03: test di project ini adalah `odoo.tests.TransactionCase` per modul dijalankan via `docker compose exec` — tidak ada `pytest`/`Vitest`/`coverage.py` sama sekali, `audit` subcommand-nya cross-reference model vs test coverage secara heuristik (grep), bukan tooling coverage formal.
+- `devops.md`, `docs.md`, `improve.md`, `pm.md`, `release.md`, `review.md`, `security.md`, `ux.md` — **masih raw/belum diadaptasi**, di-copy apa adanya dari sumber. Sebelum benar-benar dipakai, cek dulu apakah pre-flight check/asumsi tech stack-nya cocok (kemungkinan besar tidak — sama seperti `sprint.md`/`retro.md`/`qa.md` sebelum diadaptasi: asumsi `backend/`+`uv`+pytest, `frontend/`+pnpm, email via AppleScript+Mail.app macOS). `ux.md` kemungkinan besar **tidak relevan sama sekali** untuk project ini (Odoo backend module dev, bukan custom frontend web app).
 
 ## Mode Eksekusi Sprint: AUTONOMOUS (berubah dari CHECKPOINT, 2026-07-03)
 

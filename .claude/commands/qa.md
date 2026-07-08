@@ -1,417 +1,264 @@
-# QA — Quality Assurance Agent
+# QA — Quality Assurance Agent (Odoo Module Dev)
 
-Kamu adalah seorang Senior QA Engineer yang memastikan seluruh kode teruji dengan baik. Jalankan semua langkah tanpa menunggu konfirmasi. Skill ini bersifat **general** — bisa dipakai di project Python/FastAPI + React/TypeScript apapun.
+Kamu adalah Senior QA Engineer yang memastikan seluruh modul Odoo custom teruji dengan baik. Jalankan semua langkah tanpa menunggu konfirmasi, KECUALI Langkah 7 (Git Commit) yang wajib tanya dulu — ini bukan mode autonomous sprint.
+
+Diadaptasi dari `sunartha-claude-skills-dev` (`D:\Sunartha Claude Skills\commands\qa.md`) untuk konteks Odoo module dev — versi asli asumsi backend FastAPI+pytest+uv dan frontend React+Vitest+pnpm, **tidak ada satupun yang berlaku di project ini**. Test di sini adalah `odoo.tests.TransactionCase`/`tagged` per modul, dijalankan via `docker compose exec` — tidak ada `coverage.py`/`pytest-cov` yang terintegrasi.
 
 ## Cara Memanggil
 
 ```
-/qa run       → Jalankan semua test yang ada, laporkan hasil
-/qa write     → Tulis test untuk kode yang belum tercover
-/qa coverage  → Analisis coverage dan identifikasi gap
-/qa e2e       → Jalankan end-to-end test (jika ada)
-/qa audit     → Audit kondisi test suite tanpa menjalankan test
+/qa run       → Jalankan seluruh unit test tiap modul custom yang punya folder tests/, laporkan hasil
+/qa audit     → Audit kondisi test suite tanpa menjalankan test (cross-reference model vs test coverage)
+/qa write     → Tulis TransactionCase test untuk model/action method yang belum tercover (dari hasil audit)
 ```
 
-Jika dipanggil tanpa argumen (`/qa`), jalankan `run` lalu `coverage`.
+Jika dipanggil tanpa argumen (`/qa`), jalankan `audit` (bukan `run` — audit tidak menyentuh docker/database, jauh lebih cepat dan aman sebagai default).
+
+`/qa coverage` dan `/qa e2e` dari versi asli **tidak diadaptasi** — tidak ada tooling coverage terintegrasi untuk Odoo di environment ini, dan tidak ada E2E test framework terpasang (Odoo Enterprise `hoot`/tour test butuh setup terpisah, di luar scope). Kalau user minta salah satunya, jelaskan gap ini dan tawarkan `audit` sebagai pendekatan manual terdekat.
 
 ---
 
-## Langkah 1 — Baca Konfigurasi Project
+## Langkah 1 — Baca Konfigurasi Project & Daftar Modul
 
-Baca `CLAUDE.md` di root working directory. Ekstrak:
-- **Tech stack**: backend framework, frontend framework, package manager
-- **Test command** jika ada di CLAUDE.md
-
-Scan struktur test yang ada:
+Baca `CLAUDE.md`. Daftar modul custom di project ini (Layer 1 Asset Management + Layer 2 Komersial + Layer 3 Finansial):
 
 ```bash
-# Backend tests
-find backend/ -name "test_*.py" -o -name "*_test.py" 2>/dev/null | sort
-ls backend/tests/ 2>/dev/null || echo "Tidak ada folder tests/"
-cat backend/pytest.ini 2>/dev/null || cat backend/pyproject.toml 2>/dev/null | grep -A20 "\[tool.pytest"
+MODULES="fleet_document_id fleet_fuel_log fleet_maintenance_schedule fleet_model_sparepart vessel_crew_management acc_id_multicurrency_report shopify_connector_v19 maritime vessel_chartering vessel_voyage_operations vessel_voyage_pnl vessel_bunker_management"
 
-# Frontend tests
-find frontend/src -name "*.test.tsx" -o -name "*.test.ts" -o -name "*.spec.tsx" -o -name "*.spec.ts" 2>/dev/null | sort
-cat frontend/vitest.config.ts 2>/dev/null || cat frontend/jest.config.ts 2>/dev/null || echo "Tidak ada vitest/jest config"
+for m in $MODULES; do
+  echo "=== $m ==="
+  ls "$m/tests/" 2>/dev/null || echo "  (tidak ada folder tests/)"
+done
 ```
+
+Modul Layer 1 (`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`) dan 2 modul generik (`acc_id_multicurrency_report` — tidak spesifik shipping, `shopify_connector_v19`) dikembangkan **sebelum** roadmap sprint terstruktur project ini dimulai — kemungkinan besar tidak punya `tests/` sama sekali kecuali `acc_id_multicurrency_report`. Ini bukan kesalahan sprint manapun, cukup dicatat sebagai gap pre-existing di laporan, jangan diperlakukan sebagai "regresi".
 
 ---
 
 ## Langkah 2 — Subcommand: `run`
 
-**Tujuan**: Jalankan semua test yang ada, tampilkan hasil lengkap.
-
-### Backend
+**Tujuan**: Jalankan seluruh unit test modul yang punya folder `tests/`, tampilkan hasil lengkap per modul.
 
 ```bash
-cd backend
-
-# Pastikan test dependencies ada
-uv run python -c "import pytest" 2>/dev/null || uv add --dev pytest pytest-asyncio httpx
-
-# Jalankan semua test
-uv run pytest tests/ -v --tb=short 2>&1
-
-# Catat: berapa passed, failed, error, skipped
+docker compose ps
+curl -s -o /dev/null -w "Odoo HTTP: %{http_code}\n" http://localhost:8069/web/login
 ```
 
-Jika ada test yang **failed** atau **error**:
-1. Baca error message lengkap
-2. Cari root cause (import error, fixture missing, logic error, dll)
-3. Perbaiki jika penyebabnya jelas (misal: import path salah, fixture tidak terdefinisi)
-4. Jika butuh perubahan logic signifikan, catat sebagai temuan tapi jangan ubah
+Jika container tidak running, `docker compose up -d` dan tunggu healthy dulu.
 
-### Frontend
+**WAJIB sekuensial, satu modul per satu command** — semua share `--http-port=8070` dan database `shipping_dev` yang sama; menjalankan paralel berisiko row-lock contention (`could not serialize access due to concurrent update` pada `ir_cron`, pernah terjadi di sesi `vessel_bunker_management` Sprint 26).
 
 ```bash
-cd frontend
-
-# Cek apakah vitest ada
-if grep -q "vitest" package.json 2>/dev/null; then
-  pnpm run test --run 2>&1 | tail -30
-elif grep -q "jest" package.json 2>/dev/null; then
-  pnpm run test --watchAll=false 2>&1 | tail -30
-else
-  echo "INFO: Belum ada test runner di frontend"
-fi
+for m in <daftar modul yang punya folder tests/>; do
+  echo "=== $m ==="
+  MSYS_NO_PATHCONV=1 docker compose exec odoo odoo --stop-after-init -d shipping_dev \
+    --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo \
+    --http-port=8070 --test-enable --test-tags $m -u $m 2>&1 | grep -E "FAIL|ERROR|tests when loading"
+done
 ```
+
+Jika ada test **failed**/**error**:
+1. Baca traceback lengkap (cari baris `File ".../<modul>/tests/..."`)
+2. Cari root cause — cek dulu apakah ini regresi demo-data lifecycle (pola sudah dikenal project ini, lihat CLAUDE.md/RETRO.md: hardcode state/period yang stale karena demo data terus berkembang antar sprint) sebelum menyimpulkan bug baru
+3. Perbaiki jika penyebabnya jelas
+4. Jika butuh perubahan logic signifikan atau keputusan desain, catat sebagai temuan di laporan akhir, **jangan ubah tanpa konfirmasi** (beda dari mode autonomous sprint)
 
 ---
 
-## Langkah 3 — Subcommand: `coverage`
+## Langkah 3 — Subcommand: `audit`
 
-**Tujuan**: Ukur seberapa banyak kode yang tercover oleh test. Identifikasi file dan fungsi yang sama sekali tidak tercover.
+**Tujuan**: Laporan kondisi test suite tanpa menjalankan test atau mengubah kode/database — aman dan cepat, tidak butuh docker exec sama sekali kecuali untuk menghitung file.
 
-### Backend Coverage
-
-```bash
-cd backend
-
-# Install coverage jika belum ada
-uv run python -c "import pytest_cov" 2>/dev/null || uv add --dev pytest-cov
-
-# Jalankan dengan coverage
-uv run pytest tests/ --cov=app --cov-report=term-missing --cov-report=json 2>&1
-
-# Baca hasil JSON untuk analisis
-cat coverage.json 2>/dev/null | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-files = data.get('files', {})
-low_coverage = [(f, v['summary']['percent_covered']) for f, v in files.items() if v['summary']['percent_covered'] < 60]
-low_coverage.sort(key=lambda x: x[1])
-print('=== Files dengan coverage < 60% ===')
-for f, pct in low_coverage:
-    print(f'{pct:.0f}%  {f}')
-print(f'=== Total coverage: {data[\"totals\"][\"percent_covered\"]:.0f}% ===')
-" 2>/dev/null || echo "coverage.json tidak ditemukan, periksa output pytest di atas"
-```
-
-### Frontend Coverage
+### 3.1 — Statistik per Modul
 
 ```bash
-cd frontend
-if grep -q "vitest" package.json 2>/dev/null; then
-  pnpm run test --run --coverage 2>&1 | tail -40
-fi
+for m in $MODULES; do
+  n_models=$(find "$m/models" -name "*.py" ! -name "__init__.py" 2>/dev/null | wc -l | tr -d ' ')
+  n_test_files=$(find "$m/tests" -name "test_*.py" 2>/dev/null | wc -l | tr -d ' ')
+  n_test_methods=$(grep -rh "def test_" "$m/tests/"*.py 2>/dev/null | wc -l | tr -d ' ')
+  echo "$m: $n_models model file(s), $n_test_files test file(s), $n_test_methods test method(s)"
+done
 ```
 
-### Tentukan Target Coverage
+### 3.2 — Cross-Reference Model vs Test Coverage
 
-Kategorikan status coverage:
-- **≥ 80%** → ✅ Good
-- **60–79%** → ⚠️ Acceptable, perlu ditingkatkan
-- **< 60%** → ❌ Perlu perhatian segera
+Untuk tiap model **custom** (bukan model core Odoo yang cuma di-`_inherit`), cek apakah nama model itu disebut minimal sekali di test file modul yang sama:
 
-Identifikasi **5 file paling kritis** yang belum tercover:
-- Prioritaskan: auth, core business logic, API endpoints utama
-- Skip: migration files, seed files, config files
+```bash
+for m in $MODULES; do
+  for model_file in "$m"/models/*.py; do
+    [ "$(basename "$model_file")" = "__init__.py" ] && continue
+    model_name=$(grep -oP "_name\s*=\s*'\K[^']+" "$model_file" | head -1)
+    [ -z "$model_name" ] && continue  # file cuma _inherit tanpa _name baru, skip
+    if ! grep -rq "$model_name" "$m"/tests/*.py 2>/dev/null; then
+      echo "NO TEST COVERAGE: $m / $model_name ($(basename $model_file))"
+    fi
+  done
+done
+```
+
+Catatan: ini heuristik kasar (cek model NAME disebut, bukan tiap method/compute field) — cukup untuk identifikasi gap besar (model tanpa test sama sekali), bukan pengganti code review mendalam.
+
+### 3.3 — Cross-Check Acceptance Criteria vs Test Docstring
+
+Untuk modul yang punya tech spec dengan §10 Kriteria Penerimaan (`vessel_chartering`, `vessel_voyage_operations`, `vessel_voyage_pnl`, `vessel_bunker_management`), pola project ini SELALU menulis referensi `§10.X` di docstring test yang relevan — cross-check tiap poin acceptance criteria benar-benar disebut minimal satu test:
+
+```bash
+for m in vessel_chartering vessel_voyage_operations vessel_voyage_pnl vessel_bunker_management; do
+  echo "=== $m ==="
+  grep -oP "§10\.\d+" TECH_SPEC_$m.md 2>/dev/null | sort -u | while read -r poin; do
+    grep -rq "$poin" "$m"/tests/*.py 2>/dev/null && echo "  $poin: OK" || echo "  $poin: TIDAK DISEBUT DI TEST MANAPUN"
+  done
+done
+```
+
+### 3.4 — Action Method Group-Gated Tanpa Test `with_user()`
+
+Pola established project ini: action method yang di-guard `has_group(...)` wajib diuji minimal 1x dengan `with_user()` memverifikasi user tanpa grup dapat `UserError`/`AccessError` (lihat CLAUDE.md soal `has_group()` gagal di demo-context). Cek model dengan `has_group` di kode tapi tidak ada `with_user` di test:
+
+```bash
+for m in $MODULES; do
+  for model_file in "$m"/models/*.py; do
+    if grep -q "has_group(" "$model_file" 2>/dev/null; then
+      if ! grep -rq "with_user" "$m"/tests/*.py 2>/dev/null; then
+        echo "GUARD TANPA TEST with_user(): $m / $(basename $model_file)"
+      fi
+    fi
+  done
+done
+```
+
+### 3.5 — Tulis/Update `QA_STATUS.md`
+
+```markdown
+# QA Status
+**Last Check**: [tanggal]
+**Project**: Odoo Shipping Vertical Solution
+
+## Summary per Modul
+
+| Modul | Model Files | Test Files | Test Methods | Model Tanpa Test |
+|-------|------------|-----------|--------------|-------------------|
+| vessel_bunker_management | N | N | N | 0 |
+| ... | | | | |
+
+## Gap Kritis (model tanpa test sama sekali)
+- [list dari 3.2]
+
+## Acceptance Criteria Tanpa Referensi Test
+- [list dari 3.3, kalau ada]
+
+## Action Method Guard Tanpa Test with_user()
+- [list dari 3.4, kalau ada]
+
+## Modul Tanpa Folder tests/ Sama Sekali
+- [list — biasanya modul Layer 1 pre-existing, catat sebagai gap pre-existing bukan regresi]
+
+## Rekomendasi
+Jalankan `/qa run` untuk eksekusi test yang sudah ada, atau `/qa write` untuk isi gap di atas.
+```
 
 ---
 
 ## Langkah 4 — Subcommand: `write`
 
-**Tujuan**: Tulis test untuk kode yang belum tercover, fokus pada area paling kritis.
+**Tujuan**: Tulis test `TransactionCase` baru untuk model/method yang di-flag `audit` sebagai tanpa coverage, mengikuti pola project existing — **bukan** template pytest/FastAPI generik.
 
 ### 4.1 — Identifikasi Target
 
-Dari hasil `coverage`, ambil 3–5 file prioritas tinggi yang perlu test. Untuk setiap file:
+Ambil hasil Langkah 3.2/3.4 (`audit`), prioritaskan: model dengan constraint/compute field kompleks, action method dengan state machine, action method group-gated.
 
-```bash
-# Baca file yang akan dites
-cat backend/app/api/v1/endpoints/[nama].py
+### 4.2 — Pola Test yang Sudah Mapan di Project Ini
 
-# Baca test yang sudah ada (jika ada)
-cat backend/tests/test_[nama].py 2>/dev/null || echo "Belum ada test file"
-```
-
-### 4.2 — Tulis Test Backend (pytest + httpx)
-
-Untuk setiap endpoint FastAPI yang belum tercover, buat test dengan pola:
+Baca 1-2 file test existing di modul yang sama dulu untuk konsistensi gaya (`setUp` biasanya `self.env.ref(...)` ke demo data, bukan bikin fixture generik dari nol):
 
 ```python
-# backend/tests/test_[nama_endpoint].py
-import pytest
-from httpx import AsyncClient
+# <modul>/tests/test_<nama>.py
+from odoo.exceptions import UserError, ValidationError
+from odoo.tests import TransactionCase, tagged
 
 
-# --- Happy path ---
-@pytest.mark.asyncio
-async def test_[nama]_sukses(client: AsyncClient, auth_headers: dict):
-    """[Nama endpoint]: berhasil dengan data valid."""
-    response = await client.get("/api/v1/[path]/", headers=auth_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)  # atau dict, sesuai endpoint
+@tagged('post_install', '-at_install')
+class Test<Nama>(TransactionCase):
 
+    def setUp(self):
+        super().setUp()
+        # Reuse demo data via self.env.ref(...) kalau ada, baru create() manual
+        # untuk skenario yang butuh state awal berbeda dari demo.
 
-# --- Auth guard ---
-@pytest.mark.asyncio
-async def test_[nama]_tanpa_auth(client: AsyncClient):
-    """[Nama endpoint]: harus return 401 jika tidak ada token."""
-    response = await client.get("/api/v1/[path]/")
-    assert response.status_code == 401
+    def test_constraint_<nama>(self):
+        """Constraint <nama> - <alasan constraint ada>."""
+        with self.assertRaises(ValidationError):
+            self.env['<model>'].create({...})  # data yang seharusnya melanggar constraint
 
-
-# --- Edge case ---
-@pytest.mark.asyncio
-async def test_[nama]_not_found(client: AsyncClient, auth_headers: dict):
-    """[Nama endpoint]: return 404 untuk ID yang tidak ada."""
-    response = await client.get("/api/v1/[path]/nonexistent-id", headers=auth_headers)
-    assert response.status_code == 404
-
-
-# --- Validasi input ---
-@pytest.mark.asyncio
-async def test_[nama]_invalid_payload(client: AsyncClient, auth_headers: dict):
-    """[Nama endpoint]: return 422 untuk payload tidak valid."""
-    response = await client.post(
-        "/api/v1/[path]/",
-        json={"field_wajib": ""},  # sesuaikan dengan schema
-        headers=auth_headers,
-    )
-    assert response.status_code == 422
+    def test_action_<nama>_group_guard(self):
+        """§10.X (kalau ada referensi acceptance criteria) - group_xxx_user tidak
+        boleh <aksi>."""
+        test_user = self.env['res.users'].create({
+            'name': 'Test User', 'login': 'test_qa_user',
+            'group_ids': [(6, 0, [self.env.ref('<modul>.group_xxx_user').id, self.env.ref('base.group_user').id])],
+        })
+        with self.assertRaises(UserError):
+            record.with_user(test_user).action_<nama>()
 ```
 
-**Wajib cover untuk setiap endpoint**:
-1. Happy path (data valid, user authenticated)
-2. Unauthenticated request (401)
-3. Not found (404) — untuk GET by ID
-4. Invalid payload (422) — untuk POST/PUT
-5. Duplicate/conflict (409) — jika ada unique constraint
+**Wajib cover untuk tiap model baru**:
+1. Constraint (kalau ada `models.Constraint`/`@api.constrains`) — kasus yang melanggar HARUS raise
+2. Compute field kunci (formula bisnis, mis. variance/settlement amount) — nilai eksak, bukan cuma "tidak error"
+3. Action method state transition (state awal salah → `UserError`)
+4. Action method group-gated → `with_user()` non-member harus gagal
 
-### 4.3 — Pastikan Fixtures Tersedia
+### 4.3 — Jalankan Test Satu-Per-Satu Saat Ditulis
 
-Cek `backend/tests/conftest.py`:
+Sama seperti aturan `sprint.md` — tulis SATU test, jalankan (`--test-tags <modul>`), baru lanjut ke berikutnya. Jangan tulis seluruh batch dulu lalu debug massal.
+
+---
+
+## Langkah 5 — Verifikasi Akhir
+
+Setelah menulis test baru, jalankan ULANG SELURUH suite modul yang disentuh (bukan cuma test baru) — demo data yang di-extend antar sprint di project ini sudah beberapa kali membuat test lama jadi stale:
 
 ```bash
-cat backend/tests/conftest.py 2>/dev/null
-```
-
-Jika belum ada fixture `client` dan `auth_headers`, tambahkan ke `conftest.py`:
-
-```python
-import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-
-from app.main import app
-from app.db.base import Base
-from app.db.session import get_db
-
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-
-@pytest_asyncio.fixture(scope="session")
-async def engine():
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield engine
-    await engine.dispose()
-
-
-@pytest_asyncio.fixture
-async def db(engine):
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    async with async_session() as session:
-        yield session
-        await session.rollback()
-
-
-@pytest_asyncio.fixture
-async def client(db):
-    async def override_get_db():
-        yield db
-
-    app.dependency_overrides[get_db] = override_get_db
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
-        yield ac
-    app.dependency_overrides.clear()
-
-
-@pytest_asyncio.fixture
-async def auth_headers(client: AsyncClient):
-    """Login sebagai admin test, return Authorization header."""
-    # Buat user test jika belum ada
-    await client.post("/api/v1/auth/register", json={
-        "email": "test@test.com",
-        "password": "testpassword123",
-        "full_name": "Test User",
-    })
-    response = await client.post("/api/v1/auth/login", data={
-        "username": "test@test.com",
-        "password": "testpassword123",
-    })
-    token = response.json().get("access_token", "")
-    return {"Authorization": f"Bearer {token}"}
-```
-
-Jika sudah ada conftest tapi kurang fixture, tambahkan yang kurang saja.
-
-### 4.4 — Tulis Test Frontend (Vitest + React Testing Library)
-
-Jika frontend menggunakan Vitest, untuk setiap komponen penting yang belum tercover:
-
-```bash
-# Install testing dependencies jika belum ada
-cd frontend
-grep -q "@testing-library/react" package.json 2>/dev/null || pnpm add --save-dev @testing-library/react @testing-library/user-event vitest jsdom
-```
-
-Buat test dengan pola:
-
-```tsx
-// frontend/src/components/[nama].test.tsx
-import { render, screen, fireEvent } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
-import { NamaKomponen } from "./NamaKomponen";
-
-describe("NamaKomponen", () => {
-  it("merender dengan benar", () => {
-    render(<NamaKomponen />);
-    expect(screen.getByText(/teks yang diharapkan/i)).toBeInTheDocument();
-  });
-
-  it("memanggil callback saat diklik", async () => {
-    const onKlik = vi.fn();
-    render(<NamaKomponen onClick={onKlik} />);
-    fireEvent.click(screen.getByRole("button"));
-    expect(onKlik).toHaveBeenCalledTimes(1);
-  });
-});
+MSYS_NO_PATHCONV=1 docker compose exec odoo odoo --stop-after-init -d shipping_dev \
+  --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo \
+  --http-port=8070 --test-enable --test-tags <modul> -u <modul> 2>&1 | grep -E "FAIL|ERROR|tests when loading"
 ```
 
 ---
 
-## Langkah 5 — Subcommand: `audit`
+## Langkah 6 — Git Commit (WAJIB TANYA DULU, jangan auto-commit)
 
-**Tujuan**: Laporan kondisi test suite tanpa mengubah atau menjalankan kode.
+Beda dari versi generic skill ini (yang auto-commit) — project ini pakai aturan global: **jangan commit kecuali user eksplisit minta**. `/qa audit` (read-only, cuma tulis `QA_STATUS.md`) dan `/qa run` (tidak mengubah kode) TIDAK perlu commit sama sekali kecuali user minta `QA_STATUS.md` disimpan ke git. `/qa write` (nulis test baru) baru relevan untuk commit — tapi tetap tanya dulu, jangan asumsi.
 
-### 5.1 — Hitung Statistik
-
+Kalau user setuju commit:
 ```bash
-# Jumlah test files
-BACKEND_TEST_FILES=$(find backend/ -name "test_*.py" 2>/dev/null | wc -l | tr -d ' ')
-FRONTEND_TEST_FILES=$(find frontend/src -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | wc -l | tr -d ' ')
+git add <path test file yang ditulis> QA_STATUS.md
+git commit -m "test(qa): [ringkasan — misal: tambah test coverage vessel.bunker.survey constraint & group guard]
 
-# Jumlah endpoint yang ada
-ENDPOINTS=$(find backend/app/api -name "*.py" 2>/dev/null | xargs grep -l "router\." | wc -l | tr -d ' ')
-
-# Jumlah komponen yang ada
-COMPONENTS=$(find frontend/src/components -name "*.tsx" 2>/dev/null | wc -l | tr -d ' ')
-
-echo "Backend test files : $BACKEND_TEST_FILES"
-echo "Frontend test files: $FRONTEND_TEST_FILES"
-echo "API endpoint files : $ENDPOINTS"
-echo "Frontend components: $COMPONENTS"
-```
-
-### 5.2 — Buat Laporan `QA_STATUS.md`
-
-```markdown
-# QA Status
-**Last Check**: [tanggal]
-**Project**: [nama]
-
-## Summary
-
-| Layer | Test Files | Estimated Coverage |
-|-------|-----------|-------------------|
-| Backend API | N files | ~X% |
-| Frontend | N files | ~X% |
-
-## Endpoint Coverage Matrix
-
-| Endpoint | Test Ada? | Happy Path | Auth | Edge Cases |
-|----------|-----------|-----------|------|-----------|
-| POST /auth/login | ✅ | ✅ | N/A | ⚠️ |
-| GET /prospects/ | ❌ | ❌ | ❌ | ❌ |
-
-## Temuan
-
-### Kritis (tidak ada test sama sekali)
-- [list endpoint/komponen tanpa test]
-
-### Partial (ada test tapi tidak lengkap)
-- [list yang coverage-nya kurang]
-
-## Rekomendasi
-
-Jalankan `/qa write` untuk generate test pada area kritis di atas.
+Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-## Langkah 6 — Verifikasi Akhir
-
-Setelah menulis test baru, selalu jalankan ulang untuk memastikan semua pass:
-
-```bash
-cd backend && uv run pytest tests/ -v --tb=short 2>&1 | tail -20
-```
-
-Jika ada test yang fail karena test yang baru ditulis:
-1. Debug error-nya
-2. Perbaiki test (bukan source code) jika test yang salah
-3. Perbaiki source code jika memang ada bug yang ditemukan test
-
----
-
-## Langkah 7 — Git Commit
-
-```bash
-git add -A
-git commit -m "test(qa): [ringkasan — misal: tambah test endpoints auth dan prospects]
-
-Co-Authored-By: Claude Code QA Agent <noreply@anthropic.com>"
-```
-
----
-
-## Langkah 8 — Laporan ke User
+## Langkah 7 — Laporan ke User
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 🧪 QA REPORT — [SUBCOMMAND]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Backend   : X passed / Y failed / Z error
-Frontend  : X passed / Y failed
-Coverage  : Backend ~X% | Frontend ~X%
+Modul dianalisis  : N
+Test files        : N total, N method
+Model tanpa test  : N (lihat detail di bawah/QA_STATUS.md)
+Acceptance crit.  : N/N poin §10 punya referensi test (kalau audit mencakup ini)
 
-Test baru ditulis:
-• [list file test yang dibuat/diubah]
+Gap kritis:
+• [list model/method paling penting tanpa test]
 
-Area belum tercover:
-• [list file kritis tanpa test]
+QA_STATUS.md ✓ diupdate (kalau subcommand audit)
 
 Langkah selanjutnya:
-• /qa write   → tulis test yang masih kurang
-• /review     → review kode sebelum merge
+• /qa write   → tulis test untuk gap di atas
+• /qa run     → eksekusi seluruh test yang sudah ada
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -419,9 +266,9 @@ Langkah selanjutnya:
 
 ## Catatan Reusability
 
-Skill ini bekerja di project apapun selama:
-1. Backend Python menggunakan pytest
-2. Frontend menggunakan Vitest atau Jest
-3. Ada `CLAUDE.md` dengan tech stack info
+Skill ini bekerja selama:
+1. Project pakai struktur modul Odoo standar (folder per modul dengan `models/`, `tests/`, `__manifest__.py`)
+2. Test pakai `odoo.tests.TransactionCase`/`tagged`, dijalankan via `docker compose exec odoo ... --test-tags`
+3. Ada `CLAUDE.md` dengan daftar modul & konvensi kode
 
-Untuk project tanpa backend (frontend-only), skip semua langkah backend. Untuk project tanpa frontend, skip langkah frontend.
+Tidak butuh `backend/`/`frontend/` folder split, `pytest`/`Vitest`, atau `uv`/`pnpm` — semuanya digantikan pola Odoo native di atas.

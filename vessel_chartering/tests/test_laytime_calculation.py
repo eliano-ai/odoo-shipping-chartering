@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta
 
+from odoo.exceptions import UserError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -111,3 +112,18 @@ class TestLaytimeCalculation(TransactionCase):
         self.assertEqual(laytime.demurrage_amount, 15000.0)
         self.assertEqual(self.contract.demurrage_amount_total, 15000.0)
         self.assertEqual(self.contract.despatch_amount_total, 0.0)
+
+    def test_05_action_approve_requires_manager_group(self):
+        """action_approve() di-guard has_group('vessel_chartering.group_chartering_manager')
+        — user tanpa grup itu harus ditolak UserError. env.user default TransactionCase
+        sudah eksplisit di-assign grup ini di setUpClass, jadi butuh user terpisah tanpa
+        grup untuk membuktikan guard-nya benar-benar aktif (bukan lolos begitu saja)."""
+        laytime = self._create_laytime(allowed_hours=48)
+        self._add_sof(laytime, 0, 40)
+        laytime.state = 'submitted'
+        non_manager = self.env['res.users'].create({
+            'name': 'Test Non-Manager', 'login': 'test_laytime_non_manager',
+            'group_ids': [(6, 0, [self.env.ref('base.group_user').id])],
+        })
+        with self.assertRaises(UserError):
+            laytime.with_user(non_manager).action_approve()

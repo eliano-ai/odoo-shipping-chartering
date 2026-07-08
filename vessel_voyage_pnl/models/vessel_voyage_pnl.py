@@ -95,20 +95,29 @@ class VesselVoyagePnl(models.Model):
     )
 
     # ── Variance vs Estimate (§2.4) ─────────────────────────────────────
+    # store=True wajib untuk compute field yang dipakai sebagai measure pivot (Odoo
+    # 19 pivot "Measures" dropdown bisa pilih field apapun, bukan cuma yang sudah
+    # dideklarasi di XML) -- aggregator= attribute SENDIRIAN TIDAK CUKUP untuk field
+    # non-stored, Odoo tetap coba validasi lewat SQL SELECT beneran & gagal diam-diam
+    # (lihat catatan lebih lengkap di vessel_vessel_budget_line.py). Di sini AMAN
+    # di-store (beda dari budget_line) karena @api.depends di bawah cover semua
+    # sumber data sungguhan (semua field lokal/related di model yang sama, bukan
+    # search() lintas-model) -- tidak ada risiko stale. Ditemukan dari laporan error
+    # user 2026-07-08.
     revenue_variance = fields.Monetary(
-        string='Variance Revenue', compute='_compute_estimate_variance',
+        string='Variance Revenue', compute='_compute_estimate_variance', store=True,
     )
     revenue_variance_pct = fields.Float(
-        string='Variance Revenue (%)', compute='_compute_estimate_variance',
+        string='Variance Revenue (%)', compute='_compute_estimate_variance', store=True,
     )
     cost_variance = fields.Monetary(
-        string='Variance Cost', compute='_compute_estimate_variance',
+        string='Variance Cost', compute='_compute_estimate_variance', store=True,
     )
     cost_variance_pct = fields.Float(
-        string='Variance Cost (%)', compute='_compute_estimate_variance',
+        string='Variance Cost (%)', compute='_compute_estimate_variance', store=True,
     )
     tce_variance = fields.Monetary(
-        string='Variance TCE', compute='_compute_estimate_variance',
+        string='Variance TCE', compute='_compute_estimate_variance', store=True,
     )
 
     line_ids = fields.One2many('vessel.voyage.pnl.line', 'pnl_id', string='Rincian')
@@ -198,7 +207,9 @@ class VesselVoyagePnl(models.Model):
                  'total_allocated_cost', 'tce_actual_per_day')
     def _compute_estimate_variance(self):
         """§2.4 — variance per komponen (bukan cuma total) supaya jadi feedback loop
-        akurasi estimasi ke Chartering Manager. Compute murni, tidak store (ringan)."""
+        akurasi estimasi ke Chartering Manager. store=True (2026-07-08, awalnya
+        non-stored) supaya bisa dipakai sebagai measure pivot — lihat catatan
+        lengkap di field definition di atas."""
         for rec in self:
             estimate = rec.estimate_id
             if not estimate:

@@ -17,13 +17,29 @@ class VesselVesselBudgetLine(models.Model):
         'vessel.pnl.cost.category', string='Kategori Biaya', required=True,
     )
     planned_amount = fields.Monetary(string='Rencana')
+    # store=True WAJIB untuk compute field yang dipakai sebagai measure pivot (Odoo
+    # 19) -- field non-stored tidak bisa di-SQL-agregasi sama sekali, aggregator=
+    # attribute SENDIRIAN TIDAK CUKUP (Field._description_aggregator() coba SELECT
+    # SQL beneran buat validasi, non-stored selalu gagal & fallback ke None diam-diam
+    # -> pivot tetap error "No aggregate function has been provided"). §4.4 tech
+    # spec awalnya minta non-stored ("tidak store berat") supaya selalu re-compute
+    # tiap dibaca -- trade-off diterima: kalau vessel.voyage.pnl.line yang jadi
+    # sumber datanya berubah SETELAH baris ini ke-compute, nilai stored di sini baru
+    # ter-refresh saat salah satu field di @api.depends berubah (bukan live), sama
+    # persis pola vessel.voyage.pnl.total_revenue dkk (imperative recompute, bukan
+    # live @api.depends lintas-model). Ditemukan dari laporan error user 2026-07-08.
     actual_amount = fields.Monetary(
-        string='Realisasi', compute='_compute_actual_amount',
-        help='On-the-fly dari vessel.voyage.pnl.line (kategori + bulan terkait), '
-             'tidak store berat sesuai §4.4 tech spec.',
+        string='Realisasi', compute='_compute_actual_amount', store=True,
+        help='Dari vessel.voyage.pnl.line (kategori + bulan terkait) -- re-compute '
+             'saat budget/bulan/kategori berubah, TIDAK live kalau data sumbernya '
+             'berubah belakangan (lihat catatan store=True di atas).',
     )
-    variance_amount = fields.Monetary(string='Variance', compute='_compute_variance')
-    variance_pct = fields.Float(string='Variance (%)', compute='_compute_variance')
+    variance_amount = fields.Monetary(
+        string='Variance', compute='_compute_variance', store=True,
+    )
+    variance_pct = fields.Float(
+        string='Variance (%)', compute='_compute_variance', store=True,
+    )
     currency_id = fields.Many2one(related='budget_id.currency_id', store=True, readonly=True)
 
     @api.depends('budget_id.display_name', 'month', 'cost_category_id.name')

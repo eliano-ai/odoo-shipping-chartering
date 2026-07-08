@@ -10,12 +10,12 @@
                     <setting id="default_bunker_variance_threshold_pct_setting"
                              string="Default Threshold Variance ROB"
                              help="Ambang batas variance ROB reconciliation global (persen), dipakai untuk kapal yang tidak punya override sendiri.">
-                        <field name="default_bunker_variance_threshold_pct"/>
+                        <field name="global_bunker_variance_threshold_pct"/>
                     </setting>
                     <setting id="default_bdn_survey_tolerance_pct_setting"
                              string="Default Toleransi Survey BDN"
                              help="Ambang batas selisih qty BDN vs independent survey sebelum dianggap dispute.">
-                        <field name="default_bdn_survey_tolerance_pct"/>
+                        <field name="global_bdn_survey_tolerance_pct"/>
                     </setting>
                 </block>
             </xpath>

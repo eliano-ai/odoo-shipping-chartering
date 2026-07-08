@@ -10,7 +10,7 @@
                     <setting id="default_budget_variance_threshold_pct_setting"
                              string="Default Threshold Variance Budget"
                              help="Ambang batas variance budget vs actual global (persen), dipakai untuk kapal yang tidak punya override sendiri.">
-                        <field name="default_budget_variance_threshold_pct"/>
+                        <field name="global_budget_variance_threshold_pct"/>
                     </setting>
                 </block>
             </xpath>

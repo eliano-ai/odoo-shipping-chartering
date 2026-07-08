@@ -10,7 +10,7 @@
                     <setting id="default_disbursement_variance_threshold_pct_setting"
                              string="Default Threshold Variance PDA/FDA"
                              help="Ambang batas variance PDA vs FDA global (persen), dipakai untuk agen pelabuhan yang tidak punya override sendiri.">
-                        <field name="default_disbursement_variance_threshold_pct"/>
+                        <field name="global_disbursement_variance_threshold_pct"/>
                     </setting>
                 </block>
             </xpath>

@@ -58,8 +58,16 @@ for m in <daftar modul yang disentuh sprint ini>; do
   grep -rn "\.groups_id\b" "$m"/models/*.py "$m"/tests/*.py 2>/dev/null && echo "FIX: res.users.groups_id di-rename jadi group_ids di Odoo 19"
   grep -rn "_sql_constraints\s*=" "$m"/models/*.py 2>/dev/null && echo "FIX: _sql_constraints list attribute silent no-op di Odoo 19, ganti models.Constraint('sql...', 'message')"
   grep -rn "\.users\b" "$m"/models/*.py "$m"/tests/*.py 2>/dev/null | grep -v "\.user_ids\|res\.users\|res_users" && echo "FIX: res.groups.users di-rename jadi user_ids di Odoo 19"
+  awk '/_inherit\s*=\s*.res\.config\.settings./{f=1} f && /^\s*default_[a-zA-Z_]+\s*=\s*fields\./{print FILENAME":"FNR": "$0} /^class /{f=0}' "$m"/models/*.py 2>/dev/null && echo "FIX: field res.config.settings tidak boleh diawali 'default_' (reserved Odoo, butuh default_model) — rename sisi settings-nya, mis. jadi global_xxx, biarkan sisi res.company tetap default_xxx"
 done
 ```
+<!-- improved: laporan error user 2026-07-08 — field res.config.settings diawali default_
+     (default_bunker_variance_threshold_pct dkk) di 3 modul sekaligus (vessel_voyage_operations,
+     vessel_voyage_pnl, vessel_bunker_management) trigger Exception "without attribute
+     'default_model'" saat Settings dibuka di UI — TIDAK ketahuan lewat -u/test suite biasa karena
+     keduanya tidak pernah membuka halaman Settings, cuma ketahuan dari user manual test browser
+     (2026-07-08) -->
+
 <!-- improved: retro Sprint 8-14 vessel_voyage_operations — 2 pola baru (_sql_constraints=,
      res.groups.users) ditemukan Sprint 11-12, sudah masuk CLAUDE.md Gotcha table tapi baru sekarang
      disinkronkan ke grep list ini. ATURAN PROSES: setiap kali baris baru ditambah ke CLAUDE.md

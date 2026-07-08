@@ -16,7 +16,12 @@ class ResCompany(models.Model):
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
-    default_disbursement_variance_threshold_pct = fields.Float(
+    # NB: field di res.config.settings TIDAK BOLEH diawali prefix "default_" —
+    # itu reserved oleh Odoo untuk mekanisme ir.default (field wajib punya atribut
+    # default_model), walau field ini murni related= biasa ke res.company. Trigger
+    # Exception saat res.config.settings.default_get() dipanggil (lihat CLAUDE.md
+    # Checklist Odoo 19 Gotcha).
+    global_disbursement_variance_threshold_pct = fields.Float(
         related='company_id.default_disbursement_variance_threshold_pct', readonly=False,
         string='Default Threshold Variance PDA/FDA (%)',
     )

@@ -82,6 +82,14 @@ class VesselNoonReport(models.Model):
         'Noon report untuk voyage & waktu yang sama sudah ada.',
     )
 
+    @api.depends('voyage_id.name', 'report_datetime')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(voyage)s — Noon Report %(dt)s') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+                'dt': rec.report_datetime or '?',
+            }
+
     @api.constrains('latitude', 'longitude')
     def _check_lat_long_range(self):
         for rec in self:

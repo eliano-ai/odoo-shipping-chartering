@@ -37,6 +37,16 @@ class VesselOffhireEvent(models.Model):
         related='contract_id.currency_id', string='Currency', readonly=True,
     )
 
+    @api.depends('contract_id.name', 'reason', 'datetime_start')
+    def _compute_display_name(self):
+        labels = dict(OFFHIRE_REASON)
+        for rec in self:
+            rec.display_name = _('%(contract)s — Off-hire %(reason)s (%(date)s)') % {
+                'contract': rec.contract_id.name or _('Kontrak'),
+                'reason': labels.get(rec.reason, rec.reason or ''),
+                'date': rec.datetime_start or '?',
+            }
+
     @api.depends('datetime_start', 'datetime_end')
     def _compute_duration_hours(self):
         for rec in self:

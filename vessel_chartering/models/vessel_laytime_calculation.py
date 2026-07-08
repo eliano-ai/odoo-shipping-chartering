@@ -102,6 +102,15 @@ class VesselLaytimeCalculation(models.Model):
                 else self.contract_id.laytime_allowed_discharge
             )
 
+    @api.depends('contract_id.name', 'port_call_type')
+    def _compute_display_name(self):
+        labels = dict(self._fields['port_call_type'].selection)
+        for rec in self:
+            rec.display_name = _('%(contract)s — Laytime %(type)s') % {
+                'contract': rec.contract_id.name or _('Kontrak'),
+                'type': labels.get(rec.port_call_type, rec.port_call_type or ''),
+            }
+
     @api.depends('nor_accepted', 'contract_id.turn_time_hours')
     def _compute_laytime_commenced(self):
         for rec in self:

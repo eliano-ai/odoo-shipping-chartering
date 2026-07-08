@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class VesselVoyageDelay(models.Model):
@@ -33,6 +33,15 @@ class VesselVoyageDelay(models.Model):
     company_id = fields.Many2one(
         related='voyage_id.company_id', string='Perusahaan', store=True, readonly=True,
     )
+
+    @api.depends('voyage_id.name', 'delay_type_id.name', 'datetime_start')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(voyage)s — %(type)s (%(start)s)') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+                'type': rec.delay_type_id.name or _('Delay'),
+                'start': rec.datetime_start or '?',
+            }
 
     @api.depends('datetime_start', 'datetime_end')
     def _compute_duration_hours(self):

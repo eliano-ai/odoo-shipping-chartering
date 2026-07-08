@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo import fields
 from odoo.exceptions import AccessError
 from odoo.tests import TransactionCase, tagged
 
@@ -15,13 +16,22 @@ class TestPnlCore(TransactionCase):
         self.pnl = self.env['vessel.voyage.pnl'].search([('voyage_id', '=', self.voyage3.id)])
 
     def test_total_revenue_formula(self):
+        """§2.4 tech spec — line lintas-mata-uang dikonversi kurs tanggal transaksi.
+        Kontrak charter selalu USD (§2.4 vessel_chartering), company currency
+        environment ini IDR — 75,275 USD dikonversi pakai dummy rate demo (16,250)
+        jadi Rp 1,223,218,750 (QA fix 2026-07-08, sebelumnya total_revenue tersimpan
+        RAW USD tapi dilabeli company currency, salah tampil "Rp 75,275")."""
         self.assertTrue(self.pnl, 'Demo P&L voyage_3 harus sudah ter-generate.')
         expected = (
             self.pnl.freight_revenue + self.pnl.demurrage_revenue
             - self.pnl.despatch_cost - self.pnl.brokerage_cost + self.pnl.other_revenue
         )
         self.assertAlmostEqual(self.pnl.total_revenue, expected, places=2)
-        self.assertAlmostEqual(self.pnl.total_revenue, 75275.0, places=2)
+        usd = self.env.ref('base.USD')
+        expected_converted = usd._convert(
+            75275.0, self.pnl.currency_id, self.env.company, fields.Date.context_today(self.pnl),
+        )
+        self.assertAlmostEqual(self.pnl.total_revenue, expected_converted, places=2)
 
     def test_voyage_result_and_tce_exclude_allocated_cost(self):
         expected_result = (

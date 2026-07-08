@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class VesselBunkerQuote(models.Model):
@@ -27,6 +27,14 @@ class VesselBunkerQuote(models.Model):
              'sebelum validity_date — weighted rata-rata FO/DO sesuai proporsi qty diminta.',
     )
     notes = fields.Char()
+
+    @api.depends('inquiry_id.name', 'supplier_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(inquiry)s — %(supplier)s') % {
+                'inquiry': rec.inquiry_id.name or _('Inquiry'),
+                'supplier': rec.supplier_id.name or _('Supplier'),
+            }
 
     @api.model_create_multi
     def create(self, vals_list):

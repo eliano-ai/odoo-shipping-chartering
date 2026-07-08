@@ -67,6 +67,15 @@ class VesselBunkerRobReconciliation(models.Model):
         'Rekonsiliasi untuk pasangan noon report dan jenis bahan bakar ini sudah ada.',
     )
 
+    @api.depends('voyage_id.name', 'fuel_type')
+    def _compute_display_name(self):
+        labels = dict(FUEL_TYPE)
+        for rec in self:
+            rec.display_name = _('%(voyage)s — ROB %(fuel)s') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+                'fuel': labels.get(rec.fuel_type, rec.fuel_type or ''),
+            }
+
     @api.constrains('noon_report_start_id', 'noon_report_end_id', 'voyage_id')
     def _check_noon_report_order_and_voyage(self):
         for rec in self:

@@ -67,6 +67,15 @@ class VesselBunkerBodBor(models.Model):
         'Kontrak ini sudah punya BOD/BOR untuk event yang sama.',
     )
 
+    @api.depends('contract_id.name', 'event_type')
+    def _compute_display_name(self):
+        labels = dict(EVENT_TYPE)
+        for rec in self:
+            rec.display_name = _('%(contract)s — %(event)s') % {
+                'contract': rec.contract_id.name or _('Kontrak'),
+                'event': labels.get(rec.event_type, rec.event_type or ''),
+            }
+
     @api.depends('contract_id.delivery_date', 'contract_id.redelivery_date', 'event_type')
     def _compute_event_date(self):
         for rec in self:

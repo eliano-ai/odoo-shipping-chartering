@@ -55,6 +55,11 @@ class VesselBunkerDelivery(models.Model):
         'CHECK(qty_bdn_mt > 0)', 'Qty BDN harus lebih besar dari 0.',
     )
 
+    @api.depends('bdn_number')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = rec.bdn_number or _('Bunker Delivery')
+
     @api.depends('survey_id.survey_qty_mt', 'qty_bdn_mt')
     def _compute_qty_confirmed_mt(self):
         for rec in self:

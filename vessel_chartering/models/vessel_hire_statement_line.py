@@ -56,6 +56,15 @@ class VesselHireStatementLine(models.Model):
         string='Status', default='draft', copy=False,
     )
 
+    @api.depends('contract_id.name', 'period_start', 'period_end')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(contract)s — %(start)s s.d. %(end)s') % {
+                'contract': rec.contract_id.name or _('Kontrak'),
+                'start': rec.period_start or '?',
+                'end': rec.period_end or '?',
+            }
+
     @api.depends('period_start', 'period_end')
     def _compute_days_in_period(self):
         for rec in self:

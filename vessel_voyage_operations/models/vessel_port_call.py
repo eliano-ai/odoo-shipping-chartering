@@ -56,6 +56,15 @@ class VesselPortCall(models.Model):
         related='voyage_id.company_id', string='Perusahaan', store=True, readonly=True,
     )
 
+    @api.depends('voyage_id.name', 'port_id.name', 'sequence')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(voyage)s — %(port)s (#%(seq)s)') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+                'port': rec.port_id.name or _('Port'),
+                'seq': rec.sequence or '',
+            }
+
     @api.depends(
         'cargo_ops_commenced', 'cargo_ops_completed',
         'voyage_id.cargo_document_ids.qty_mt', 'voyage_id.cargo_document_ids.port_call_id',

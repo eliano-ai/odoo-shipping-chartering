@@ -29,6 +29,15 @@ class VesselSofLine(models.Model):
     )
     remarks = fields.Char(string='Keterangan')
 
+    @api.depends('laytime_id.display_name', 'datetime_start', 'activity')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(laytime)s — %(activity)s (%(start)s)') % {
+                'laytime': rec.laytime_id.display_name or _('Laytime'),
+                'activity': rec.activity or _('SOF'),
+                'start': rec.datetime_start or '?',
+            }
+
     @api.depends('datetime_start', 'datetime_end')
     def _compute_duration_hours(self):
         for rec in self:

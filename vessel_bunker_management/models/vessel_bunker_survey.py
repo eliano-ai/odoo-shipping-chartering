@@ -44,6 +44,14 @@ class VesselBunkerSurvey(models.Model):
     resolution_notes = fields.Html()
     attachment_ids = fields.Many2many('ir.attachment', string='Laporan Survey')
 
+    @api.depends('delivery_id.display_name', 'surveyor_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(delivery)s — Survey %(surveyor)s') % {
+                'delivery': rec.delivery_id.display_name or _('BDN'),
+                'surveyor': rec.surveyor_id.name or _('Surveyor'),
+            }
+
     @api.depends('survey_qty_mt', 'delivery_id.qty_bdn_mt', 'tolerance_pct')
     def _compute_variance(self):
         for rec in self:

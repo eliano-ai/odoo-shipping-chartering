@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models, _
 
 DIRECTION = [
     ('in', 'Masuk'),
@@ -32,3 +32,11 @@ class VesselPortClearanceLine(models.Model):
     cleared_date = fields.Datetime(string='Tanggal Cleared')
     document_number = fields.Char(string='Nomor Dokumen')
     attachment_ids = fields.Many2many('ir.attachment', string='Lampiran')
+
+    @api.depends('port_call_id.display_name', 'document_type_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(call)s — %(doc)s') % {
+                'call': rec.port_call_id.display_name or _('Port Call'),
+                'doc': rec.document_type_id.name or _('Dokumen'),
+            }

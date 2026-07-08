@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 MONTH = [(str(i), str(i)) for i in range(1, 13)]
 
@@ -81,6 +81,15 @@ class VesselVesselPnl(models.Model):
             ('voyage_id.date_departure', '<', next_first),
             ('voyage_id.date_arrival_final', '>=', first),
         ])
+
+    @api.depends('vessel_id.name', 'period_month', 'period_year')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(vessel)s — P&L %(month)s/%(year)s') % {
+                'vessel': rec.vessel_id.name or _('Kapal'),
+                'month': rec.period_month or '',
+                'year': rec.period_year or '',
+            }
 
     @api.depends('vessel_id', 'period_month', 'period_year')
     def _compute_voyage_pnl_ids(self):

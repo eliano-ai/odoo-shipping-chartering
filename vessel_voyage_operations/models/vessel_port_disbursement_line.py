@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models, _
 
 
 class VesselPortDisbursementLine(models.Model):
@@ -18,3 +18,11 @@ class VesselPortDisbursementLine(models.Model):
         related='disbursement_id.currency_id', string='Mata Uang', readonly=True,
     )
     amount = fields.Monetary(string='Jumlah', currency_field='currency_id')
+
+    @api.depends('disbursement_id.display_name', 'item_type_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(disb)s — %(item)s') % {
+                'disb': rec.disbursement_id.display_name or _('Disbursement'),
+                'item': rec.item_type_id.name or _('Item'),
+            }

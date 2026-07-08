@@ -127,6 +127,13 @@ class VesselVoyagePnl(models.Model):
 
     _unique_voyage = models.Constraint('UNIQUE(voyage_id)', 'Voyage ini sudah punya P&L.')
 
+    @api.depends('voyage_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(voyage)s — Voyage P&L') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+            }
+
     @api.depends('voyage_id.date_departure', 'voyage_id.date_arrival_final')
     def _compute_voyage_days(self):
         for rec in self:
@@ -365,10 +372,26 @@ class VesselVoyagePnl(models.Model):
             'allocation_rule_id': allocation_rule_id,
         })
 
+    def _convert_to_pnl_currency(self, amount, from_currency, date):
+        """§2.4 tech spec — 'line lintas-mata-uang dikonversi kurs tanggal transaksi
+        masing-masing'. self.currency_id = company currency (bukan otomatis USD di
+        environment ini, lihat CLAUDE.md), sementara sumber baris revenue (invoice
+        freight/demurrage) & sebagian port disbursement genuinely dalam USD (kontrak
+        charter sengaja pakai currency USD, §2.4 vessel_chartering) — no-op kalau
+        currency sumber & tujuan sudah sama."""
+        self.ensure_one()
+        if not amount or not from_currency or from_currency == self.currency_id:
+            return amount
+        return from_currency._convert(
+            amount, self.currency_id, self.company_id,
+            date or fields.Date.context_today(self),
+        )
+
     def _compute_revenue(self):
         """§2.2 — Freight, Demurrage, Despatch dari account.move.line (analytic voyage),
         Brokerage dihitung langsung dari kontrak (bukan dari move, karena brokerage
-        tidak pernah diinvoice sebagai baris terpisah di vessel_chartering)."""
+        tidak pernah diinvoice sebagai baris terpisah di vessel_chartering). Semua
+        dikonversi ke self.currency_id (§2.4 — lihat _convert_to_pnl_currency)."""
         self.ensure_one()
         self._clear_auto_lines('revenue')
         contract = self.contract_id
@@ -386,9 +409,10 @@ class VesselVoyagePnl(models.Model):
                 for aml in self._search_analytic_move_lines(freight_product.id, analytic_id):
                     if aml.move_id.move_type != 'out_invoice':
                         continue
-                    freight_total += aml.price_subtotal
+                    amount = self._convert_to_pnl_currency(aml.price_subtotal, aml.currency_id, aml.date)
+                    freight_total += amount
                     self._create_line(
-                        'cost_category_freight_revenue', aml.price_subtotal,
+                        'cost_category_freight_revenue', amount,
                         aml.name or _('Freight'), 'account.move.line', aml.id,
                     )
 
@@ -397,10 +421,11 @@ class VesselVoyagePnl(models.Model):
             )
             if demurrage_product:
                 for aml in self._search_analytic_move_lines(demurrage_product.id, analytic_id):
+                    amount = self._convert_to_pnl_currency(aml.price_subtotal, aml.currency_id, aml.date)
                     if aml.move_id.move_type == 'out_invoice':
-                        signed = aml.price_subtotal
+                        signed = amount
                     elif aml.move_id.move_type == 'out_refund':
-                        signed = -aml.price_subtotal
+                        signed = -amount
                     else:
                         continue
                     if signed >= 0:
@@ -418,7 +443,11 @@ class VesselVoyagePnl(models.Model):
 
         brokerage_total = 0.0
         if contract and contract.brokerage_pct:
-            brokerage_total = contract.freight_amount_final * (contract.brokerage_pct / 100.0)
+            brokerage_usd = contract.freight_amount_final * (contract.brokerage_pct / 100.0)
+            brokerage_date = self.voyage_id.date_departure or fields.Date.context_today(self)
+            brokerage_total = self._convert_to_pnl_currency(
+                brokerage_usd, contract.currency_id, brokerage_date,
+            )
             if brokerage_total:
                 self._create_line(
                     'cost_category_brokerage', -brokerage_total,
@@ -436,7 +465,10 @@ class VesselVoyagePnl(models.Model):
     def _compute_direct_cost(self):
         """§2.2 — Bunker dari fleet_fuel_log (via bridge fleet_trip_id), Port Cost dari
         FDA confirmed, Cargo Handling/Insurance dari account.move.line ter-mapping
-        vessel.pnl.cost.category.default_account_ids."""
+        vessel.pnl.cost.category.default_account_ids. Semua dikonversi ke
+        self.currency_id (§2.4) — bunker/fleet_maintenance_schedule biasanya sudah
+        company currency (no-op), tapi port disbursement genuinely bisa USD atau IDR
+        per record ("sesuai kebiasaan agen", §3 tech spec vessel_voyage_operations)."""
         self.ensure_one()
         self._clear_auto_lines('direct_cost')
         voyage = self.voyage_id
@@ -448,9 +480,10 @@ class VesselVoyagePnl(models.Model):
                 ('state', 'in', ('approved', 'posted')),
             ])
             for log in fuel_logs:
-                bunker_total += log.total_cost
+                amount = self._convert_to_pnl_currency(log.total_cost, log.currency_id, log.date)
+                bunker_total += amount
                 self._create_line(
-                    'cost_category_bunker', -log.total_cost,
+                    'cost_category_bunker', -amount,
                     log.display_name or _('Fuel Log'), 'fleet.fuel.log', log.id,
                 )
 
@@ -460,10 +493,12 @@ class VesselVoyagePnl(models.Model):
             ('disbursement_type', '=', 'fda'),
             ('state', '=', 'confirmed'),
         ])
+        port_cost_date = voyage.date_departure or fields.Date.context_today(self)
         for fda in fdas:
-            port_total += fda.total_amount
+            amount = self._convert_to_pnl_currency(fda.total_amount, fda.currency_id, port_cost_date)
+            port_total += amount
             self._create_line(
-                'cost_category_port_cost', -fda.total_amount,
+                'cost_category_port_cost', -amount,
                 fda.display_name or _('Port Disbursement (FDA)'),
                 'vessel.port.disbursement', fda.id,
             )
@@ -598,7 +633,13 @@ class VesselVoyagePnl(models.Model):
     def _get_monthly_pool(self, vessel, category, first_day, next_first_day):
         """Sumber pool cuma tersedia untuk Maintenance (fleet_maintenance_schedule) di
         MVP — Crew Cost & Depreciation selalu manual (hr_payroll/account_asset tidak
-        ada), Overhead pakai fixed_percentage (tidak butuh pool)."""
+        ada), Overhead pakai fixed_percentage (tidak butuh pool).
+
+        NB: dipanggil baik dari record singleton (_compute_allocation_for_category)
+        MAUPUN dari recordset kosong `self.env['vessel.voyage.pnl']`
+        (vessel_vessel_pnl._compute_totals) — jangan pakai `self.currency_id`/
+        `self._convert_to_pnl_currency` di sini (butuh self.ensure_one()), konversi
+        langsung ke company currency lewat self.env.company."""
         maintenance_cat = self.env.ref(
             'vessel_voyage_pnl.cost_category_maintenance', raise_if_not_found=False,
         )
@@ -609,7 +650,18 @@ class VesselVoyagePnl(models.Model):
                 ('completed_date', '>=', first_day),
                 ('completed_date', '<', next_first_day),
             ])
-            return sum(schedules.mapped('actual_cost'))
+            company = self.env.company
+            company_currency = company.currency_id
+            total = 0.0
+            for s in schedules:
+                amount = s.actual_cost
+                if s.currency_id and s.currency_id != company_currency:
+                    amount = s.currency_id._convert(
+                        amount, company_currency, company,
+                        s.completed_date or fields.Date.context_today(self),
+                    )
+                total += amount
+            return total
         return 0.0
 
     def _get_total_active_voyage_days(self, vessel, first_day, next_first_day):
@@ -635,9 +687,10 @@ class VesselVoyagePnl(models.Model):
         for aml in self._search_analytic_move_lines(
             False, self.analytic_account_id.id, account_ids=category.default_account_ids.ids,
         ):
-            total += abs(aml.price_subtotal)
+            amount = abs(self._convert_to_pnl_currency(aml.price_subtotal, aml.currency_id, aml.date))
+            total += amount
             self._create_line(
-                cost_category_xmlid, -abs(aml.price_subtotal),
+                cost_category_xmlid, -amount,
                 aml.name or category.name, 'account.move.line', aml.id,
             )
         return total

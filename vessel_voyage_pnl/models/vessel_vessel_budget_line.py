@@ -26,6 +26,15 @@ class VesselVesselBudgetLine(models.Model):
     variance_pct = fields.Float(string='Variance (%)', compute='_compute_variance')
     currency_id = fields.Many2one(related='budget_id.currency_id', store=True, readonly=True)
 
+    @api.depends('budget_id.display_name', 'month', 'cost_category_id.name')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(budget)s — Bulan %(month)s — %(cat)s') % {
+                'budget': rec.budget_id.display_name or _('Budget'),
+                'month': rec.month or '',
+                'cat': rec.cost_category_id.name or _('Kategori'),
+            }
+
     @api.depends('budget_id.vessel_id', 'budget_id.year', 'month', 'cost_category_id')
     def _compute_actual_amount(self):
         for line in self:

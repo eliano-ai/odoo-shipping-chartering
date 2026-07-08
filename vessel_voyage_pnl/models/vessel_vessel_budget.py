@@ -45,6 +45,14 @@ class VesselVesselBudget(models.Model):
         'UNIQUE(vessel_id, year)', 'Kapal ini sudah punya budget untuk tahun tersebut.',
     )
 
+    @api.depends('vessel_id.name', 'year')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(vessel)s — Budget %(year)s') % {
+                'vessel': rec.vessel_id.name or _('Kapal'),
+                'year': rec.year or '',
+            }
+
     @api.depends('budget_line_ids.planned_amount')
     def _compute_total_budget_cost(self):
         for rec in self:

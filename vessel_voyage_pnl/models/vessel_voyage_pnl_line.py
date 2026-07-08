@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models, _
 
 
 class VesselVoyagePnlLine(models.Model):
@@ -29,6 +29,14 @@ class VesselVoyagePnlLine(models.Model):
         'vessel.cost.allocation.rule', string='Aturan Alokasi',
     )
     is_manual_adjustment = fields.Boolean(string='Adjustment Manual')
+
+    @api.depends('pnl_id.display_name', 'cost_category_id.name', 'description')
+    def _compute_display_name(self):
+        for rec in self:
+            rec.display_name = _('%(pnl)s — %(cat)s') % {
+                'pnl': rec.pnl_id.display_name or _('Voyage P&L'),
+                'cat': rec.cost_category_id.name or rec.description or _('Baris'),
+            }
 
     def action_view_source(self):
         self.ensure_one()

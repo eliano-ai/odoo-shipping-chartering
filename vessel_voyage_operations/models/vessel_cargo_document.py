@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models, _
 
 DOCUMENT_TYPE = [
     ('bl', 'Bill of Lading'),
@@ -37,3 +37,13 @@ class VesselCargoDocument(models.Model):
     company_id = fields.Many2one(
         related='voyage_id.company_id', string='Perusahaan', store=True, readonly=True,
     )
+
+    @api.depends('voyage_id.name', 'document_type', 'document_number')
+    def _compute_display_name(self):
+        labels = dict(DOCUMENT_TYPE)
+        for rec in self:
+            rec.display_name = _('%(voyage)s — %(type)s %(number)s') % {
+                'voyage': rec.voyage_id.name or _('Voyage'),
+                'type': labels.get(rec.document_type, rec.document_type or ''),
+                'number': rec.document_number or '',
+            }

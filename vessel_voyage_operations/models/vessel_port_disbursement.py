@@ -64,6 +64,15 @@ class VesselPortDisbursement(models.Model):
     )
     document_ids = fields.Many2many('ir.attachment', string='Lampiran')
 
+    @api.depends('port_call_id.display_name', 'disbursement_type')
+    def _compute_display_name(self):
+        labels = dict(DISBURSEMENT_TYPE)
+        for rec in self:
+            rec.display_name = _('%(call)s — %(type)s') % {
+                'call': rec.port_call_id.display_name or _('Port Call'),
+                'type': labels.get(rec.disbursement_type, rec.disbursement_type or ''),
+            }
+
     @api.depends('line_ids.amount')
     def _compute_total_amount(self):
         for rec in self:

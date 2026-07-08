@@ -296,8 +296,14 @@ class VesselBunkerRobReconciliation(models.Model):
                 'fuel_type_id': mfo_type.id,
                 'transaction_type': 'trip',
                 'date': fields.Date.context_today(self),
+                # qty_liters JANGAN diubah — 150,000 L = 150 MT persis §10.5 acceptance
+                # criteria (consumption). price_per_liter 1.2 tidak realistis (sisa
+                # sebelum vessel_voyage_pnl currency conversion fix), Rp 12.000/liter
+                # konsisten dengan fix voyage_pnl.py _demo_setup_voyage3_sources
+                # (2026-07-08) -- qty tidak dipakai vessel_voyage_pnl, tapi price
+                # disamakan supaya total_cost antar modul konsisten kalau ada overlap.
                 'qty_liters': 150000,
-                'price_per_liter': 1.2,
+                'price_per_liter': 12000,
                 'state': 'approved',
             })
 

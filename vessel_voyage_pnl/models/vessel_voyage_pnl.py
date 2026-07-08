@@ -824,7 +824,13 @@ class VesselVoyagePnl(models.Model):
                     'fuel_type_id': fuel_type.id,
                     'transaction_type': 'trip',
                     'qty_liters': 5000,
-                    'price_per_liter': 1.2,
+                    # price_per_liter 1.2 (IDR) tidak realistis (bunker Rp 1,2/liter,
+                    # sisa dari sebelum currency conversion fix) -- Rp 12.000/liter
+                    # mendekati harga riil HSD/MFO non-subsidi, supaya voyage_result
+                    # jadi kerugian genuine setelah §2.4 currency conversion, bukan cuma
+                    # "untung besar" karena cost tidak pernah diskalakan ulang (QA fix
+                    # 2026-07-08 -- lihat juga vessel_bunker_rob_reconciliation.py).
+                    'price_per_liter': 12000,
                     'state': 'approved',
                 })
 

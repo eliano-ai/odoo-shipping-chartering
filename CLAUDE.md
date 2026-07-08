@@ -19,7 +19,6 @@ Odoo Shipping adalah kumpulan modul custom Odoo 19 untuk perusahaan pelayaran/fl
 | `fleet_model_sparepart` | Master sparepart kapal |
 | `vessel_crew_management` | Manajemen ABK — sign on/off, STCW, crew scheduling |
 | `acc_id_multicurrency_report` | Laporan keuangan dual-currency IDR/USD (tidak spesifik shipping) |
-| `shopify_connector_v19` | Integrasi Shopify (tidak spesifik shipping) |
 
 Layer 2 (Komersial) — app terpisah **`maritime`** (bukan submenu Fleet, sejak restrukturisasi 2026-07-03):
 - `maritime` — app root container, **tidak ada model sendiri**, cuma menyatukan menu root `vessel_chartering` + `vessel_voyage_operations` di bawah 1 app "Maritime" (depends ke keduanya, reparent menu via xmlid tanpa mengubah modul asal)

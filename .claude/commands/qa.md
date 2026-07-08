@@ -23,7 +23,7 @@ Jika dipanggil tanpa argumen (`/qa`), jalankan `audit` (bukan `run` — audit ti
 Baca `CLAUDE.md`. Daftar modul custom di project ini (Layer 1 Asset Management + Layer 2 Komersial + Layer 3 Finansial):
 
 ```bash
-MODULES="fleet_document_id fleet_fuel_log fleet_maintenance_schedule fleet_model_sparepart vessel_crew_management acc_id_multicurrency_report shopify_connector_v19 maritime vessel_chartering vessel_voyage_operations vessel_voyage_pnl vessel_bunker_management"
+MODULES="fleet_document_id fleet_fuel_log fleet_maintenance_schedule fleet_model_sparepart vessel_crew_management acc_id_multicurrency_report maritime vessel_chartering vessel_voyage_operations vessel_voyage_pnl vessel_bunker_management"
 
 for m in $MODULES; do
   echo "=== $m ==="
@@ -31,7 +31,7 @@ for m in $MODULES; do
 done
 ```
 
-Modul Layer 1 (`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`) dan 2 modul generik (`acc_id_multicurrency_report` — tidak spesifik shipping, `shopify_connector_v19`) dikembangkan **sebelum** roadmap sprint terstruktur project ini dimulai — kemungkinan besar tidak punya `tests/` sama sekali kecuali `acc_id_multicurrency_report`. Ini bukan kesalahan sprint manapun, cukup dicatat sebagai gap pre-existing di laporan, jangan diperlakukan sebagai "regresi".
+Modul Layer 1 (`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`) dan 1 modul generik (`acc_id_multicurrency_report` — tidak spesifik shipping) dikembangkan **sebelum** roadmap sprint terstruktur project ini dimulai — kemungkinan besar tidak punya `tests/` sama sekali kecuali `acc_id_multicurrency_report`. Ini bukan kesalahan sprint manapun, cukup dicatat sebagai gap pre-existing di laporan, jangan diperlakukan sebagai "regresi".
 
 ---
 

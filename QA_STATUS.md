@@ -11,7 +11,11 @@
 1. **`test_05_action_approve_requires_manager_group`** ditambahkan ke `vessel_chartering/tests/test_laytime_calculation.py` — user tanpa `group_chartering_manager` dikonfirmasi ditolak `UserError` saat `action_approve()`. `vessel_chartering`: 12 → **13 test method, 13/13 pass**.
 2. **`test_price_reference_uses_most_recent_before_date`** ditambahkan ke `vessel_bunker_management/tests/test_bunker_procurement.py` — dibuktikan dengan 2 baris `vessel.bunker.price.reference` (500 di H-60, 600 di H-10) bahwa `_compute_price_vs_market_pct()` benar-benar pakai baris TERDEKAT sebelum tanggal (`order='date desc', limit=1`), bukan baris pertama yang ditemukan. `vessel_bunker_management`: 19 → **20 test method, 20/20 pass**.
 
-Belum dikerjakan (Prioritas MED/LOW, lihat Rekomendasi di bawah — masih valid, belum disentuh): `vessel.voyage.estimate`, `vessel.cost.allocation.rule`/`vessel.pnl.cost.category`, dan 6 modul Layer 1 tanpa `tests/` sama sekali.
+Belum dikerjakan (Prioritas MED/LOW, lihat Rekomendasi di bawah — masih valid, belum disentuh): `vessel.voyage.estimate`, `vessel.cost.allocation.rule`/`vessel.pnl.cost.category`, dan 5 modul Layer 1 tanpa `tests/` sama sekali.
+
+## Update 2026-07-08 — `shopify_connector_v19` dihapus dari repo
+
+Modul ini dihapus (tidak spesifik shipping, tidak pernah `installed` di database — cuma `uninstalled` di `ir_module_module`, aman dihapus tanpa cleanup DB). Semua baris/referensi ke modul ini di tabel bawah sudah tidak relevan lagi.
 
 ## Summary per Modul
 
@@ -23,7 +27,6 @@ Belum dikerjakan (Prioritas MED/LOW, lihat Rekomendasi di bawah — masih valid,
 | `fleet_model_sparepart` | 3 | 0 | 0 | 1 (semua) |
 | `vessel_crew_management` | 5 | 0 | 0 | 4 (semua) |
 | `acc_id_multicurrency_report` | 7 | 2 | 24 | 2 |
-| `shopify_connector_v19` | 13 | 0 | 0 | 11 (semua) |
 | `maritime` | 0 (app container, tanpa model) | 0 | 0 | – |
 | `vessel_chartering` | 13 | 4 | **13** (was 12) | 3 (lihat catatan false-positive di bawah) — guard `action_approve()` sudah teratasi |
 | `vessel_voyage_operations` | 15 | 3 | 10 | 3 (lihat catatan false-positive di bawah) |
@@ -34,7 +37,7 @@ Belum dikerjakan (Prioritas MED/LOW, lihat Rekomendasi di bawah — masih valid,
 
 ## Modul Tanpa Folder `tests/` Sama Sekali (gap pre-existing, BUKAN regresi)
 
-`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`, `shopify_connector_v19` — 6 dari 12 modul custom. Semua dikembangkan **sebelum** roadmap sprint terstruktur (Sprint 1+) dimulai, jadi tidak pernah masuk siklus "tulis test per sprint" yang berlaku sejak `vessel_chartering`. Ini backlog test debt pre-existing, bukan sesuatu yang rusak baru-baru ini.
+`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management` — 5 dari 11 modul custom. Semua dikembangkan **sebelum** roadmap sprint terstruktur (Sprint 1+) dimulai, jadi tidak pernah masuk siklus "tulis test per sprint" yang berlaku sejak `vessel_chartering`. Ini backlog test debt pre-existing, bukan sesuatu yang rusak baru-baru ini.
 
 `maritime` wajar tanpa test — app container murni tanpa model sendiri.
 
@@ -67,7 +70,7 @@ Konvensi menulis `"""§10.N acceptance criteria — ..."""` di docstring test ba
 3. Model inti tanpa test sama sekali: `vessel.voyage.estimate` (`vessel_chartering`), `vessel.cost.allocation.rule`/`vessel.pnl.cost.category` (`vessel_voyage_pnl`) — semuanya model dengan business logic (bukan cuma master data statis), layak diprioritaskan lebih dulu dari model master-data murni (`vessel.cargo.type`, `vessel.charter.terms`, `vessel.clearance.document.type`).
 
 **Prioritas LOW / backlog jangka panjang**:
-4. 6 modul Layer 1 tanpa test sama sekali (`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`, `shopify_connector_v19`) — test debt pre-existing dari sebelum roadmap sprint dimulai. Realistis butuh sprint/inisiatif terpisah, bukan quick-fix `/qa write`.
+4. 5 modul Layer 1 tanpa test sama sekali (`fleet_document_id`, `fleet_fuel_log`, `fleet_maintenance_schedule`, `fleet_model_sparepart`, `vessel_crew_management`) — test debt pre-existing dari sebelum roadmap sprint dimulai. Realistis butuh sprint/inisiatif terpisah, bukan quick-fix `/qa write`.
 
 Jalankan `/qa write` untuk mulai isi 2 gap HIGH di atas.
 

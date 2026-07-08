@@ -8,12 +8,12 @@
             <list decoration-danger="net_result &lt; 0">
                 <field name="vessel_id"/>
                 <field name="period_month"/>
-                <field name="period_year"/>
+                <field name="period_year" options="{'enable_formatting': False}"/>
                 <field name="total_revenue" sum="Total Revenue"/>
                 <field name="total_cost" sum="Total Cost"/>
                 <field name="idle_cost_allocated" sum="Idle Cost"/>
                 <field name="net_result" sum="Net Result"/>
-                <field name="utilization_pct" widget="percentage"/>
+                <field name="utilization_pct"/>
                 <field name="avg_tce"/>
                 <field name="state" widget="badge"/>
             </list>
@@ -37,7 +37,7 @@
                         <group>
                             <field name="vessel_id"/>
                             <field name="period_month"/>
-                            <field name="period_year"/>
+                            <field name="period_year" options="{'enable_formatting': False}"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                         <group>
@@ -51,7 +51,7 @@
                         <group>
                             <field name="calendar_days"/>
                             <field name="voyage_days_total"/>
-                            <field name="utilization_pct" widget="percentage"/>
+                            <field name="utilization_pct"/>
                         </group>
                         <group>
                             <field name="avg_tce"/>

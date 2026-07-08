@@ -3,7 +3,13 @@ from datetime import date
 
 from odoo import api, fields, models, _
 
-MONTH = [(str(i), str(i)) for i in range(1, 13)]
+# Value TETAP string angka '1'-'12' (dipakai int(self.period_month) di _get_period_bounds
+# dkk) -- cuma LABEL yang diganti nama bulan (laporan user 2026-07-08).
+MONTH = [
+    ('1', 'Januari'), ('2', 'Februari'), ('3', 'Maret'), ('4', 'April'),
+    ('5', 'Mei'), ('6', 'Juni'), ('7', 'Juli'), ('8', 'Agustus'),
+    ('9', 'September'), ('10', 'Oktober'), ('11', 'November'), ('12', 'Desember'),
+]
 
 STATE = [
     ('draft', 'Draft'),
@@ -84,10 +90,11 @@ class VesselVesselPnl(models.Model):
 
     @api.depends('vessel_id.name', 'period_month', 'period_year')
     def _compute_display_name(self):
+        labels = dict(MONTH)
         for rec in self:
-            rec.display_name = _('%(vessel)s — P&L %(month)s/%(year)s') % {
+            rec.display_name = _('%(vessel)s — P&L %(month)s %(year)s') % {
                 'vessel': rec.vessel_id.name or _('Kapal'),
-                'month': rec.period_month or '',
+                'month': labels.get(rec.period_month, rec.period_month or ''),
                 'year': rec.period_year or '',
             }
 

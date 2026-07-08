@@ -94,7 +94,7 @@
                                     <field name="barging_fee_usd"/>
                                     <field name="validity_date"/>
                                     <field name="total_estimated_usd"/>
-                                    <field name="price_vs_market_pct" widget="percentage"/>
+                                    <field name="price_vs_market_pct"/>
                                 </list>
                             </field>
                         </page>

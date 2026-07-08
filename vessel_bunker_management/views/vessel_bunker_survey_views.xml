@@ -11,7 +11,7 @@
                 <field name="surveyor_id"/>
                 <field name="survey_qty_mt"/>
                 <field name="variance_qty_mt"/>
-                <field name="variance_pct" widget="percentage"/>
+                <field name="variance_pct"/>
                 <field name="is_dispute"/>
                 <field name="dispute_state"/>
             </list>
@@ -40,7 +40,7 @@
                         </group>
                         <group>
                             <field name="variance_qty_mt" readonly="1"/>
-                            <field name="variance_pct" readonly="1" widget="percentage"/>
+                            <field name="variance_pct" readonly="1"/>
                             <field name="tolerance_pct"/>
                             <field name="is_dispute" readonly="1"/>
                             <field name="dispute_state" readonly="1" invisible="not is_dispute"/>

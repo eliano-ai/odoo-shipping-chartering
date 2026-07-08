@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
 
-MONTH = [(str(i), str(i)) for i in range(1, 13)]
+# Value TETAP string angka '1'-'12' (dipakai int(line.month) di _compute_actual_amount
+# dkk) -- cuma LABEL yang diganti nama bulan, supaya dropdown UI tidak nunjukkan 1-12
+# mentah (laporan user 2026-07-08).
+MONTH = [
+    ('1', 'Januari'), ('2', 'Februari'), ('3', 'Maret'), ('4', 'April'),
+    ('5', 'Mei'), ('6', 'Juni'), ('7', 'Juli'), ('8', 'Agustus'),
+    ('9', 'September'), ('10', 'Oktober'), ('11', 'November'), ('12', 'Desember'),
+]
 
 
 class VesselVesselBudgetLine(models.Model):
@@ -44,10 +51,11 @@ class VesselVesselBudgetLine(models.Model):
 
     @api.depends('budget_id.display_name', 'month', 'cost_category_id.name')
     def _compute_display_name(self):
+        labels = dict(MONTH)
         for rec in self:
-            rec.display_name = _('%(budget)s — Bulan %(month)s — %(cat)s') % {
+            rec.display_name = _('%(budget)s — %(month)s — %(cat)s') % {
                 'budget': rec.budget_id.display_name or _('Budget'),
-                'month': rec.month or '',
+                'month': labels.get(rec.month, rec.month or ''),
                 'cat': rec.cost_category_id.name or _('Kategori'),
             }
 

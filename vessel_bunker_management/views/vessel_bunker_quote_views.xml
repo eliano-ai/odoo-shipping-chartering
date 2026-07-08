@@ -11,7 +11,7 @@
                 <field name="price_fo_usd_mt"/>
                 <field name="price_do_usd_mt"/>
                 <field name="total_estimated_usd"/>
-                <field name="price_vs_market_pct" widget="percentage"/>
+                <field name="price_vs_market_pct"/>
             </list>
         </field>
     </record>
